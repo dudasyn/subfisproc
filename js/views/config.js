@@ -1,3 +1,4 @@
+// configView v1.1
 const configView = {
     async render(container, user, params) {
         const isAdmin = user.role === 'Admin' || user.role === 'Gestor';
