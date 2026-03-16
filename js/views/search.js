@@ -2,7 +2,7 @@ const searchView = {
     async render(container, user) {
         container.innerHTML = `
             <div class="view-section">
-                <div class="card mb-2">
+                <div class="card mb-1">
                     <div class="card-header border-bottom">
                         <h3>Buscar Processo</h3>
                         <p class="text-secondary">Acompanhe a localização e o histórico completo de qualquer processo.</p>
@@ -13,7 +13,7 @@ const searchView = {
                                 <label>Número do Processo</label>
                                 <div class="input-group" style="margin-bottom:0;">
                                     <i class="fa-solid fa-magnifying-glass"></i>
-                                    <input type="text" id="search-input" placeholder="Ex: 12345/2026" style="border:none; padding-left:0;">
+                                    <input type="text" id="search-input" placeholder="Ex: 12345/2026" style="border:none;">
                                 </div>
                             </div>
                             <div class="form-group">
@@ -25,7 +25,23 @@ const searchView = {
                     </div>
                 </div>
 
+                <div id="recent-section" class="card mb-2">
+                    <div class="card-header border-bottom">
+                        <h4>Últimos Processos Movimentados</h4>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="recent-list" id="recent-processes-list">
+                            <div class="p-3 text-center text-secondary">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Carregando processos...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="search-results" style="display:none;">
+                    <button class="btn-secondary mb-1" id="btn-clear-search">
+                        <i class="fa-solid fa-arrow-left"></i> Voltar para recentes
+                    </button>
                     <div class="grid-form mb-2">
                         <div class="card col-span-2">
                             <div class="card-header border-bottom">
@@ -93,6 +109,9 @@ const searchView = {
                 </div>
 
                 <div id="search-empty" class="card text-center py-5" style="display:none;">
+                    <button class="btn-secondary" id="btn-clear-empty" style="position:absolute; top:1rem; left:1rem;">
+                        <i class="fa-solid fa-arrow-left"></i> Voltar
+                    </button>
                     <i class="fa-solid fa-folder-open text-secondary mb-2" style="font-size: 3rem; opacity: 0.3;"></i>
                     <h3>Processo não encontrado</h3>
                     <p class="text-secondary">Verifique o número digitado e tente novamente.</p>
@@ -100,6 +119,22 @@ const searchView = {
             </div>
 
             <style>
+                .recent-list { overflow: hidden; }
+                .recent-item {
+                    padding: 1rem 1.5rem;
+                    border-bottom: 1px solid var(--border-color);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    cursor: pointer;
+                    transition: var(--transition);
+                }
+                .recent-item:last-child { border-bottom: none; }
+                .recent-item:hover { background: var(--primary-light); }
+                .recent-info h5 { margin: 0; font-size: 1rem; color: var(--text-primary); }
+                .recent-info p { margin: 0; font-size: 0.85rem; color: var(--text-secondary); }
+                .recent-status { text-align: right; }
+
                 .details-grid {
                     display: grid;
                     grid-template-columns: 1fr 1fr;
@@ -154,6 +189,42 @@ const searchView = {
         const inputSearch = document.getElementById('search-input');
         const resultsDiv = document.getElementById('search-results');
         const emptyDiv = document.getElementById('search-empty');
+        const recentSection = document.getElementById('recent-section');
+        const recentList = document.getElementById('recent-processes-list');
+        const btnClearSearch = document.getElementById('btn-clear-search');
+        const btnClearEmpty = document.getElementById('btn-clear-empty');
+
+        const loadRecent = async () => {
+            try {
+                const latest = await Api.movements.listLatest();
+                if (latest.length === 0) {
+                    recentList.innerHTML = '<div class="p-4 text-center text-secondary">Nenhum processo movimentado recentemente.</div>';
+                    return;
+                }
+
+                recentList.innerHTML = latest.map(m => `
+                    <div class="recent-item" data-number="${m.process_number}">
+                        <div class="recent-info">
+                            <h5>${m.process_number}</h5>
+                            <p>${m.subject}</p>
+                        </div>
+                        <div class="recent-status">
+                            <span class="badge-${m.action.toLowerCase()}">${m.action}</span>
+                            <p style="font-size: 0.7rem; margin-top: 4px;">${new Date(m.movement_date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                        </div>
+                    </div>
+                `).join('');
+
+                document.querySelectorAll('.recent-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        inputSearch.value = item.dataset.number;
+                        doSearch();
+                    });
+                });
+            } catch (err) {
+                recentList.innerHTML = '<div class="p-4 text-center text-danger">Erro ao carregar processos recentes.</div>';
+            }
+        };
 
         const doSearch = async () => {
             const number = inputSearch.value.trim();
@@ -193,9 +264,11 @@ const searchView = {
                     `).join('');
 
                     resultsDiv.style.display = 'block';
+                    recentSection.style.display = 'none';
                     emptyDiv.style.display = 'none';
                 } else {
                     resultsDiv.style.display = 'none';
+                    recentSection.style.display = 'none';
                     emptyDiv.style.display = 'block';
                 }
             } catch (err) {
@@ -206,10 +279,24 @@ const searchView = {
             }
         };
 
+        const resetView = () => {
+            inputSearch.value = '';
+            resultsDiv.style.display = 'none';
+            emptyDiv.style.display = 'none';
+            recentSection.style.display = 'block';
+            loadRecent();
+        };
+
         btnSearch.addEventListener('click', doSearch);
         inputSearch.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') doSearch();
         });
+
+        btnClearSearch.addEventListener('click', resetView);
+        btnClearEmpty.addEventListener('click', resetView);
+
+        // Initial load
+        loadRecent();
     }
 };
 

@@ -18,8 +18,8 @@ if ($method === 'GET') {
     $stmt = $pdo->query('SELECT COUNT(*) as count FROM processes');
     $stats['total_processes'] = $stmt->fetch()['count'];
 
-    $stmt = $pdo->query('SELECT COUNT(*) as count FROM users WHERE active = 1');
-    $stats['total_users'] = $stmt->fetch()['count'];
+    // $stmt = $pdo->query('SELECT COUNT(*) as count FROM users WHERE active = 1');
+    // $stats['total_users'] = $stmt->fetch()['count'];
 
     // Recent activity (last 7 movements)
     $stmt = $pdo->query('

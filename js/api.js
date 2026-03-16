@@ -50,6 +50,7 @@ const Api = {
     },
     movements: {
         listAll: () => Api.request('movements.php', 'GET'),
+        listLatest: () => Api.request('movements.php?latest=1', 'GET'),
         listByProcess: (procId) => Api.request(`movements.php?process_id=${procId}`, 'GET'),
         getByNumber: (number) => Api.request(`movements.php?process_number=${encodeURIComponent(number)}`, 'GET'),
         register: (data) => Api.request('movements.php', 'POST', data)

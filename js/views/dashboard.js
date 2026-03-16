@@ -50,13 +50,6 @@ const dashboardView = {
                                 <h2>${stats.total_processes}</h2>
                             </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon icon-info"><i class="fa-solid fa-users"></i></div>
-                            <div class="stat-info">
-                                <h3>Colaboradores</h3>
-                                <h2>${stats.total_users}</h2>
-                            </div>
-                        </div>
                     </div>
                     
                     <div class="card mt-2">

@@ -10,8 +10,25 @@ if ($method === 'GET') {
     // List recent movements or history of a specific process
     $process_id = $_GET['process_id'] ?? null;
     $process_number = $_GET['process_number'] ?? null;
+    $latest = $_GET['latest'] ?? null;
     
-    if ($process_id) {
+    if ($latest) {
+        // Return latest 10 unique processes that had movements
+        $stmt = $pdo->query('
+            SELECT m.id, p.process_number, p.subject, m.movement_date, m.action, 
+                   s.name as destination_sector, u.name as user_name
+            FROM movements m
+            JOIN processes p ON m.process_id = p.id
+            JOIN sectors s ON m.destination_sector_id = s.id
+            JOIN users u ON m.user_id = u.id
+            WHERE m.id IN (
+                SELECT MAX(id) FROM movements GROUP BY process_id
+            )
+            ORDER BY m.created_at DESC
+            LIMIT 10
+        ');
+        jsonResponse($stmt->fetchAll());
+    } elseif ($process_id) {
         $stmt = $pdo->prepare('
             SELECT m.id, m.movement_date, m.action, m.created_at, 
                    s.name as destination_sector, u.name as user_name
