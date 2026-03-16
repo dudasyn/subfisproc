@@ -165,7 +165,6 @@ class AppManager {
             window.location.hash = isStaff ? '#dashboard' : '#movements';
             return;
         }
-
         const viewParts = hash.split('/');
         const viewName = viewParts[0];
         
