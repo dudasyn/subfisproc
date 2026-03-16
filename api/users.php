@@ -83,7 +83,7 @@ if ($method === 'GET') {
     $cpf = trim($data['cpf'] ?? '');
     $name = trim($data['name'] ?? '');
     $email = trim($data['email'] ?? '');
-    $role = $data['role'] ?? 'Secretaria';
+    $role = $data['role'] ?? 'Assistente Operacional';
     $sector_id = $data['sector_id'] ?? null;
     $password = $data['password'] ?? '';
 

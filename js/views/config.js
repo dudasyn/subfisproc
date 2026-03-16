@@ -165,10 +165,22 @@ const configView = {
         document.getElementById('modal-form').onsubmit = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
+            const originalHtml = btn.innerHTML;
+            
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            await onSave();
-            document.getElementById('custom-modal').remove();
+            
+            try {
+                await onSave();
+                document.getElementById('custom-modal').remove();
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                // Toast is usually handled inside onSave, but just in case:
+                if (err.message && !document.querySelector('.toast-error')) {
+                    window.app.toast(err.message, 'error');
+                }
+            }
         };
     },
 
