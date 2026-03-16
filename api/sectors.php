@@ -10,7 +10,6 @@ if ($method === 'GET') {
     $stmt = $pdo->query('SELECT id, name, active, created_at FROM sectors WHERE active = 1 ORDER BY name ASC');
     jsonResponse($stmt->fetchAll());
 } elseif ($method === 'POST') {
-    checkAuth(['Admin', 'Gestor']); // Only Admin/Gestor can create sectors
     $data = json_decode(file_get_contents('php://input'), true);
     
     $name = trim($data['name'] ?? '');
@@ -20,7 +19,6 @@ if ($method === 'GET') {
     $stmt->execute([$name]);
     jsonResponse(['id' => $pdo->lastInsertId(), 'name' => $name, 'active' => 1]);
 } elseif ($method === 'PUT') {
-    checkAuth(['Admin', 'Gestor']);
     $data = json_decode(file_get_contents('php://input'), true);
     
     $id = $data['id'] ?? 0;
@@ -31,7 +29,6 @@ if ($method === 'GET') {
     $stmt->execute([$name, $id]);
     jsonResponse(['success' => true]);
 } elseif ($method === 'DELETE') {
-    checkAuth(['Admin', 'Gestor']);
     $id = $_GET['id'] ?? 0;
     
     if (!$id) jsonResponse(['error' => 'ID é obrigatório'], 400);

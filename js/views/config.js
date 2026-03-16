@@ -1,15 +1,12 @@
 const configView = {
     async render(container, user, params) {
-        if (user.role !== 'Admin' && user.role !== 'Gestor') {
-            container.innerHTML = `<div class="card"><div class="card-body text-center"><h3 class="text-secondary">Acesso Negado</h3><p>Apenas Gestores e Administradores têm acesso a esta área.</p></div></div>`;
-            return;
-        }
-
+        const isAdmin = user.role === 'Admin' || user.role === 'Gestor';
+        
         container.innerHTML = `
             <div class="view-section">
                 <div class="tabs-header">
                     <button class="tab-btn active" data-tab="setores"><i class="fa-solid fa-building"></i> Setores</button>
-                    <button class="tab-btn" data-tab="colaboradores"><i class="fa-solid fa-users"></i> Colaboradores</button>
+                    ${isAdmin ? '<button class="tab-btn" data-tab="colaboradores"><i class="fa-solid fa-users"></i> Colaboradores</button>' : ''}
                 </div>
 
                 <!-- SETORES TAB -->
@@ -34,6 +31,7 @@ const configView = {
                 </div>
 
                 <!-- COLABORADORES TAB -->
+                ${isAdmin ? `
                 <div class="tab-content" id="tab-colaboradores">
                     <div class="card mb-1">
                         <div class="card-header flex-center" style="justify-content: space-between;">
@@ -53,6 +51,7 @@ const configView = {
                         </div>
                     </div>
                 </div>
+                ` : ''}
             </div>
             <div id="modal-root"></div>
         `;
@@ -61,10 +60,16 @@ const configView = {
         
         // Add listeners
         document.getElementById('btn-add-sector').onclick = () => this.showSectorModal();
-        document.getElementById('btn-add-user').onclick = () => this.showUserModal();
+        if (isAdmin) {
+            document.getElementById('btn-add-user').onclick = () => this.showUserModal();
+        }
         
         // Fetch Data
-        await Promise.all([this.loadSectors(), this.loadUsers()]);
+        if (isAdmin) {
+            await Promise.all([this.loadSectors(), this.loadUsers()]);
+        } else {
+            await this.loadSectors();
+        }
     },
 
     attachTabEvents() {
@@ -207,8 +212,7 @@ const configView = {
                 <div class="form-group col-span-1">
                     <label>Função</label>
                     <select id="usr-role" required>
-                        <option value="Secretaria">Secretária</option>
-                        <option value="Agente">Agente</option>
+                        <option value="Assistente Operacional">Assistente Operacional</option>
                         <option value="Estagiario">Estagiário</option>
                         <option value="Gestor">Gestor</option>
                         <option value="Admin">Administrador</option>

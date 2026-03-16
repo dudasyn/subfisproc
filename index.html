@@ -10,6 +10,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Libraries for Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <!-- CSS Design System -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
@@ -72,6 +76,10 @@
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <span>Buscar Processo</span>
                     </a>
+                    <a href="#reports" class="nav-item" data-view="reports">
+                        <i class="fa-solid fa-file-lines"></i>
+                        <span>Relatórios</span>
+                    </a>
                     <a href="#config" class="nav-item" data-view="config">
                         <i class="fa-solid fa-gear"></i>
                         <span>Configurações</span>
@@ -109,6 +117,7 @@
     <script src="js/views/dashboard.js"></script>
     <script src="js/views/movements.js"></script>
     <script src="js/views/search.js"></script>
+    <script src="js/views/reports.js"></script>
     <script src="js/views/config.js"></script>
     <script src="js/app.js"></script>
 </body>

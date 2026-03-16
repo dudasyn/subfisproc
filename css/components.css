@@ -51,6 +51,7 @@
 .badge-warning { background: #fef3c7; color: #92400e; }
 .badge-primary { background: #dbeafe; color: #1e40af; }
 .badge-neutral { background: #e2e8f0; color: #475569; }
+.badge-danger { background: #fee2e2; color: #b91c1c; }
 
 /* Forms */
 .grid-form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
@@ -70,6 +71,7 @@
 .text-secondary { color: var(--text-secondary); }
 .flex-end { display: flex; justify-content: flex-end; }
 .flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
 
 /* Tabs */
 .tabs-header { display: flex; gap: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }

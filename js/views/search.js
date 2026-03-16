@@ -12,8 +12,8 @@ const searchView = {
                             <div class="form-group col-span-3">
                                 <label>Número do Processo</label>
                                 <div class="input-group" style="margin-bottom:0;">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                    <input type="text" id="search-input" placeholder="Ex: 12345/2026" style="border:none;">
+                                    <i class="fa-solid fa-magnifying-glass" style="left: 1.2rem;"></i>
+                                    <input type="text" id="search-input" placeholder="Ex: 12345/2026" style="padding-left: 3rem;">
                                 </div>
                             </div>
                             <div class="form-group">
@@ -39,9 +39,14 @@ const searchView = {
                 </div>
 
                 <div id="search-results" style="display:none;">
-                    <button class="btn-secondary mb-1" id="btn-clear-search">
-                        <i class="fa-solid fa-arrow-left"></i> Voltar para recentes
-                    </button>
+                    <div class="flex-between mb-1">
+                        <button class="btn-secondary" id="btn-clear-search">
+                            <i class="fa-solid fa-arrow-left"></i> Voltar para recentes
+                        </button>
+                        <button class="btn-secondary" id="btn-delete-proc" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; display:none;">
+                            <i class="fa-solid fa-trash"></i> Excluir Processo
+                        </button>
+                    </div>
                     <div class="grid-form mb-2">
                         <div class="card col-span-2">
                             <div class="card-header border-bottom">
@@ -193,6 +198,8 @@ const searchView = {
         const recentList = document.getElementById('recent-processes-list');
         const btnClearSearch = document.getElementById('btn-clear-search');
         const btnClearEmpty = document.getElementById('btn-clear-empty');
+        const btnDeleteProc = document.getElementById('btn-delete-proc');
+        let currentProcessId = null;
 
         const loadRecent = async () => {
             try {
@@ -266,10 +273,17 @@ const searchView = {
                     resultsDiv.style.display = 'block';
                     recentSection.style.display = 'none';
                     emptyDiv.style.display = 'none';
+
+                    currentProcessId = process.id;
+                    if (user.role === 'Admin' || user.role === 'Gestor') {
+                        btnDeleteProc.style.display = 'block';
+                    }
                 } else {
+                    currentProcessId = null;
                     resultsDiv.style.display = 'none';
                     recentSection.style.display = 'none';
                     emptyDiv.style.display = 'block';
+                    btnDeleteProc.style.display = 'none';
                 }
             } catch (err) {
                 window.app.toast('Erro ao buscar processo', 'error');
@@ -290,6 +304,24 @@ const searchView = {
         btnSearch.addEventListener('click', doSearch);
         inputSearch.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') doSearch();
+        });
+        
+        btnDeleteProc.addEventListener('click', async () => {
+            if (!currentProcessId) return;
+            if (!confirm('ATENÇÃO: Deseja realmente excluir este processo e TODO o seu histórico de movimentações? Esta ação não pode ser desfeita.')) return;
+
+            try {
+                btnDeleteProc.disabled = true;
+                btnDeleteProc.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...';
+                
+                await Api.processes.delete(currentProcessId);
+                window.app.toast('Processo e histórico excluídos com sucesso!');
+                resetView();
+            } catch (err) {
+                window.app.toast(err.message, 'error');
+                btnDeleteProc.disabled = false;
+                btnDeleteProc.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir Processo';
+            }
         });
 
         btnClearSearch.addEventListener('click', resetView);

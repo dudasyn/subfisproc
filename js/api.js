@@ -49,6 +49,13 @@ const Api = {
         delete: (id) => Api.request(`users.php?id=${id}`, 'DELETE'),
         changePassword: (old_password, new_password) => Api.request('users.php', 'POST', { action: 'change-password', old_password, new_password })
     },
+    processes: {
+        delete: (id) => Api.request(`processes.php?id=${id}`, 'DELETE')
+    },
+    reports: {
+        movements: (start, end) => Api.request(`reports.php?type=movements&start=${start}&end=${end}`, 'GET'),
+        stagnant: (days) => Api.request(`reports.php?type=stagnant&days=${days}`, 'GET')
+    },
     movements: {
         listAll: () => Api.request('movements.php', 'GET'),
         listLatest: () => Api.request('movements.php?latest=1', 'GET'),

@@ -21,8 +21,7 @@ const movementsView = {
                                 <div class="form-group">
                                     <label>Ação *</label>
                                     <select id="mov-acao" required>
-                                        <option value="">Selecione...</option>
-                                        <option value="ENTRADA">ENTRADA (Subfis)</option>
+                                        <option value="ENTRADA" selected>ENTRADA (Subfis)</option>
                                         <option value="SAIDA">SAÍDA (Outro Setor)</option>
                                     </select>
                                 </div>
@@ -181,6 +180,7 @@ const movementsView = {
                 acaoSelect.querySelectorAll('option').forEach(opt => opt.disabled = false);
                 
                 document.getElementById('mov-data').value = new Date().toISOString().split('T')[0];
+                acaoSelect.value = 'ENTRADA';
                 acaoSelect.dispatchEvent(new Event('change'));
             } catch (err) {
                 window.app.toast(err.message, 'error');

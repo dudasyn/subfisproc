@@ -63,6 +63,9 @@ class AppManager {
         document.getElementById('ui-user-name').textContent = this.user.name;
         document.getElementById('ui-user-role').textContent = this.user.role;
         
+        const dashNav = document.querySelector('.nav-item[data-view="dashboard"]');
+        if (dashNav) dashNav.style.display = 'flex';
+        
         // Update Date Display
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById('current-date').textContent = new Date().toLocaleDateString('pt-BR', options);
@@ -71,7 +74,10 @@ class AppManager {
         document.getElementById('btn-logout').addEventListener('click', () => this.logout());
         
         // Trigger routing
-        if (!window.location.hash) window.location.hash = '#dashboard';
+        if (!window.location.hash) {
+            const isStaff = this.user.role === 'Admin' || this.user.role === 'Gestor';
+            window.location.hash = isStaff ? '#dashboard' : '#movements';
+        }
         this.handleRoute();
 
         // Mandatory password change check
@@ -151,13 +157,21 @@ class AppManager {
     handleRoute() {
         if (!this.user) return;
         
-        const hash = window.location.hash.substring(1) || 'dashboard';
+        const isStaff = this.user.role === 'Admin' || this.user.role === 'Gestor';
+        let hash = window.location.hash.substring(1);
+        
+        // Redirect only if NO hash is present (initial login/load)
+        if (!hash) {
+            window.location.hash = isStaff ? '#dashboard' : '#movements';
+            return;
+        }
+
         const viewParts = hash.split('/');
         const viewName = viewParts[0];
         
         // Update nav active state
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        const navItem = document.querySelector(\`.nav-item[data-view="\${viewName}"]\`);
+        const navItem = document.querySelector(`.nav-item[data-view="${viewName}"]`);
         if (navItem) navItem.classList.add('active');
 
         // Render view
@@ -179,6 +193,7 @@ class AppManager {
             'dashboard': 'Dashboard',
             'movements': 'Nova Movimentação',
             'search': 'Buscar Processo',
+            'reports': 'Relatórios e Estatísticas',
             'config': 'Configurações do Sistema'
         };
         return titles[view] || 'SUBFIS Gestão';
@@ -188,11 +203,11 @@ class AppManager {
         const container = document.getElementById('toast-container');
         if (!container) return;
         const d = document.createElement('div');
-        d.className = \`toast toast-\${type}\`;
-        d.innerHTML = \`
-            <i class="fa-solid \${type === 'success' ? 'fa-check-circle' : 'fa-circle-exclamation'}"></i>
-            <span>\${msg}</span>
-        \`;
+        d.className = `toast toast-${type}`;
+        d.innerHTML = `
+            <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-circle-exclamation'}"></i>
+            <span>${msg}</span>
+        `;
         container.appendChild(d);
         setTimeout(() => {
             d.style.animation = 'slideOutRight 0.3s forwards';

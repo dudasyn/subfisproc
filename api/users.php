@@ -47,7 +47,7 @@ if ($method === 'GET') {
     $name = trim($data['name'] ?? '');
     $email = trim($data['email'] ?? '');
     $password = $data['password'] ?? '';
-    $role = $data['role'] ?? 'Secretaria';
+    $role = $data['role'] ?? 'Assistente Operacional';
     $sector_id = $data['sector_id'] ?? null;
 
     if (empty($cpf) || empty($name)) {

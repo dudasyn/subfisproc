@@ -1,0 +1,23 @@
+# Regras de Desenvolvimento para Antigravity (SUBFIS)
+
+## Fluxo de Trabalho e Git
+- **PROIBIDO**: Não execute comandos de Git para deploy ou versionamento, como `git add .`, `git commit` ou `git push`. O usuário fará o gerenciamento das versões e deploys manualmente.
+- Informe ao usuário quando as alterações estiverem prontas para serem commitadas.
+
+## Padrões de Código
+- **Idioma**: Utilize português para comentários, mensagens de erro e labels na interface (o código base atual já segue este padrão).
+- **Clean Code**: Escreva funções pequenas e focadas. Evite repetição de código (DRY).
+- **Estilo**: Mantenha a estética premium estabelecida (Glassmorphism, sombras suaves, cores consistentes).
+
+## Segurança
+- Nunca exponha credenciais, chaves de API ou segredos do banco de dados no código.
+- Utilize o arquivo `.env` para configurações locais e verifique se ele está no `.gitignore`.
+- Verifique sempre a autenticação (`checkAuth()`) em novos endpoints da API.
+
+## Frontend
+- Utilize CSS Vanilla e evite frameworks pesados a menos que solicitado.
+- Garanta que a interface seja responsiva e acessível.
+- Use micro-animações para melhorar a experiência do usuário.
+
+## Documentação
+- Sempre que houver mudanças estruturais, sugira atualizações nos arquivos de documentação (como o `walkthrough.md`).
