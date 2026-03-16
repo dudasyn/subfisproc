@@ -14,15 +14,15 @@ if ($method === 'POST') {
         jsonResponse(['success' => true]);
     }
 
-    $email = $data['email'] ?? '';
+    $username = trim($data['email'] ?? ''); // Accepts email or CPF
     $password = $data['password'] ?? '';
 
-    if (empty($email) || empty($password)) {
-        jsonResponse(['error' => 'E-mail e senha são obrigatórios'], 400);
+    if (empty($username) || empty($password)) {
+        jsonResponse(['error' => 'CPF/E-mail e senha são obrigatórios'], 400);
     }
 
-    $stmt = $pdo->prepare('SELECT id, name, role, sector_id, password FROM users WHERE email = ? AND active = 1');
-    $stmt->execute([$email]);
+    $stmt = $pdo->prepare('SELECT id, name, role, sector_id, password, force_password_change FROM users WHERE (email = ? OR cpf = ?) AND active = 1');
+    $stmt->execute([$username, $username]);
     $user = $stmt->fetch();
 
     if ($user && password_verify($password, $user['password'])) {
@@ -30,6 +30,7 @@ if ($method === 'POST') {
         $_SESSION['name'] = $user['name'];
         $_SESSION['role'] = $user['role'];
         $_SESSION['sector_id'] = $user['sector_id'];
+        $_SESSION['force_password_change'] = (bool)$user['force_password_change'];
 
         jsonResponse([
             'success' => true,
@@ -37,11 +38,12 @@ if ($method === 'POST') {
                 'id' => $user['id'],
                 'name' => $user['name'],
                 'role' => $user['role'],
-                'sector_id' => $user['sector_id']
+                'sector_id' => $user['sector_id'],
+                'force_password_change' => (bool)$user['force_password_change']
             ]
         ]);
     } else {
-        jsonResponse(['error' => 'E-mail ou senha incorretos, ou usuário inativo.'], 401);
+        jsonResponse(['error' => 'CPF/E-mail ou senha incorretos.'], 401);
     }
 } else if ($method === 'GET') {
     // Check if session is active
@@ -52,7 +54,8 @@ if ($method === 'POST') {
                 'id' => $_SESSION['user_id'],
                 'name' => $_SESSION['name'],
                 'role' => $_SESSION['role'],
-                'sector_id' => $_SESSION['sector_id']
+                'sector_id' => $_SESSION['sector_id'],
+                'force_password_change' => $_SESSION['force_password_change'] ?? false
             ]
         ]);
     } else {

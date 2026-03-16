@@ -16,8 +16,32 @@ if ($method === 'GET') {
     ');
     jsonResponse($stmt->fetchAll());
 } elseif ($method === 'POST') {
-    checkAuth(['Admin', 'Gestor']);
     $data = json_decode(file_get_contents('php://input'), true);
+    $action = $data['action'] ?? '';
+
+    if ($action === 'change-password') {
+        $oldPass = $data['old_password'] ?? '';
+        $newPass = $data['new_password'] ?? '';
+        
+        if (empty($newPass)) jsonResponse(['error' => 'Nova senha é obrigatória'], 400);
+
+        $stmt = $pdo->prepare('SELECT password FROM users WHERE id = ?');
+        $stmt->execute([$_SESSION['user_id']]);
+        $user = $stmt->fetch();
+
+        if ($user && password_verify($oldPass, $user['password'])) {
+            $hashed = password_hash($newPass, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare('UPDATE users SET password = ?, force_password_change = 0 WHERE id = ?');
+            $stmt->execute([$hashed, $_SESSION['user_id']]);
+            $_SESSION['force_password_change'] = false;
+            jsonResponse(['success' => true]);
+        } else {
+            jsonResponse(['error' => 'Senha atual incorreta'], 401);
+        }
+        exit;
+    }
+
+    checkAuth(['Admin', 'Gestor']);
     
     $cpf = trim($data['cpf'] ?? '');
     $name = trim($data['name'] ?? '');
@@ -26,8 +50,17 @@ if ($method === 'GET') {
     $role = $data['role'] ?? 'Secretaria';
     $sector_id = $data['sector_id'] ?? null;
 
-    if (empty($cpf) || empty($name) || empty($email) || empty($password)) {
-        jsonResponse(['error' => 'CPF, Nome, E-mail e Senha são obrigatórios'], 400);
+    if (empty($cpf) || empty($name)) {
+        jsonResponse(['error' => 'CPF e Nome são obrigatórios'], 400);
+    }
+    
+    // Default email if empty (legacy support or internal requirement)
+    if (empty($email)) $email = $cpf . '@subfis.gov';
+
+    // Password logic: If not provided, use last 6 digits of CPF
+    if (empty($password)) {
+        $cleanCpf = preg_replace('/\D/', '', $cpf);
+        $password = substr($cleanCpf, -6);
     }
     
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);

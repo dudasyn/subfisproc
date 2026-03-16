@@ -195,8 +195,8 @@ const configView = {
             </div>
             <div class="grid-form mb-1" style="grid-template-columns: 1fr 1fr;">
                 <div class="form-group col-span-1">
-                    <label>CPF</label>
-                    <input type="text" id="usr-cpf" required placeholder="000.000.000-00">
+                    <label>CPF (Apenas números)</label>
+                    <input type="text" id="usr-cpf" required placeholder="Ex: 12345678901" maxlength="11">
                 </div>
                 <div class="form-group col-span-1">
                     <label>E-mail</label>
@@ -223,8 +223,10 @@ const configView = {
                 </div>
             </div>
             <div class="form-group">
-                <label>Senha Inicial</label>
-                <input type="password" id="usr-pass" required>
+                <p class="text-secondary" style="font-size: 0.85rem;">
+                    <i class="fa-solid fa-circle-info"></i> A senha inicial será os 6 últimos dígitos do CPF informado.
+                </p>
+                <input type="hidden" id="usr-pass" value="">
             </div>
         `;
         this.showModal('Novo Colaborador', html, async () => {
