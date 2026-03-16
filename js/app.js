@@ -160,11 +160,11 @@ class AppManager {
         const isStaff = this.user.role === 'Admin' || this.user.role === 'Gestor';
         let hash = window.location.hash.substring(1);
         
-        // Redirect only if NO hash is present (initial login/load)
         if (!hash) {
             window.location.hash = isStaff ? '#dashboard' : '#movements';
             return;
         }
+
         const viewParts = hash.split('/');
         const viewName = viewParts[0];
         
