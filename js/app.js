@@ -111,6 +111,7 @@ class AppManager {
         const titles = {
             'dashboard': 'Dashboard',
             'movements': 'Nova Movimentação',
+            'search': 'Buscar Processo',
             'config': 'Configurações do Sistema'
         };
         return titles[view] || 'SUBFIS Gestão';

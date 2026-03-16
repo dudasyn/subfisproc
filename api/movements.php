@@ -9,6 +9,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'GET') {
     // List recent movements or history of a specific process
     $process_id = $_GET['process_id'] ?? null;
+    $process_number = $_GET['process_number'] ?? null;
     
     if ($process_id) {
         $stmt = $pdo->prepare('
@@ -22,6 +23,23 @@ if ($method === 'GET') {
         ');
         $stmt->execute([$process_id]);
         jsonResponse($stmt->fetchAll());
+    } elseif ($process_number) {
+        // Fetch process details and last movement
+        $stmt = $pdo->prepare('SELECT id, subject, requester, document_number, observations FROM processes WHERE process_number = ?');
+        $stmt->execute([$process_number]);
+        $process = $stmt->fetch();
+        
+        if ($process) {
+            // Get last movement
+            $stmt = $pdo->prepare('SELECT action FROM movements WHERE process_id = ? ORDER BY movement_date DESC, created_at DESC LIMIT 1');
+            $stmt->execute([$process['id']]);
+            $last_movement = $stmt->fetch();
+            
+            $process['last_action'] = $last_movement ? $last_movement['action'] : null;
+            jsonResponse($process);
+        } else {
+            jsonResponse(null);
+        }
     } else {
         // List all recent movements
         $stmt = $pdo->query('

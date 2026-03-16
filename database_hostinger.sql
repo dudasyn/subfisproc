@@ -1,6 +1,5 @@
--- Script de Criação do Banco de Dados SUBFISPROC
-CREATE DATABASE IF NOT EXISTS subfisproc CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE subfisproc;
+-- Script de Criação do Banco de Dados SUBFISPROC (Versão Hostinger)
+-- Banco de Dados: u489835785_subfisprocdb
 
 -- 1. Tabela de Setores
 CREATE TABLE IF NOT EXISTS sectors (
@@ -10,11 +9,10 @@ CREATE TABLE IF NOT EXISTS sectors (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Inserindo setor padrão SUBFIS e outros setores básicos
-INSERT INTO sectors (name) VALUES ('SUBFIS');
+-- Inserindo setor padrão SUBFIS
+INSERT INTO sectors (name) SELECT 'SUBFIS' WHERE NOT EXISTS (SELECT 1 FROM sectors WHERE name = 'SUBFIS');
 
 -- 2. Tabela de Usuários (Colaboradores / Admin)
--- Roles: Admin, Gestor, Secretaria, Agente, Estagiario
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cpf VARCHAR(14) UNIQUE NOT NULL,
@@ -29,17 +27,10 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Inserindo Usuário Admin Padrão
--- A senha 'tsuk4Sh12@' convertida via password_hash() no PHP dá o valor abaixo (usando BCRYPT)
--- Isso permite o primeiro login. Como a gerou localmente, você poderá trocar dps.
+-- Senha: tsuk4Sh12@
 INSERT INTO users (cpf, name, email, password, role, sector_id) 
-VALUES (
-    '000.000.000-00', 
-    'Administrador do Sistema', 
-    'admin@subfis.gov', 
-    '$2y$12$LhnFJaOrIuaodl3oBnKXL.GyRhfzVTsyo.OA2MVX0X4Rkh6nxMOue', -- tsuk4Sh12@
-    'Admin', 
-    1
-);
+SELECT '000.000.000-00', 'Administrador do Sistema', 'admin@subfis.gov', '$2y$12$LhnFJaOrIuaodl3oBnKXL.GyRhfzVTsyo.OA2MVX0X4Rkh6nxMOue', 'Admin', 1
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'admin@subfis.gov');
 
 -- 3. Tabela de Processos
 CREATE TABLE IF NOT EXISTS processes (
@@ -47,7 +38,7 @@ CREATE TABLE IF NOT EXISTS processes (
     process_number VARCHAR(50) UNIQUE NOT NULL,
     subject VARCHAR(255) NOT NULL,
     requester VARCHAR(255) NOT NULL,
-    document_number VARCHAR(20), -- CPF ou CNPJ
+    document_number VARCHAR(20),
     observations TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

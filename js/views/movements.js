@@ -68,11 +68,70 @@ const movementsView = {
             </div>
         `;
 
-        // Event listeners
         const form = document.getElementById('movement-form');
+        const processInput = document.getElementById('mov-processo');
         const acaoSelect = document.getElementById('mov-acao');
         const destinoDiv = document.getElementById('div-destino');
         const destinoSelect = document.getElementById('mov-destino');
+        const assuntoInput = document.getElementById('mov-assunto');
+        const requerenteInput = document.getElementById('mov-requerente');
+        const docInput = document.getElementById('mov-doc');
+        const obsInput = document.getElementById('mov-obs');
+
+        // Search process and auto-fill
+        processInput.addEventListener('blur', async () => {
+            const processNumber = processInput.value.trim();
+            if (!processNumber) return;
+
+            try {
+                const process = await Api.movements.getByNumber(processNumber);
+                if (process) {
+                    assuntoInput.value = process.subject || '';
+                    requerenteInput.value = process.requester || '';
+                    docInput.value = process.document_number || '';
+                    obsInput.value = process.observations || '';
+
+                    // Lock fields if process exists
+                    assuntoInput.disabled = true;
+                    requerenteInput.disabled = true;
+                    docInput.disabled = true;
+
+                    // Restriction logic
+                    // If last was ENTRADA, only SAIDA is allowed
+                    // If last was SAIDA, only ENTRADA is allowed
+                    if (process.last_action === 'ENTRADA') {
+                        acaoSelect.value = 'SAIDA';
+                        acaoSelect.querySelectorAll('option').forEach(opt => {
+                            if (opt.value === 'ENTRADA') opt.disabled = true;
+                            else opt.disabled = false;
+                        });
+                        // Trigger change to show destination if SAIDA
+                        acaoSelect.dispatchEvent(new Event('change'));
+                    } else if (process.last_action === 'SAIDA') {
+                        acaoSelect.value = 'ENTRADA';
+                        acaoSelect.querySelectorAll('option').forEach(opt => {
+                            if (opt.value === 'SAIDA') opt.disabled = true;
+                            else opt.disabled = false;
+                        });
+                        acaoSelect.dispatchEvent(new Event('change'));
+                    } else {
+                        // No movement yet, allow anything
+                        acaoSelect.querySelectorAll('option').forEach(opt => opt.disabled = false);
+                    }
+
+                    window.app.toast('Dados do processo carregados!', 'success');
+                } else {
+                    // New process
+                    assuntoInput.disabled = false;
+                    requerenteInput.disabled = false;
+                    docInput.disabled = false;
+                    acaoSelect.querySelectorAll('option').forEach(opt => opt.disabled = false);
+                    window.app.toast('Novo processo identificado.', 'info');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
 
         acaoSelect.addEventListener('change', async (e) => {
             if (e.target.value === 'SAIDA') {
@@ -115,6 +174,12 @@ const movementsView = {
                 await Api.movements.register(data);
                 window.app.toast('Movimentação registrada com sucesso!');
                 form.reset();
+                // Reset state
+                assuntoInput.disabled = false;
+                requerenteInput.disabled = false;
+                docInput.disabled = false;
+                acaoSelect.querySelectorAll('option').forEach(opt => opt.disabled = false);
+                
                 document.getElementById('mov-data').value = new Date().toISOString().split('T')[0];
                 acaoSelect.dispatchEvent(new Event('change'));
             } catch (err) {
