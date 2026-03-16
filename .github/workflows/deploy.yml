@@ -25,6 +25,8 @@ jobs:
           **/.git*/**
           **/node_modules/**
           .github/**
+          .env
+          .env.example
           brain/**
           SETUP_DEV.md
           README.md
