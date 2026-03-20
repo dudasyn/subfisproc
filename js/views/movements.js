@@ -12,7 +12,10 @@ const movementsView = {
                             <div class="grid-form">
                                 <div class="form-group col-span-2">
                                     <label>Número do Processo *</label>
-                                    <input type="text" id="mov-processo" required placeholder="Ex: 12345/2026">
+                                    <input type="text" id="mov-processo" required placeholder="Ex: 009/000345/2026" autocomplete="off">
+                                    <small id="mov-processo-warning" style="color:var(--warning-color, #eab308); font-weight: 500; display:none; margin-top:0.25rem;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Formato sugerido: 000/000000/0000
+                                    </small>
                                 </div>
                                 <div class="form-group">
                                     <label>Data da Movimentação *</label>
@@ -35,7 +38,6 @@ const movementsView = {
                             
                             <hr class="my-2">
                             <h4>Dados do Processo</h4>
-                            <p class="text-secondary mb-1" style="font-size:0.85rem;">(Opcional)</p>
                             
                             <div class="grid-form">
                                 <div class="form-group col-span-2">
@@ -76,6 +78,19 @@ const movementsView = {
         const requerenteInput = document.getElementById('mov-requerente');
         const docInput = document.getElementById('mov-doc');
         const obsInput = document.getElementById('mov-obs');
+
+        // Format verification warning (non-blocking)
+        processInput.addEventListener('input', () => {
+            const processNumber = processInput.value.trim();
+            const warningEl = document.getElementById('mov-processo-warning');
+            
+            // Regex to match DDD/NNNNNN/AAAA (3 digits, 6 digits, 4 digits separated by '/')
+            if (processNumber && !/^\d{3}\/\d{6}\/\d{4}$/.test(processNumber)) {
+                warningEl.style.display = 'block';
+            } else {
+                warningEl.style.display = 'none';
+            }
+        });
 
         // Search process and auto-fill
         processInput.addEventListener('blur', async () => {
