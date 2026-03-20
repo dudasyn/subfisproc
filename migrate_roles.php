@@ -11,7 +11,9 @@ try {
 
     // 3. Modify the ENUM column
     $pdo->exec("ALTER TABLE users MODIFY COLUMN role ENUM('Admin', 'Gestor', 'Assistente Operacional', 'Estagiario') NOT NULL");
-    echo "Coluna 'role' atualizada para novos valores ENUM.\n";
+    // 4. Disable force password change for the main admin
+    $pdo->exec("UPDATE users SET force_password_change = 0 WHERE email = 'admin@subfis.gov'");
+    echo "Troca de senha obrigatória desativada para o Admin principal.\n";
     
     echo "Migração concluída com sucesso!";
 } catch(Exception $e) {

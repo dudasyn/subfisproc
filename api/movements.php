@@ -117,10 +117,7 @@ if ($method === 'GET') {
             }
         } else {
             // New process
-            if (empty($subject) || empty($requester)) {
-                $pdo->rollBack();
-                jsonResponse(['error' => 'Assunto e Requerente são obrigatórios para um novo processo'], 400);
-            }
+
             $stmt = $pdo->prepare('INSERT INTO processes (process_number, subject, requester, document_number, observations) VALUES (?, ?, ?, ?, ?)');
             $stmt->execute([$process_number, $subject, $requester, $document_number, $observations]);
             $process_id = $pdo->lastInsertId();

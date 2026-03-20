@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Inserindo Usuário Admin Padrão
 -- Senha: tsuk4Sh12@
-INSERT INTO users (cpf, name, email, password, role, sector_id) 
-SELECT '000.000.000-00', 'Administrador do Sistema', 'admin@subfis.gov', '$2y$12$LhnFJaOrIuaodl3oBnKXL.GyRhfzVTsyo.OA2MVX0X4Rkh6nxMOue', 'Admin', 1
+INSERT INTO users (cpf, name, email, password, role, sector_id, force_password_change) 
+SELECT '000.000.000-00', 'Administrador do Sistema', 'admin@subfis.gov', '$2y$12$LhnFJaOrIuaodl3oBnKXL.GyRhfzVTsyo.OA2MVX0X4Rkh6nxMOue', 'Admin', 1, 0
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'admin@subfis.gov');
 
 -- 3. Tabela de Processos

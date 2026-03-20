@@ -35,7 +35,7 @@ const movementsView = {
                             
                             <hr class="my-2">
                             <h4>Dados do Processo</h4>
-                            <p class="text-secondary mb-1" style="font-size:0.85rem;">(Preenchimento obrigatório para o primeiro registro do processo)</p>
+                            <p class="text-secondary mb-1" style="font-size:0.85rem;">(Opcional)</p>
                             
                             <div class="grid-form">
                                 <div class="form-group col-span-2">
