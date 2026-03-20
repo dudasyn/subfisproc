@@ -57,6 +57,26 @@ if ($method === 'GET') {
         } else {
             jsonResponse(null);
         }
+    } elseif (isset($_GET['search'])) {
+        $search = $_GET['search'];
+        $stmt = $pdo->prepare('
+            SELECT p.id, p.process_number, p.subject, p.requester
+            FROM processes p
+            WHERE p.process_number LIKE ?
+            ORDER BY p.id DESC
+            LIMIT 20
+        ');
+        $stmt->execute(['%'.$search.'%']);
+        $processes = $stmt->fetchAll();
+        
+        foreach ($processes as &$p) {
+            $stmt2 = $pdo->prepare('SELECT action, movement_date FROM movements WHERE process_id = ? ORDER BY movement_date DESC, created_at DESC LIMIT 1');
+            $stmt2->execute([$p['id']]);
+            $last = $stmt2->fetch();
+            $p['action'] = $last ? $last['action'] : 'NOVO';
+            $p['movement_date'] = $last ? $last['movement_date'] : null;
+        }
+        jsonResponse($processes);
     } else {
         // List all recent movements
         $stmt = $pdo->query('

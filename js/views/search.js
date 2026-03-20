@@ -38,6 +38,19 @@ const searchView = {
                     </div>
                 </div>
 
+                <div id="search-list-section" class="card mb-2" style="display:none;">
+                    <div class="card-header border-bottom flex-between">
+                        <h4>Resultados da Busca</h4>
+                        <button class="btn-secondary" id="btn-back-recent" style="padding: 0.4rem 0.8rem;">
+                            <i class="fa-solid fa-arrow-left"></i> Voltar
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="recent-list" id="search-processes-list">
+                        </div>
+                    </div>
+                </div>
+
                 <div id="search-results" style="display:none;">
                     <div class="flex-between mb-1">
                         <button class="btn-secondary" id="btn-clear-search">
@@ -196,6 +209,9 @@ const searchView = {
         const emptyDiv = document.getElementById('search-empty');
         const recentSection = document.getElementById('recent-section');
         const recentList = document.getElementById('recent-processes-list');
+        const searchListSection = document.getElementById('search-list-section');
+        const searchList = document.getElementById('search-processes-list');
+        const btnBackRecent = document.getElementById('btn-back-recent');
         const btnClearSearch = document.getElementById('btn-clear-search');
         const btnClearEmpty = document.getElementById('btn-clear-empty');
         const btnDeleteProc = document.getElementById('btn-delete-proc');
@@ -225,7 +241,7 @@ const searchView = {
                 document.querySelectorAll('.recent-item').forEach(item => {
                     item.addEventListener('click', () => {
                         inputSearch.value = item.dataset.number;
-                        doSearch();
+                        loadProcessDetails(item.dataset.number);
                     });
                 });
             } catch (err) {
@@ -233,13 +249,58 @@ const searchView = {
             }
         };
 
+        const renderProcessItem = (m) => `
+            <div class="recent-item search-result-item" data-number="${m.process_number}">
+                <div class="recent-info">
+                    <h5>${m.process_number}</h5>
+                    <p>${m.subject || 'Sem assunto'}</p>
+                </div>
+                <div class="recent-status">
+                    <span class="badge-${(m.action || 'NOVO').toLowerCase()}">${m.action || 'NOVO'}</span>
+                    <p style="font-size: 0.7rem; margin-top: 4px;">${m.movement_date ? new Date(m.movement_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</p>
+                </div>
+            </div>
+        `;
+
         const doSearch = async () => {
-            const number = inputSearch.value.trim();
-            if (!number) return;
+            const query = inputSearch.value.trim();
+            if (!query) return;
 
             btnSearch.disabled = true;
             btnSearch.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
+            try {
+                const processes = await Api.movements.search(query);
+                
+                recentSection.style.display = 'none';
+                resultsDiv.style.display = 'none';
+                
+                if (processes && processes.length > 0) {
+                    searchList.innerHTML = processes.map(renderProcessItem).join('');
+                    
+                    document.querySelectorAll('.search-result-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            inputSearch.value = item.dataset.number;
+                            loadProcessDetails(item.dataset.number);
+                        });
+                    });
+                    
+                    searchListSection.style.display = 'block';
+                    emptyDiv.style.display = 'none';
+                } else {
+                    currentProcessId = null;
+                    searchListSection.style.display = 'none';
+                    emptyDiv.style.display = 'block';
+                }
+            } catch (err) {
+                window.app.toast('Erro ao buscar processos', 'error');
+            } finally {
+                btnSearch.disabled = false;
+                btnSearch.innerHTML = '<span>Buscar</span>';
+            }
+        };
+
+        const loadProcessDetails = async (number) => {
             try {
                 const process = await Api.movements.getByNumber(number);
                 if (process) {
@@ -257,6 +318,9 @@ const searchView = {
                     if (lastMov) {
                         document.getElementById('res-status').textContent = lastMov.action === 'ENTRADA' ? 'Em posse da SUBFIS' : 'Enviado para ' + lastMov.destination_sector;
                         document.getElementById('res-sector-now').textContent = lastMov.action === 'ENTRADA' ? 'SUBFIS' : lastMov.destination_sector;
+                    } else {
+                        document.getElementById('res-status').textContent = 'Sem movimentação';
+                        document.getElementById('res-sector-now').textContent = '-';
                     }
 
                     // Fill History table
@@ -272,24 +336,16 @@ const searchView = {
 
                     resultsDiv.style.display = 'block';
                     recentSection.style.display = 'none';
+                    searchListSection.style.display = 'none';
                     emptyDiv.style.display = 'none';
 
                     currentProcessId = process.id;
                     if (user.role === 'Admin' || user.role === 'Gestor') {
                         btnDeleteProc.style.display = 'block';
                     }
-                } else {
-                    currentProcessId = null;
-                    resultsDiv.style.display = 'none';
-                    recentSection.style.display = 'none';
-                    emptyDiv.style.display = 'block';
-                    btnDeleteProc.style.display = 'none';
                 }
-            } catch (err) {
-                window.app.toast('Erro ao buscar processo', 'error');
-            } finally {
-                btnSearch.disabled = false;
-                btnSearch.innerHTML = '<span>Buscar</span>';
+            } catch(e) {
+                window.app.toast('Erro ao carregar detalhes', 'error');
             }
         };
 
@@ -326,6 +382,7 @@ const searchView = {
 
         btnClearSearch.addEventListener('click', resetView);
         btnClearEmpty.addEventListener('click', resetView);
+        if(btnBackRecent) btnBackRecent.addEventListener('click', resetView);
 
         // Initial load
         loadRecent();

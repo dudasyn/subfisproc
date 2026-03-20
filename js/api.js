@@ -61,6 +61,7 @@ const Api = {
         listLatest: () => Api.request('movements.php?latest=1', 'GET'),
         listByProcess: (procId) => Api.request(`movements.php?process_id=${procId}`, 'GET'),
         getByNumber: (number) => Api.request(`movements.php?process_number=${encodeURIComponent(number)}`, 'GET'),
+        search: (query) => Api.request(`movements.php?search=${encodeURIComponent(query)}`, 'GET'),
         register: (data) => Api.request('movements.php', 'POST', data)
     },
     dashboard: {
