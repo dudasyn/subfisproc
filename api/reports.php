@@ -14,7 +14,9 @@ if ($type === 'movements') {
     }
     
     // Entradas e Saídas no período
-    $stmt = $pdo->prepare("
+    $action = $_GET['action'] ?? '';
+    
+    $sql = "
         SELECT 
             m.movement_date,
             m.action,
@@ -28,9 +30,19 @@ if ($type === 'movements') {
         JOIN sectors s ON m.destination_sector_id = s.id
         JOIN users u ON m.user_id = u.id
         WHERE m.movement_date BETWEEN ? AND ?
-        ORDER BY m.movement_date DESC, m.created_at DESC
-    ");
-    $stmt->execute([$start, $end]);
+    ";
+    
+    $params = [$start, $end];
+    
+    if ($action === 'ENTRADA' || $action === 'SAIDA') {
+        $sql .= " AND m.action = ?";
+        $params[] = $action;
+    }
+    
+    $sql .= " ORDER BY m.movement_date DESC, m.created_at DESC";
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     jsonResponse($stmt->fetchAll());
 
 } elseif ($type === 'stagnant') {

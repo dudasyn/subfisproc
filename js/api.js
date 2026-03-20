@@ -53,7 +53,7 @@ const Api = {
         delete: (id) => Api.request(`processes.php?id=${id}`, 'DELETE')
     },
     reports: {
-        movements: (start, end) => Api.request(`reports.php?type=movements&start=${start}&end=${end}`, 'GET'),
+        movements: (start, end, action = '') => Api.request(`reports.php?type=movements&start=${start}&end=${end}&action=${action}`, 'GET'),
         stagnant: (days) => Api.request(`reports.php?type=stagnant&days=${days}`, 'GET')
     },
     movements: {

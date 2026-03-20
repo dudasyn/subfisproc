@@ -21,25 +21,38 @@ const reportsView = {
                         </div>
                         <div class="card-body">
                             <div class="grid-form" style="align-items: end;">
-                                <div class="form-group col-span-2">
+                                <div class="form-group">
                                     <label>Data Início</label>
                                     <input type="date" id="rep-mov-start">
                                 </div>
-                                <div class="form-group col-span-2">
+                                <div class="form-group">
                                     <label>Data Fim</label>
                                     <input type="date" id="rep-mov-end">
                                 </div>
                                 <div class="form-group">
-                                    <button class="btn-primary" id="btn-gen-mov" style="height: 48px;"><i class="fa-solid fa-sync"></i> Gerar</button>
+                                    <label>Tipo de Ação</label>
+                                    <select id="rep-mov-action" style="height: 48px;">
+                                        <option value="">Todas</option>
+                                        <option value="ENTRADA">Somente Entradas</option>
+                                        <option value="SAIDA">Somente Saídas</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <button class="btn-primary" id="btn-gen-mov" style="height: 48px; width: 100%;"><i class="fa-solid fa-sync"></i> Gerar</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div id="mov-results" style="display:none;">
-                        <div class="flex-end mb-1" style="gap:10px;">
-                            <button class="btn-secondary" id="btn-mov-xlsx" style="width:auto;"><i class="fa-solid fa-file-excel"></i> Exportar XLSX</button>
-                            <button class="btn-secondary" id="btn-mov-pdf" style="width:auto;"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button>
+                        <div class="flex-between mb-1" style="align-items: center;">
+                            <div>
+                                <h4 id="mov-summary-text" style="margin: 0; color: var(--primary-color);"></h4>
+                            </div>
+                            <div style="display: flex; gap:10px;">
+                                <button class="btn-secondary" id="btn-mov-xlsx" style="width:auto;"><i class="fa-solid fa-file-excel"></i> Exportar XLSX</button>
+                                <button class="btn-secondary" id="btn-mov-pdf" style="width:auto;"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button>
+                            </div>
                         </div>
                         <div class="card">
                             <div class="table-responsive">
@@ -137,13 +150,24 @@ const reportsView = {
         btn.onclick = async () => {
             const start = startInput.value;
             const end = endInput.value;
+            const action = document.getElementById('rep-mov-action').value;
             if (!start || !end) return window.app.toast('Selecione as datas', 'error');
 
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
             try {
-                const data = await Api.reports.movements(start, end);
+                const data = await Api.reports.movements(start, end, action);
+                
+                const summaryText = document.getElementById('mov-summary-text');
+                if (action === 'ENTRADA') {
+                    summaryText.innerHTML = `<i class="fa-solid fa-arrow-right-to-bracket"></i> ${data.length} Entrada(s) no período`;
+                } else if (action === 'SAIDA') {
+                    summaryText.innerHTML = `<i class="fa-solid fa-arrow-right-from-bracket"></i> ${data.length} Saída(s) no período`;
+                } else {
+                    summaryText.innerHTML = `<i class="fa-solid fa-list"></i> ${data.length} Movimentação(ões) no período`;
+                }
+
                 tbody.innerHTML = data.map(m => `
                     <tr>
                         <td>${new Date(m.movement_date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
@@ -164,8 +188,14 @@ const reportsView = {
             }
         };
 
-        document.getElementById('btn-mov-xlsx').onclick = () => this.exportXLSX('table-mov', 'Relatorio_Movimentacoes');
-        document.getElementById('btn-mov-pdf').onclick = () => this.exportPDF('table-mov', 'Relatório de Movimentações');
+        document.getElementById('btn-mov-xlsx').onclick = () => {
+            const sumText = document.getElementById('mov-summary-text').innerText;
+            this.exportXLSX('table-mov', 'Relatorio_Movimentacoes', sumText);
+        };
+        document.getElementById('btn-mov-pdf').onclick = () => {
+            const sumText = document.getElementById('mov-summary-text').innerText;
+            this.exportPDF('table-mov', 'Relatório de Movimentações', sumText);
+        };
     },
 
     initStagnant() {
@@ -205,12 +235,20 @@ const reportsView = {
         document.getElementById('btn-stag-pdf').onclick = () => this.exportPDF('table-stag', 'Processos Stagnados');
     },
 
-    exportXLSX(tableId, filename) {
-        const wb = XLSX.utils.table_to_book(document.getElementById(tableId));
+    exportXLSX(tableId, filename, subtitle = '') {
+        const table = document.getElementById(tableId);
+        let caption = null;
+        if (subtitle) {
+            caption = document.createElement('caption');
+            caption.innerText = subtitle;
+            table.insertBefore(caption, table.firstChild);
+        }
+        const wb = XLSX.utils.table_to_book(table);
+        if (caption) table.removeChild(caption);
         XLSX.writeFile(wb, `${filename}.xlsx`);
     },
 
-    exportPDF(tableId, title) {
+    exportPDF(tableId, title, subtitle = '') {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
@@ -220,9 +258,17 @@ const reportsView = {
         doc.setTextColor(100);
         doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 28);
         
+        let startY = 35;
+        if (subtitle) {
+            doc.setFontSize(10);
+            doc.setTextColor(50);
+            doc.text(subtitle, 14, 34);
+            startY = 40;
+        }
+        
         doc.autoTable({
             html: `#${tableId}`,
-            startY: 35,
+            startY: startY,
             theme: 'grid',
             headStyles: { fillColor: [37, 99, 235], textColor: 255 },
             styles: { fontSize: 9 }
