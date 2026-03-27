@@ -42,6 +42,12 @@ const Api = {
         update: (id, name) => Api.request('sectors.php', 'PUT', { id, name }),
         delete: (id) => Api.request(`sectors.php?id=${id}`, 'DELETE')
     },
+    responsibles: {
+        list: () => Api.request('responsibles.php', 'GET'),
+        create: (name, sector_id) => Api.request('responsibles.php', 'POST', { name, sector_id }),
+        update: (id, name, sector_id) => Api.request('responsibles.php', 'PUT', { id, name, sector_id }),
+        delete: (id) => Api.request(`responsibles.php?id=${id}`, 'DELETE')
+    },
     users: {
         list: () => Api.request('users.php', 'GET'),
         create: (data) => Api.request('users.php', 'POST', data),

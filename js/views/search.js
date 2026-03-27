@@ -330,7 +330,7 @@ const searchView = {
                             <td>${new Date(m.movement_date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                             <td><span class="badge-${m.action.toLowerCase()}">${m.action}</span></td>
                             <td>${m.destination_sector}</td>
-                            <td>${m.user_name}</td>
+                            <td>${m.responsible_name || '<span style="color:var(--text-secondary);font-style:italic;">Não definido</span>'}</td>
                         </tr>
                     `).join('');
 

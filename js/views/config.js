@@ -7,6 +7,7 @@ const configView = {
             <div class="view-section">
                 <div class="tabs-header">
                     <button class="tab-btn active" data-tab="setores"><i class="fa-solid fa-building"></i> Setores</button>
+                    <button class="tab-btn" data-tab="responsaveis"><i class="fa-solid fa-user-tie"></i> Responsáveis</button>
                     ${isAdmin ? '<button class="tab-btn" data-tab="colaboradores"><i class="fa-solid fa-users"></i> Colaboradores</button>' : ''}
                 </div>
 
@@ -25,6 +26,27 @@ const configView = {
                                 <table class="data-table">
                                     <thead><tr><th>ID</th><th>Nome do Setor</th><th class="text-center">Ações</th></tr></thead>
                                     <tbody id="tbody-sectors"><tr><td colspan="3" class="text-center">Carregando...</td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RESPONSAVEIS TAB -->
+                <div class="tab-content" id="tab-responsaveis">
+                    <div class="card mb-1">
+                        <div class="card-header flex-center" style="justify-content: space-between;">
+                            <div>
+                                <h3>Responsáveis</h3>
+                                <p>Gerencie os Auditores Fiscais e demais responsáveis pelos processos.</p>
+                            </div>
+                            <button class="btn-primary" id="btn-add-responsible" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-user-plus"></i> Novo Responsável</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead><tr><th>Nome</th><th>Setor</th><th class="text-center">Ações</th></tr></thead>
+                                    <tbody id="tbody-responsibles"><tr><td colspan="3" class="text-center">Carregando...</td></tr></tbody>
                                 </table>
                             </div>
                         </div>
@@ -61,15 +83,16 @@ const configView = {
         
         // Add listeners
         document.getElementById('btn-add-sector').onclick = () => this.showSectorModal();
+        document.getElementById('btn-add-responsible').onclick = () => this.showResponsibleModal();
         if (isAdmin) {
             document.getElementById('btn-add-user').onclick = () => this.showUserModal();
         }
         
         // Fetch Data
         if (isAdmin) {
-            await Promise.all([this.loadSectors(), this.loadUsers()]);
+            await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles()]);
         } else {
-            await this.loadSectors();
+            await Promise.all([this.loadSectors(), this.loadResponsibles()]);
         }
     },
 
@@ -86,6 +109,7 @@ const configView = {
     },
 
     sectors: [],
+    responsibles_list: [],
     
     async loadSectors() {
         try {
@@ -109,6 +133,31 @@ const configView = {
             `).join('');
         } catch (e) {
             document.getElementById('tbody-sectors').innerHTML = `<tr><td colspan="3" class="text-center text-danger">Erro ao carregar setores</td></tr>`;
+        }
+    },
+
+    async loadResponsibles() {
+        try {
+            this.responsibles_list = await Api.responsibles.list();
+            const tbody = document.getElementById('tbody-responsibles');
+            if (!tbody) return;
+            if (this.responsibles_list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center">Nenhum responsável cadastrado</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = this.responsibles_list.map(r => `
+                <tr>
+                    <td><strong>${r.name}</strong></td>
+                    <td><span class="badge badge-neutral">${r.sector_name || 'N/A'}</span></td>
+                    <td class="text-center">
+                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showResponsibleModal(${r.id}, '${r.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i> Editar</button>
+                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c; margin-left:5px;" onclick="configView.deleteResponsible(${r.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            const tbody = document.getElementById('tbody-responsibles');
+            if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">Erro ao carregar responsáveis</td></tr>`;
         }
     },
 
@@ -182,6 +231,38 @@ const configView = {
                 }
             }
         };
+    },
+
+    showResponsibleModal(id = null, currentName = '') {
+        const sectorsOpts = this.sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        const currentResp = id ? this.responsibles_list.find(r => r.id === id) : null;
+        const currentSectorId = currentResp ? currentResp.sector_id : '';
+        const html = `
+            <div class="form-group mb-1">
+                <label>Nome do Responsável</label>
+                <input type="text" id="resp-name" required value="${currentName}" placeholder="Ex: João da Silva">
+            </div>
+            <div class="form-group">
+                <label>Setor</label>
+                <select id="resp-sector" required>
+                    <option value="">Selecione o setor...</option>
+                    ${this.sectors.map(s => `<option value="${s.id}" ${s.id == currentSectorId ? 'selected' : ''}>${s.name}</option>`).join('')}
+                </select>
+            </div>
+        `;
+        this.showModal(id ? 'Editar Responsável' : 'Novo Responsável', html, async () => {
+            try {
+                const name = document.getElementById('resp-name').value;
+                const sector_id = document.getElementById('resp-sector').value;
+                if (id) await Api.responsibles.update(id, name, sector_id);
+                else await Api.responsibles.create(name, sector_id);
+                window.app.toast('Responsável salvo!');
+                this.loadResponsibles();
+            } catch(e) {
+                window.app.toast(e.message, 'error');
+                throw e;
+            }
+        });
     },
 
     showSectorModal(id = null, currentName = '') {
@@ -262,6 +343,15 @@ const configView = {
                 window.app.toast(e.message, 'error');
             }
         });
+    },
+
+    async deleteResponsible(id) {
+        if (!confirm('Deseja realmente remover este responsável?')) return;
+        try {
+            await Api.responsibles.delete(id);
+            window.app.toast('Responsável removido!');
+            this.loadResponsibles();
+        } catch(e) { window.app.toast(e.message, 'error'); }
     },
 
     async deleteSector(id) {

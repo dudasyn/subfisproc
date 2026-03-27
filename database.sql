@@ -13,6 +13,16 @@ CREATE TABLE IF NOT EXISTS sectors (
 -- Inserindo setor padrão SUBFIS e outros setores básicos
 INSERT INTO sectors (name) VALUES ('SUBFIS');
 
+-- 2. Tabela de Responsáveis (Auditores, etc)
+CREATE TABLE IF NOT EXISTS responsibles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    sector_id INT NOT NULL,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sector_id) REFERENCES sectors(id)
+);
+
 -- 2. Tabela de Usuários (Colaboradores / Admin)
 -- Roles: Admin, Gestor, Secretaria, Agente, Estagiario
 CREATE TABLE IF NOT EXISTS users (
@@ -24,6 +34,7 @@ CREATE TABLE IF NOT EXISTS users (
     role ENUM('Admin', 'Gestor', 'Secretaria', 'Agente', 'Estagiario') NOT NULL,
     sector_id INT,
     active BOOLEAN DEFAULT TRUE,
+    force_password_change BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sector_id) REFERENCES sectors(id) ON DELETE SET NULL
 );
@@ -59,9 +70,11 @@ CREATE TABLE IF NOT EXISTS movements (
     movement_date DATE NOT NULL,
     action ENUM('ENTRADA', 'SAIDA') NOT NULL,
     destination_sector_id INT NOT NULL,
+    responsible_id INT,
     user_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (process_id) REFERENCES processes(id) ON DELETE CASCADE,
     FOREIGN KEY (destination_sector_id) REFERENCES sectors(id),
+    FOREIGN KEY (responsible_id) REFERENCES responsibles(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );

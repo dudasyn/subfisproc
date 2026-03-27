@@ -1,4 +1,5 @@
 const movementsView = {
+    responsibles: [],
     async render(container, user) {
         container.innerHTML = `
             <div class="view-section">
@@ -24,14 +25,20 @@ const movementsView = {
                                 <div class="form-group">
                                     <label>Ação *</label>
                                     <select id="mov-acao" required>
-                                        <option value="ENTRADA" selected>ENTRADA (Subfis)</option>
-                                        <option value="SAIDA">SAÍDA (Outro Setor)</option>
+                                        <option value="ENTRADA" selected>ENTRADA</option>
+                                        <option value="SAIDA">SAÍDA</option>
                                     </select>
                                 </div>
-                                <div class="form-group col-span-2" id="div-destino" style="display:none;">
-                                    <label>Destino do Processo *</label>
-                                    <select id="mov-destino">
-                                        <option value="">Carregando setores...</option>
+                                <div class="form-group col-span-2" id="div-destino">
+                                    <label>Setor de Destino *</label>
+                                    <select id="mov-destino" required>
+                                        <option value="">Nenhum / Não definido</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-span-2">
+                                    <label>Responsável</label>
+                                    <select id="mov-responsavel">
+                                        <option value="">Nenhum / Não definido</option>
                                     </select>
                                 </div>
                             </div>
@@ -74,10 +81,29 @@ const movementsView = {
         const acaoSelect = document.getElementById('mov-acao');
         const destinoDiv = document.getElementById('div-destino');
         const destinoSelect = document.getElementById('mov-destino');
+        const responsavelSelect = document.getElementById('mov-responsavel');
         const assuntoInput = document.getElementById('mov-assunto');
         const requerenteInput = document.getElementById('mov-requerente');
         const docInput = document.getElementById('mov-doc');
         const obsInput = document.getElementById('mov-obs');
+
+        // Load responsibles list
+        try {
+            this.responsibles = await Api.responsibles.list();
+            responsavelSelect.innerHTML = '<option value="">Nenhum / Não definido</option>' +
+                this.responsibles.map(r => `<option value="${r.id}">${r.name} (${r.sector_name})</option>`).join('');
+        } catch(e) {
+            console.warn('Nao foi possivel carregar responsaveis', e);
+        }
+
+        // Load sectors list
+        try {
+            const sectors = await Api.sectors.list();
+            destinoSelect.innerHTML = '<option value="">Selecione o setor...</option>' + 
+                sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        } catch(err) {
+            window.app.toast('Erro ao carregar setores', 'error');
+        }
 
         // Format verification warning (non-blocking)
         processInput.addEventListener('input', () => {
@@ -147,26 +173,6 @@ const movementsView = {
             }
         });
 
-        acaoSelect.addEventListener('change', async (e) => {
-            if (e.target.value === 'SAIDA') {
-                destinoDiv.style.display = 'block';
-                destinoSelect.required = true;
-                if (destinoSelect.options.length <= 1) {
-                    try {
-                        const sectors = await Api.sectors.list();
-                        destinoSelect.innerHTML = '<option value="">Selecione o setor...</option>' + 
-                            sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-                    } catch(err) {
-                        window.app.toast('Erro ao carregar setores', 'error');
-                    }
-                }
-            } else {
-                destinoDiv.style.display = 'none';
-                destinoSelect.required = false;
-                destinoSelect.value = '';
-            }
-        });
-
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-save-mov');
@@ -178,6 +184,7 @@ const movementsView = {
                 movement_date: document.getElementById('mov-data').value,
                 action: document.getElementById('mov-acao').value,
                 destination_sector_id: document.getElementById('mov-destino').value || null,
+                responsible_id: document.getElementById('mov-responsavel').value || null,
                 subject: document.getElementById('mov-assunto').value,
                 requester: document.getElementById('mov-requerente').value,
                 document_number: document.getElementById('mov-doc').value,
@@ -196,7 +203,8 @@ const movementsView = {
                 
                 document.getElementById('mov-data').value = new Date().toISOString().split('T')[0];
                 acaoSelect.value = 'ENTRADA';
-                acaoSelect.dispatchEvent(new Event('change'));
+                destinoSelect.value = '';
+                responsavelSelect.value = '';
             } catch (err) {
                 window.app.toast(err.message, 'error');
             } finally {
