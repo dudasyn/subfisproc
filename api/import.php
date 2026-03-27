@@ -2,7 +2,8 @@
 // Aumentar limites do PHP para lidar com grandes planilhas
 ini_set('memory_limit', '1024M');
 ini_set('max_execution_time', '600'); 
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
 
 require 'config.php';
 
@@ -73,9 +74,15 @@ if ($method === 'POST') {
             $sectorsCache[strtolower(trim($s['name']))] = $s['id'];
         }
 
-        $stmt = $pdo->query("SELECT id, name, sector_id FROM responsibles");
+        $stmt = $pdo->query("SELECT id, name FROM responsibles");
         foreach($stmt->fetchAll() as $r) {
-            $responsiblesCache[strtolower(trim($r['name'])) . '_' . $r['sector_id']] = $r['id'];
+            $responsiblesCache[strtolower(trim($r['name']))] = $r['id'];
+        }
+        // Track which (responsible_id, sector_id) links already exist
+        $respSectorCache = [];
+        $stmt = $pdo->query("SELECT responsible_id, sector_id FROM responsible_sectors");
+        foreach($stmt->fetchAll() as $rs) {
+            $respSectorCache[$rs['responsible_id'] . '_' . $rs['sector_id']] = true;
         }
         
         $stmt = $pdo->query("SELECT id, process_number FROM processes");
@@ -83,21 +90,44 @@ if ($method === 'POST') {
             $processesCache[strtolower(trim($p['process_number']))] = $p['id'];
         }
 
+        // Helper: returns true if the sector name is clearly garbage/data-entry error
+        $isInvalidSector = function(string $name): bool {
+            if (empty($name)) return true;
+            // Only whitespace
+            if (trim($name) === '') return true;
+            // Isolated punctuation (e.g. ",", ".", "-", "/")
+            if (preg_match('/^[\s,\.\-\/]+$/', $name)) return true;
+            // Looks like a process number: contains digit + slash (e.g. "009/001074/26", "0")
+            if (preg_match('/\d+\//', $name)) return true;
+            // Pure number or number with slashes/dashes only
+            if (preg_match('/^[\d\/\-\.\s]+$/', $name)) return true;
+            // Too short to be meaningful (1 char)
+            if (strlen(trim($name)) <= 1) return true;
+            return false;
+        };
+
         foreach ($data as $row) {
             // Limpeza robusta (remove espaços invisíveis e afins)
             $process_number = trim(preg_replace('/\s+/', ' ', $row['process_number'] ?? ''));
             $movement_date = !empty($row['movement_date']) ? $row['movement_date'] : date('Y-m-d');
             
-            $mov_action = strtoupper(trim($row['action'] ?? 'ENTRADA'));
-            if (!in_array($mov_action, ['ENTRADA', 'SAIDA', 'REDISTRIBUIÇÃO', 'SAÍDA'])) {
+            $mov_action_raw = trim($row['action'] ?? 'ENTRADA');
+            
+            if (preg_match('/SA[IÍ]/iu', $mov_action_raw)) {
+                $mov_action = 'SAIDA';
+            } elseif (preg_match('/REDISTRI/iu', $mov_action_raw)) {
+                $mov_action = 'REDISTRIBUIÇÃO';
+            } else {
                 $mov_action = 'ENTRADA';
             }
-            if ($mov_action === 'SAÍDA') $mov_action = 'SAIDA';
 
             $responsible_name = trim(preg_replace('/\s+/', ' ', $row['responsible'] ?? ''));
             $subject = trim($row['subject'] ?? 'Processo Importado');
-            $sector_name = trim(preg_replace('/\s+/', ' ', $row['destination_sector'] ?? 'SUBFIS'));
-            
+            $sector_raw = trim(preg_replace('/\s+/', ' ', $row['destination_sector'] ?? ''));
+
+            // Sanitize sector: if it looks like a data-entry error, fall back to SUBFIS
+            $sector_name = $isInvalidSector($sector_raw) ? 'SUBFIS' : $sector_raw;
+
             if (empty($process_number)) continue;
 
             // 1. Sector
@@ -110,18 +140,27 @@ if ($method === 'POST') {
             }
             $current_sector_id = $sectorsCache[$s_key];
 
-            // 2. Responsible
+            // 2. Responsible — lookup by name only, link to sector via pivot table
             $resp_id = null;
             if (!empty($responsible_name)) {
-                $r_key = strtolower($responsible_name) . '_' . $current_sector_id;
+                $r_key = strtolower($responsible_name);
                 if (!isset($responsiblesCache[$r_key])) {
-                    $stmt = $pdo->prepare("INSERT INTO responsibles (name, sector_id, import_batch) VALUES (?, ?, ?)");
-                    $stmt->execute([$responsible_name, $current_sector_id, $batch_id]);
+                    // New auditor: create with no sector yet
+                    $stmt = $pdo->prepare("INSERT INTO responsibles (name, import_batch) VALUES (?, ?)");
+                    $stmt->execute([$responsible_name, $batch_id]);
                     $resp_id = $pdo->lastInsertId();
                     $responsiblesCache[$r_key] = $resp_id;
                     $stats['responsibles_created']++;
                 } else {
                     $resp_id = $responsiblesCache[$r_key];
+                }
+
+                // Link auditor to sector if not already linked (via responsible_sectors)
+                $rs_key = $resp_id . '_' . $current_sector_id;
+                if (!isset($respSectorCache[$rs_key])) {
+                    $stmt = $pdo->prepare("INSERT IGNORE INTO responsible_sectors (responsible_id, sector_id) VALUES (?, ?)");
+                    $stmt->execute([$resp_id, $current_sector_id]);
+                    $respSectorCache[$rs_key] = true;
                 }
             }
 

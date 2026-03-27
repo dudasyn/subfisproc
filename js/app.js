@@ -191,7 +191,7 @@ class AppManager {
         const titles = {
             'dashboard': 'Dashboard',
             'movements': 'Nova Movimentação',
-            'search': 'Buscar Processo',
+            'search': 'Listar Processos',
             'reports': 'Relatórios e Estatísticas',
             'config': 'Configurações do Sistema'
         };

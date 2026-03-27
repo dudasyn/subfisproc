@@ -61,20 +61,48 @@ if ($method === 'GET') {
         } else {
             jsonResponse(null);
         }
-    } elseif (isset($_GET['search'])) {
-        $search = $_GET['search'];
-        $stmt = $pdo->prepare('
-            SELECT p.id, p.process_number, p.subject, p.requester
-            FROM processes p
-            WHERE p.process_number LIKE ?
-            ORDER BY p.id DESC
-            LIMIT 20
-        ');
-        $stmt->execute(['%'.$search.'%']);
+    } elseif (isset($_GET['search']) || isset($_GET['sector_id'])) {
+        $search = $_GET['search'] ?? '';
+        $sector_id = $_GET['sector_id'] ?? null;
+        $only_current = isset($_GET['only_current']) && $_GET['only_current'] === '1';
+        
+        $params = [];
+        $sql = "SELECT DISTINCT p.id, p.process_number, p.subject, p.requester FROM processes p ";
+        
+        if ($only_current && $sector_id) {
+            $sql .= "
+                JOIN movements m ON p.id = m.process_id 
+                WHERE m.id IN (SELECT MAX(id) FROM movements GROUP BY process_id)
+                AND m.destination_sector_id = ?
+            ";
+            $params[] = $sector_id;
+            if ($search) {
+                $sql .= " AND p.process_number LIKE ?";
+                $params[] = '%'.$search.'%';
+            }
+        } elseif ($sector_id) {
+            $sql .= "
+                JOIN movements m ON p.id = m.process_id 
+                WHERE m.destination_sector_id = ?
+            ";
+            $params[] = $sector_id;
+            if ($search) {
+                $sql .= " AND p.process_number LIKE ?";
+                $params[] = '%'.$search.'%';
+            }
+        } else {
+            $sql .= " WHERE p.process_number LIKE ?";
+            $params[] = '%'.$search.'%';
+        }
+        
+        $sql .= " ORDER BY p.id DESC LIMIT 50";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
         $processes = $stmt->fetchAll();
         
         foreach ($processes as &$p) {
-            $stmt2 = $pdo->prepare('SELECT action, movement_date FROM movements WHERE process_id = ? ORDER BY movement_date DESC, created_at DESC LIMIT 1');
+            $stmt2 = $pdo->prepare('SELECT action, movement_date FROM movements WHERE process_id = ? ORDER BY movement_date DESC, id DESC LIMIT 1');
             $stmt2->execute([$p['id']]);
             $last = $stmt2->fetch();
             $p['action'] = $last ? $last['action'] : 'NOVO';

@@ -4,21 +4,34 @@ const searchView = {
             <div class="view-section">
                 <div class="card mb-1">
                     <div class="card-header border-bottom">
-                        <h3>Buscar Processo</h3>
-                        <p class="text-secondary">Acompanhe a localização e o histórico completo de qualquer processo.</p>
+                        <h3>Listar Processos</h3>
+                        <p class="text-secondary">Filtre processos por número ou por situação nos setores.</p>
                     </div>
                     <div class="card-body">
-                        <div class="grid-form" style="align-items: end;">
-                            <div class="form-group col-span-3">
+                        <div class="grid-form" style="gap:1rem; align-items: end;">
+                            <div class="form-group col-span-2">
                                 <label>Número do Processo</label>
                                 <div class="input-group" style="margin-bottom:0;">
                                     <i class="fa-solid fa-magnifying-glass" style="left: 1.2rem;"></i>
                                     <input type="text" id="search-input" placeholder="Ex: 12345/2026" style="padding-left: 3rem;">
                                 </div>
                             </div>
+                            <div class="form-group col-span-1">
+                                <label>Filtrar por Setor</label>
+                                <select id="filter-sector">
+                                    <option value="">Todos os setores...</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-span-1">
+                                <label>Tipo de Filtro</label>
+                                <select id="filter-mode">
+                                    <option value="current">Onde está agora</option>
+                                    <option value="history">Já passou por lá (Histórico)</option>
+                                </select>
+                            </div>
                             <div class="form-group">
-                                <button id="btn-search-proc" class="btn-primary" style="height: 48px;">
-                                    <span>Buscar</span>
+                                <button id="btn-search-proc" class="btn-primary" style="height: 48px; width: 100%;">
+                                    <span>Filtrar</span>
                                 </button>
                             </div>
                         </div>
@@ -205,6 +218,8 @@ const searchView = {
 
         const btnSearch = document.getElementById('btn-search-proc');
         const inputSearch = document.getElementById('search-input');
+        const filterSector = document.getElementById('filter-sector');
+        const filterMode = document.getElementById('filter-mode');
         const resultsDiv = document.getElementById('search-results');
         const emptyDiv = document.getElementById('search-empty');
         const recentSection = document.getElementById('recent-section');
@@ -216,6 +231,10 @@ const searchView = {
         const btnClearEmpty = document.getElementById('btn-clear-empty');
         const btnDeleteProc = document.getElementById('btn-delete-proc');
         let currentProcessId = null;
+
+        // Load Sectors for filter
+        const sectors = await Api.sectors.list();
+        filterSector.innerHTML += sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 
         const loadRecent = async () => {
             try {
@@ -264,13 +283,19 @@ const searchView = {
 
         const doSearch = async () => {
             const query = inputSearch.value.trim();
-            if (!query) return;
+            const sectorId = filterSector.value;
+            const onlyCurrent = filterMode.value === 'current';
+            
+            if (!query && !sectorId) {
+                window.app.toast('Digite um número ou selecione um setor', 'warning');
+                return;
+            }
 
             btnSearch.disabled = true;
             btnSearch.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
             try {
-                const processes = await Api.movements.search(query);
+                const processes = await Api.movements.search(query, sectorId, onlyCurrent);
                 
                 recentSection.style.display = 'none';
                 resultsDiv.style.display = 'none';
@@ -296,7 +321,7 @@ const searchView = {
                 window.app.toast('Erro ao buscar processos', 'error');
             } finally {
                 btnSearch.disabled = false;
-                btnSearch.innerHTML = '<span>Buscar</span>';
+                btnSearch.innerHTML = '<span>Filtrar</span>';
             }
         };
 

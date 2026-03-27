@@ -194,6 +194,7 @@ const configView = {
                     <td><strong>${s.name}</strong></td>
                     <td class="text-center">
                         <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showSectorModal(${s.id}, '${s.name}')"><i class="fa-solid fa-pen"></i> Editar</button>
+                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:var(--bg-secondary); color:var(--primary); margin-left:5px;" onclick="configView.showMergeSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}')" title="Mesclar histórico com outro setor"><i class="fa-solid fa-code-merge"></i> Mesclar</button>
                         <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c; margin-left:5px;" onclick="configView.deleteSector(${s.id})"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
@@ -212,16 +213,20 @@ const configView = {
                 tbody.innerHTML = `<tr><td colspan="3" class="text-center">Nenhum responsável cadastrado</td></tr>`;
                 return;
             }
-            tbody.innerHTML = this.responsibles_list.map(r => `
+            tbody.innerHTML = this.responsibles_list.map(r => {
+                const sectorBadges = r.sector_name 
+                    ? r.sector_name.split(', ').map(s => `<span class="badge badge-neutral" style="margin-right:2px;">${s}</span>`).join('')
+                    : '<span class="badge badge-neutral" style="color:var(--text-secondary)">Sem setor</span>';
+                return `
                 <tr>
                     <td><strong>${r.name}</strong></td>
-                    <td><span class="badge badge-neutral">${r.sector_name || 'N/A'}</span></td>
+                    <td>${sectorBadges}</td>
                     <td class="text-center">
-                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showResponsibleModal(${r.id}, '${r.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i> Editar</button>
+                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showResponsibleModal(${r.id}, '${r.name.replace(/'/g, "\\'")}', '${r.sector_ids || ''}')"><i class="fa-solid fa-pen"></i> Editar</button>
                         <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c; margin-left:5px;" onclick="configView.deleteResponsible(${r.id})"><i class="fa-solid fa-trash"></i></button>
                     </td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
         } catch (e) {
             const tbody = document.getElementById('tbody-responsibles');
             if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">Erro ao carregar responsáveis</td></tr>`;
@@ -300,29 +305,35 @@ const configView = {
         };
     },
 
-    showResponsibleModal(id = null, currentName = '') {
-        const sectorsOpts = this.sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-        const currentResp = id ? this.responsibles_list.find(r => r.id === id) : null;
-        const currentSectorId = currentResp ? currentResp.sector_id : '';
+    showResponsibleModal(id = null, currentName = '', currentSectorIds = '') {
+        const selectedIds = currentSectorIds ? currentSectorIds.split(',').map(s => s.trim()) : [];
+        const checkboxes = this.sectors.map(s => `
+            <label style="display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0; cursor:pointer;">
+                <input type="checkbox" name="resp-sectors" value="${s.id}" ${selectedIds.includes(String(s.id)) ? 'checked' : ''}>
+                ${s.name}
+            </label>
+        `).join('');
         const html = `
             <div class="form-group mb-1">
                 <label>Nome do Responsável</label>
                 <input type="text" id="resp-name" required value="${currentName}" placeholder="Ex: João da Silva">
             </div>
             <div class="form-group">
-                <label>Setor</label>
-                <select id="resp-sector" required>
-                    <option value="">Selecione o setor...</option>
-                    ${this.sectors.map(s => `<option value="${s.id}" ${s.id == currentSectorId ? 'selected' : ''}>${s.name}</option>`).join('')}
-                </select>
+                <label>Setores de Atuação</label>
+                <div style="max-height:200px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--radius); padding:0.5rem 1rem;">
+                    ${checkboxes}
+                </div>
             </div>
         `;
         this.showModal(id ? 'Editar Responsável' : 'Novo Responsável', html, async () => {
             try {
                 const name = document.getElementById('resp-name').value;
-                const sector_id = document.getElementById('resp-sector').value;
-                if (id) await Api.responsibles.update(id, name, sector_id);
-                else await Api.responsibles.create(name, sector_id);
+                const sector_ids = [...document.querySelectorAll('input[name="resp-sectors"]:checked')].map(cb => cb.value);
+                if (id) {
+                    await fetch('api/responsibles.php', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, name, sector_ids }) }).then(r => r.json());
+                } else {
+                    await fetch('api/responsibles.php', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name, sector_ids }) }).then(r => r.json());
+                }
                 window.app.toast('Responsável salvo!');
                 this.loadResponsibles();
             } catch(e) {
@@ -348,6 +359,49 @@ const configView = {
                 this.loadSectors();
             } catch(e) {
                 window.app.toast(e.message, 'error');
+            }
+        });
+    },
+
+    showMergeSectorModal(sourceId, sourceName) {
+        const otherSectors = this.sectors.filter(s => s.id !== sourceId);
+        const html = `
+            <div class="alert alert-warning mb-1">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Esta ação moverá <strong>toda a história</strong> (movimentações, usuários e responsáveis) do setor "<b>${sourceName}</b>" para o setor selecionado abaixo. O setor antigo será desativado.
+            </div>
+            <div class="form-group">
+                <label>Setor de Destino (Onde os dados serão consolidados)</label>
+                <select id="merge-target" required>
+                    <option value="">Selecione o setor correto...</option>
+                    ${otherSectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                </select>
+            </div>
+        `;
+        this.showModal('Mesclar Setores', html, async () => {
+            try {
+                const targetId = document.getElementById('merge-target').value;
+                if (!targetId) throw new Error('Selecione um setor de destino');
+
+                const res = await fetch('api/sectors.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'merge',
+                        source_id: sourceId,
+                        target_id: targetId
+                    })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                window.app.toast('Setores mesclados com sucesso!');
+                this.loadSectors();
+                this.loadResponsibles();
+                if (this.loadUsers) this.loadUsers();
+            } catch(e) {
+                window.app.toast(e.message, 'error');
+                throw e;
             }
         });
     },
@@ -507,8 +561,8 @@ const configView = {
             const headers = Object.keys(json[0]);
             const mapping = {
                 process_number: headers.find(h => /processo/i.test(h)) || headers[0],
-                movement_date: headers.find(h => /movimentação|data/i.test(h) && !/tipo/i.test(h)) || headers[1],
-                action: headers.find(h => /tipo|ação/i.test(h)) || headers[2],
+                movement_date: headers.find(h => /data/i.test(h) || (/movimentação/i.test(h) && !/tipo/i.test(h))) || headers[1],
+                action: headers.find(h => /tipo/i.test(h)) || headers.find(h => /ação/i.test(h) && !/data/i.test(h)) || headers[2],
                 responsible: headers.find(h => /auditor|responsável/i.test(h)) || headers[3],
                 subject: headers.find(h => /assunto/i.test(h)) || headers[4],
                 destination_sector: headers.find(h => /setor/i.test(h)) || headers[5]

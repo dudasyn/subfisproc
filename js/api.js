@@ -73,7 +73,12 @@ const Api = {
         listLatest: () => Api.request('movements.php?latest=1', 'GET'),
         listByProcess: (procId) => Api.request(`movements.php?process_id=${procId}`, 'GET'),
         getByNumber: (number) => Api.request(`movements.php?process_number=${encodeURIComponent(number)}`, 'GET'),
-        search: (query) => Api.request(`movements.php?search=${encodeURIComponent(query)}`, 'GET'),
+        search: (query, sector_id = '', only_current = false) => {
+            let url = `movements.php?search=${encodeURIComponent(query)}`;
+            if (sector_id) url += `&sector_id=${sector_id}`;
+            if (only_current) url += `&only_current=1`;
+            return Api.request(url, 'GET');
+        },
         register: (data) => Api.request('movements.php', 'POST', data)
     },
     dashboard: {

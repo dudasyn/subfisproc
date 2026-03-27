@@ -9,14 +9,22 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'GET') {
     $stats = [];
 
-    $stmt = $pdo->query('SELECT COUNT(*) as count FROM movements WHERE action = "ENTRADA"');
-    $stats['entradas'] = $stmt->fetch()['count'];
-
-    $stmt = $pdo->query('SELECT COUNT(*) as count FROM movements WHERE action = "SAIDA"');
-    $stats['saidas'] = $stmt->fetch()['count'];
-
-    $stmt = $pdo->query('SELECT COUNT(*) as count FROM processes');
-    $stats['total_processes'] = $stmt->fetch()['count'];
+    $count_sql = "
+        SELECT 
+            SUM(CASE WHEN m.action IN ('ENTRADA', 'REDISTRIBUIÇÃO') THEN 1 ELSE 0 END) as entradas,
+            SUM(CASE WHEN m.action = 'SAIDA' THEN 1 ELSE 0 END) as saidas
+        FROM movements m
+        INNER JOIN (
+            SELECT process_id, MAX(id) as max_id
+            FROM movements
+            GROUP BY process_id
+        ) latest ON m.id = latest.max_id";
+    
+    $counts = $pdo->query($count_sql)->fetch();
+    $stats['entradas'] = $counts['entradas'] ?: 0;
+    $stats['saidas'] = $counts['saidas'] ?: 0;
+    
+    $stats['total_processes'] = $pdo->query('SELECT COUNT(*) FROM processes')->fetchColumn();
 
     // $stmt = $pdo->query('SELECT COUNT(*) as count FROM users WHERE active = 1');
     // $stats['total_users'] = $stmt->fetch()['count'];

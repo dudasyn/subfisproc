@@ -59,12 +59,11 @@ if ($type === 'movements') {
             DATEDIFF(CURRENT_DATE, m_last.movement_date) as idle_days
         FROM processes p
         INNER JOIN (
-            SELECT process_id, MAX(created_at) as max_created
+            SELECT process_id, MAX(id) as max_id
             FROM movements
             GROUP BY process_id
         ) m_latest ON p.id = m_latest.process_id
-        INNER JOIN movements m_last ON m_latest.process_id = m_last.process_id 
-            AND m_latest.max_created = m_last.created_at
+        INNER JOIN movements m_last ON m_latest.max_id = m_last.id 
         WHERE m_last.action = 'ENTRADA' 
           AND DATEDIFF(CURRENT_DATE, m_last.movement_date) >= ?
         ORDER BY idle_days DESC
