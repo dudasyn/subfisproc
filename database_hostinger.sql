@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS sectors (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     active BOOLEAN DEFAULT TRUE,
+    import_batch VARCHAR(50) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -19,6 +20,7 @@ CREATE TABLE IF NOT EXISTS responsibles (
     name VARCHAR(255) NOT NULL,
     sector_id INT NOT NULL,
     active BOOLEAN DEFAULT TRUE,
+    import_batch VARCHAR(50) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sector_id) REFERENCES sectors(id)
 );
@@ -52,6 +54,7 @@ CREATE TABLE IF NOT EXISTS processes (
     requester VARCHAR(255) NOT NULL,
     document_number VARCHAR(20),
     observations TEXT,
+    import_batch VARCHAR(50) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -60,10 +63,11 @@ CREATE TABLE IF NOT EXISTS movements (
     id INT AUTO_INCREMENT PRIMARY KEY,
     process_id INT NOT NULL,
     movement_date DATE NOT NULL,
-    action ENUM('ENTRADA', 'SAIDA') NOT NULL,
+    action ENUM('ENTRADA', 'SAIDA', 'REDISTRIBUIÇÃO') NOT NULL,
     destination_sector_id INT NOT NULL,
     responsible_id INT,
     user_id INT NOT NULL,
+    import_batch VARCHAR(50) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (process_id) REFERENCES processes(id) ON DELETE CASCADE,
     FOREIGN KEY (destination_sector_id) REFERENCES sectors(id),

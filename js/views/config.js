@@ -9,6 +9,7 @@ const configView = {
                     <button class="tab-btn active" data-tab="setores"><i class="fa-solid fa-building"></i> Setores</button>
                     <button class="tab-btn" data-tab="responsaveis"><i class="fa-solid fa-user-tie"></i> Responsáveis</button>
                     ${isAdmin ? '<button class="tab-btn" data-tab="colaboradores"><i class="fa-solid fa-users"></i> Colaboradores</button>' : ''}
+                    ${isAdmin ? '<button class="tab-btn" data-tab="importacao"><i class="fa-solid fa-file-import"></i> Importação</button>' : ''}
                 </div>
 
                 <!-- SETORES TAB -->
@@ -75,6 +76,66 @@ const configView = {
                     </div>
                 </div>
                 ` : ''}
+                <!-- IMPORTACAO TAB -->
+                ${isAdmin ? `
+                <div class="tab-content" id="tab-importacao">
+                    <div class="card mb-1">
+                        <div class="card-header border-bottom">
+                            <h3>Importar Planilha (Excel)</h3>
+                            <p>Envie sua planilha de controle para migrar os dados para o sistema.</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="import-actions flex-center" style="gap:1rem; flex-wrap: wrap;">
+                                <div class="file-input-wrapper">
+                                    <input type="file" id="input-import-excel" accept=".xlsx, .xls" style="display:none;">
+                                    <button class="btn-secondary" onclick="document.getElementById('input-import-excel').click()">
+                                        <i class="fa-solid fa-file-excel"></i> Selecionar Arquivo
+                                    </button>
+                                </div>
+                                <button class="btn-primary" id="btn-process-import" disabled>
+                                    <i class="fa-solid fa-upload"></i> Processar e Importar
+                                </button>
+                            </div>
+                            <div id="import-preview" class="mt-2" style="display:none;">
+                                <div class="alert alert-info">
+                                    <i class="fa-solid fa-info-circle"></i> 
+                                    <span id="import-info-text">Detectamos X registros para importação.</span>
+                                </div>
+                                <div class="table-responsive mt-1">
+                                    <table class="data-table">
+                                        <thead><tr id="preview-header"></tr></thead>
+                                        <tbody id="preview-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header border-bottom">
+                            <h3>Histórico de Importações</h3>
+                            <p>Desfaça importações em lote se necessário.</p>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID Lote</th>
+                                            <th>Data</th>
+                                            <th>Registros</th>
+                                            <th class="text-center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-import-history">
+                                        <tr><td colspan="4" class="text-center">Carregando...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
             </div>
             <div id="modal-root"></div>
         `;
@@ -90,7 +151,13 @@ const configView = {
         
         // Fetch Data
         if (isAdmin) {
-            await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles()]);
+            await Promise.all([
+                this.loadSectors(), 
+                this.loadUsers(), 
+                this.loadResponsibles(),
+                this.loadImportHistory()
+            ]);
+            this.initImportLogic();
         } else {
             await Promise.all([this.loadSectors(), this.loadResponsibles()]);
         }
@@ -370,6 +437,157 @@ const configView = {
             window.app.toast('Colaborador desativado!');
             this.loadUsers();
         } catch(e) { window.app.toast(e.message, 'error'); }
+    },
+
+    async loadImportHistory() {
+        try {
+            const history = await Api.import.history();
+            const tbody = document.getElementById('tbody-import-history');
+            if (!tbody) return;
+            
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhuma importação encontrada.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = history.map(h => `
+                <tr>
+                    <td><code>${h.id}</code></td>
+                    <td>${new Date(h.date).toLocaleString('pt-BR')}</td>
+                    <td>${h.movements_count} mov. / ${h.processes_count} proc.</td>
+                    <td class="text-center">
+                        <button class="btn-icon text-danger" title="Desfazer Importação" onclick="configView.deleteImportBatch('${h.id}')">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch(e) { console.error('Erro ao carregar historico', e); }
+    },
+
+    async deleteImportBatch(id) {
+        if (!confirm('ATENÇÃO: Deseja realmente DESFAZER esta importação? Isso removerá todos os processos, movimentações, responsáveis e setores que foram criados EXCLUSIVAMENTE por este lote. Esta ação não pode ser desfeita.')) return;
+        
+        try {
+            await Api.import.undo(id);
+            window.app.toast('Importação desfeita com sucesso!');
+            await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles(), this.loadImportHistory()]);
+        } catch(e) { window.app.toast(e.message, 'error'); }
+    },
+
+    initImportLogic() {
+        const input = document.getElementById('input-import-excel');
+        const btn = document.getElementById('btn-process-import');
+        if (!input) return;
+
+        input.onchange = (e) => this.handleFileSelect(e);
+        btn.onclick = () => this.processImport();
+    },
+
+    handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const data = evt.target.result;
+            const workbook = XLSX.read(data, { type: 'binary' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(sheet);
+
+            if (json.length === 0) {
+                window.app.toast('Planilha vazia!', 'error');
+                return;
+            }
+
+            // Map columns intuitively
+            const headers = Object.keys(json[0]);
+            const mapping = {
+                process_number: headers.find(h => /processo/i.test(h)),
+                movement_date: headers.find(h => /movimentação|data/i.test(h) && !/tipo/i.test(h)),
+                action: headers.find(h => /tipo|ação/i.test(h)),
+                responsible: headers.find(h => /auditor|responsável/i.test(h)),
+                subject: headers.find(h => /assunto/i.test(h)),
+                destination_sector: headers.find(h => /setor/i.test(h))
+            };
+
+            this.importData = json.map(row => ({
+                process_number: row[mapping.process_number],
+                movement_date: this.formatExcelDate(row[mapping.movement_date]),
+                action: row[mapping.action],
+                responsible: row[mapping.responsible],
+                subject: row[mapping.subject],
+                destination_sector: row[mapping.destination_sector]
+            })).filter(r => r.process_number);
+
+            this.renderImportPreview(mapping, this.importData.slice(0, 5));
+            
+            document.getElementById('import-info-text').textContent = `Detectamos ${this.importData.length} registros para importação.`;
+            document.getElementById('import-preview').style.display = 'block';
+            document.getElementById('btn-process-import').disabled = false;
+        };
+        reader.readAsBinaryString(file);
+    },
+
+    formatExcelDate(val) {
+        if (!val) return null;
+        if (typeof val === 'number') {
+            // Excel serial date format
+            const date = new Date((val - 25569) * 86400 * 1000);
+            return date.toISOString().split('T')[0];
+        }
+        // Try to parse string DD/MM/YYYY or YYYY-MM-DD
+        if (typeof val === 'string') {
+            const parts = val.split(/[\/\-]/);
+            if (parts.length === 3) {
+                if (parts[0].length === 4) return val; // YYYY-MM-DD
+                return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD/MM/YYYY
+            }
+        }
+        return val;
+    },
+
+    renderImportPreview(mapping, rows) {
+        const headerRow = document.getElementById('preview-header');
+        const bodyRows = document.getElementById('preview-body');
+        
+        const cols = ['process_number', 'movement_date', 'action', 'responsible', 'subject', 'destination_sector'];
+        headerRow.innerHTML = cols.map(c => `<th>${c}</th>`).join('');
+        
+        bodyRows.innerHTML = rows.map(r => `
+            <tr>
+                ${cols.map(c => `<td>${r[c] || '-'}</td>`).join('')}
+            </tr>
+        `).join('');
+    },
+
+    async processImport() {
+        if (!this.importData || this.importData.length === 0) return;
+        
+        const btn = document.getElementById('btn-process-import');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importando...';
+
+        try {
+            const res = await Api.import.upload(this.importData);
+            window.app.toast(`Importação concluída! Lote: ${res.batch_id}`);
+            
+            // Reset UI
+            document.getElementById('input-import-excel').value = '';
+            document.getElementById('import-preview').style.display = 'none';
+            btn.innerHTML = originalHtml;
+            btn.disabled = true;
+            this.importData = null;
+
+            // Refresh all data
+            await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles(), this.loadImportHistory()]);
+        } catch(e) {
+            window.app.toast(e.message, 'error');
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
     }
 };
 
