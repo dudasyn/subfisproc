@@ -59,12 +59,12 @@ const Api = {
         delete: (id) => Api.request(`processes.php?id=${id}`, 'DELETE')
     },
     reports: {
-        movements: (start, end, sectorId) => 
-            Api.request(`reports.php?start=${start}&end=${end}${sectorId ? '&sector_id='+sectorId : ''}`, 'GET'),
-        totals: () => Api.request('reports.php?action=totals', 'GET')
+        movements: (start, end, action) => 
+            Api.request(`reports.php?type=movements&start=${start}&end=${end}${action && action !== 'Todas' ? '&action='+action : ''}`, 'GET'),
+        stagnant: (days) => Api.request(`reports.php?type=stagnant&days=${days || 15}`, 'GET')
     },
     import: {
-        upload: (data) => Api.request('import.php', 'POST', data),
+        upload: (data, batchId) => Api.request(`import.php${batchId ? '?batch_id=' + batchId : ''}`, 'POST', data),
         undo: (batchId) => Api.request(`import.php?batch=${batchId}`, 'DELETE'),
         history: () => Api.request('import.php?action=history', 'GET')
     },

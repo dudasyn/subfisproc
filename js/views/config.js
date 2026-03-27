@@ -494,22 +494,24 @@ const configView = {
             const workbook = XLSX.read(data, { type: 'binary' });
             const sheetName = workbook.SheetNames[0];
             const sheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(sheet);
+            
+            // Pass defval: "" so xlsx doesn't omit keys when cells (like SETOR) are empty in the first row
+            const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
             if (json.length === 0) {
                 window.app.toast('Planilha vazia!', 'error');
                 return;
             }
 
-            // Map columns intuitively
+            // Map columns intuitively or fallback to absolute positions based on your file
             const headers = Object.keys(json[0]);
             const mapping = {
-                process_number: headers.find(h => /processo/i.test(h)),
-                movement_date: headers.find(h => /movimentação|data/i.test(h) && !/tipo/i.test(h)),
-                action: headers.find(h => /tipo|ação/i.test(h)),
-                responsible: headers.find(h => /auditor|responsável/i.test(h)),
-                subject: headers.find(h => /assunto/i.test(h)),
-                destination_sector: headers.find(h => /setor/i.test(h))
+                process_number: headers.find(h => /processo/i.test(h)) || headers[0],
+                movement_date: headers.find(h => /movimentação|data/i.test(h) && !/tipo/i.test(h)) || headers[1],
+                action: headers.find(h => /tipo|ação/i.test(h)) || headers[2],
+                responsible: headers.find(h => /auditor|responsável/i.test(h)) || headers[3],
+                subject: headers.find(h => /assunto/i.test(h)) || headers[4],
+                destination_sector: headers.find(h => /setor/i.test(h)) || headers[5]
             };
 
             this.importData = json.map(row => ({
@@ -523,9 +525,24 @@ const configView = {
 
             this.renderImportPreview(mapping, this.importData.slice(0, 5));
             
-            document.getElementById('import-info-text').textContent = `Detectamos ${this.importData.length} registros para importação.`;
+            // Debug missing columns (destination_sector is optional, backend defaults to SUBFIS)
+            let missing = [];
+            const requiredFields = ['process_number', 'movement_date', 'action', 'responsible', 'subject'];
+            for (let k of requiredFields) {
+                if (!mapping[k]) missing.push(k);
+            }
+
+            let msg = `Detectamos ${this.importData.length} registros para importação.<br><br><b>Cabeçalhos Lidos da Planilha:</b> ${headers.join(', ')}<br>`;
+            if (missing.length > 0) {
+                msg += `<b style="color:var(--danger)">Campos essenciais não encontrados:</b> ${missing.join(', ')} (verifique os nomes no Excel)`;
+            }
+            if (!mapping.destination_sector) {
+                msg += `<br><span class="text-secondary"><i class="fa-solid fa-circle-info"></i> Coluna SETOR ausente. Todos os registros serão direcionados para SUBFIS por padrão.</span>`;
+            }
+
+            document.getElementById('import-info-text').innerHTML = msg;
             document.getElementById('import-preview').style.display = 'block';
-            document.getElementById('btn-process-import').disabled = false;
+            document.getElementById('btn-process-import').disabled = missing.length > 0;
         };
         reader.readAsBinaryString(file);
     },
@@ -567,12 +584,21 @@ const configView = {
         
         const btn = document.getElementById('btn-process-import');
         const originalHtml = btn.innerHTML;
+        const total = this.importData.length;
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importando...';
+
+        const batchId = 'imp_' + Date.now();
+        const chunkSize = 2000;
 
         try {
-            const res = await Api.import.upload(this.importData);
-            window.app.toast(`Importação concluída! Lote: ${res.batch_id}`);
+            for (let i = 0; i < total; i += chunkSize) {
+                const chunk = this.importData.slice(i, i + chunkSize);
+                const current = Math.min(i + chunkSize, total);
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando lote ${current} de ${total}...`;
+                await Api.import.upload(chunk, batchId);
+            }
+
+            window.app.toast(`Importação de ${total} registros concluída!`);
             
             // Reset UI
             document.getElementById('input-import-excel').value = '';

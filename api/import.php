@@ -1,7 +1,23 @@
 <?php
+// Aumentar limites do PHP para lidar com grandes planilhas
+ini_set('memory_limit', '1024M');
+ini_set('max_execution_time', '600'); 
+ini_set('display_errors', 1);
+
 require 'config.php';
 
 header('Content-Type: application/json');
+
+// Catch fatal errors to output JSON
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Fatal Error: ' . $error['message'] . ' in ' . $error['file'] . ':' . $error['line']]);
+        exit;
+    }
+});
+
 if (!isset($_SESSION['user_id'])) {
     jsonResponse(['error' => 'Unauthorized'], 401);
 }
@@ -34,7 +50,7 @@ if ($method === 'POST') {
         jsonResponse(['error' => 'Formato de dados inválido.'], 400);
     }
 
-    $batch_id = uniqid('imp_');
+    $batch_id = $_GET['batch_id'] ?? uniqid('imp_');
     $user_id = $_SESSION['user_id'];
 
     try {
@@ -51,36 +67,36 @@ if ($method === 'POST') {
         $responsiblesCache = [];
         $processesCache = [];
 
-        // Preload caches
-        $stmt = $pdo->query("SELECT id, LOWER(name) as name FROM sectors");
+        // Preload caches with strict lowercasing and trimming
+        $stmt = $pdo->query("SELECT id, name FROM sectors");
         foreach($stmt->fetchAll() as $s) {
-            $sectorsCache[$s['name']] = $s['id'];
+            $sectorsCache[strtolower(trim($s['name']))] = $s['id'];
         }
 
-        $stmt = $pdo->query("SELECT id, LOWER(name) as name, sector_id FROM responsibles");
+        $stmt = $pdo->query("SELECT id, name, sector_id FROM responsibles");
         foreach($stmt->fetchAll() as $r) {
-            $responsiblesCache[$r['name'] . '_' . $r['sector_id']] = $r['id'];
+            $responsiblesCache[strtolower(trim($r['name'])) . '_' . $r['sector_id']] = $r['id'];
         }
         
         $stmt = $pdo->query("SELECT id, process_number FROM processes");
         foreach($stmt->fetchAll() as $p) {
-            $processesCache[$p['process_number']] = $p['id'];
+            $processesCache[strtolower(trim($p['process_number']))] = $p['id'];
         }
 
         foreach ($data as $row) {
-            $process_number = trim($row['process_number'] ?? '');
+            // Limpeza robusta (remove espaços invisíveis e afins)
+            $process_number = trim(preg_replace('/\s+/', ' ', $row['process_number'] ?? ''));
             $movement_date = !empty($row['movement_date']) ? $row['movement_date'] : date('Y-m-d');
             
             $mov_action = strtoupper(trim($row['action'] ?? 'ENTRADA'));
-            // Defaulting fallback cases explicitly mapped
             if (!in_array($mov_action, ['ENTRADA', 'SAIDA', 'REDISTRIBUIÇÃO', 'SAÍDA'])) {
                 $mov_action = 'ENTRADA';
             }
             if ($mov_action === 'SAÍDA') $mov_action = 'SAIDA';
 
-            $responsible_name = trim($row['responsible'] ?? '');
+            $responsible_name = trim(preg_replace('/\s+/', ' ', $row['responsible'] ?? ''));
             $subject = trim($row['subject'] ?? 'Processo Importado');
-            $sector_name = trim($row['destination_sector'] ?? 'SUBFIS');
+            $sector_name = trim(preg_replace('/\s+/', ' ', $row['destination_sector'] ?? 'SUBFIS'));
             
             if (empty($process_number)) continue;
 
@@ -110,13 +126,14 @@ if ($method === 'POST') {
             }
 
             // 3. Process
-            if (!isset($processesCache[$process_number])) {
+            $p_key = strtolower($process_number);
+            if (!isset($processesCache[$p_key])) {
                 $stmt = $pdo->prepare("INSERT INTO processes (process_number, subject, requester, import_batch) VALUES (?, ?, ?, ?)");
                 $stmt->execute([$process_number, $subject, 'Importação de Dados', $batch_id]);
-                $processesCache[$process_number] = $pdo->lastInsertId();
+                $processesCache[$p_key] = $pdo->lastInsertId();
                 $stats['processes_created']++;
             }
-            $current_process_id = $processesCache[$process_number];
+            $current_process_id = $processesCache[$p_key];
 
             // 4. Movement
             $stmt = $pdo->prepare("INSERT INTO movements (process_id, movement_date, action, destination_sector_id, responsible_id, user_id, import_batch) VALUES (?, ?, ?, ?, ?, ?, ?)");

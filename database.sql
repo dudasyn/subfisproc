@@ -57,7 +57,7 @@ VALUES (
 -- 3. Tabela de Processos
 CREATE TABLE IF NOT EXISTS processes (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    process_number VARCHAR(50) UNIQUE NOT NULL,
+    process_number VARCHAR(255) UNIQUE NOT NULL,
     subject VARCHAR(255) NOT NULL,
     requester VARCHAR(255) NOT NULL,
     document_number VARCHAR(20), -- CPF ou CNPJ
