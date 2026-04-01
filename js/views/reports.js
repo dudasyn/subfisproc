@@ -8,7 +8,7 @@ const reportsView = {
         container.innerHTML = `
             <div class="view-section">
                 <div class="tabs-header">
-                    <button class="tab-btn active" data-tab="movimentacoes"><i class="fa-solid fa-arrow-right-arrow-left"></i> Entradas / Saídas</button>
+                    <button class="tab-btn active" data-tab="movimentacoes"><i class="fa-solid fa-arrow-right-arrow-left"></i> Entradas / Saídas / Tramit.</button>
                     <button class="tab-btn" data-tab="parados"><i class="fa-solid fa-hourglass-half"></i> Processos Parados</button>
                 </div>
 
@@ -33,7 +33,7 @@ const reportsView = {
                                     <label>Tipo de Ação</label>
                                     <select id="rep-mov-action" style="height: 48px;">
                                         <option value="">Todas</option>
-                                        <option value="ENTRADA">Somente Entradas</option>
+                                        <option value="ENTRADA">Somente Entradas (Tramitação)</option>
                                         <option value="SAIDA">Somente Saídas</option>
                                     </select>
                                 </div>
@@ -161,7 +161,7 @@ const reportsView = {
                 
                 const summaryText = document.getElementById('mov-summary-text');
                 if (action === 'ENTRADA') {
-                    summaryText.innerHTML = `<i class="fa-solid fa-arrow-right-to-bracket"></i> ${data.length} Entrada(s) no período`;
+                    summaryText.innerHTML = `<i class="fa-solid fa-arrow-right-to-bracket"></i> ${data.length} Entrada(s) / Tramitação(ões) no período`;
                 } else if (action === 'SAIDA') {
                     summaryText.innerHTML = `<i class="fa-solid fa-arrow-right-from-bracket"></i> ${data.length} Saída(s) no período`;
                 } else {
@@ -171,7 +171,7 @@ const reportsView = {
                 tbody.innerHTML = data.map(m => `
                     <tr>
                         <td>${window.app.formatDate(m.movement_date)}</td>
-                        <td><span class="badge ${m.action === 'ENTRADA' ? 'badge-success' : 'badge-warning'}">${m.action}</span></td>
+                        <td><span class="badge ${m.action === 'ENTRADA' ? 'badge-success' : 'badge-warning'}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : m.action}</span></td>
                         <td>
                             <strong>${m.process_number}</strong>
                             ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="margin-left:5px; font-size:0.7rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="margin-left:5px; font-size:0.7rem; color:var(--primary-color);"></i>' : '')}

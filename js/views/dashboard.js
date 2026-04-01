@@ -16,7 +16,7 @@ const dashboardView = {
                     </td>
                     <td>
                         <span class="badge badge-${m.action === 'ENTRADA' ? 'success' : 'warning'}">
-                            ${m.action}
+                            ${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : m.action}
                         </span>
                     </td>
                     <td>${window.app.formatDate(m.movement_date)}</td>

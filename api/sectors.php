@@ -7,7 +7,7 @@ header('Content-Type: application/json');
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-    $stmt = $pdo->query('SELECT id, name, active, created_at FROM sectors WHERE active = 1 ORDER BY name ASC');
+    $stmt = $pdo->query('SELECT id, name, is_internal, active, created_at FROM sectors WHERE active = 1 ORDER BY name ASC');
     jsonResponse($stmt->fetchAll());
 } elseif ($method === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
@@ -50,20 +50,22 @@ if ($method === 'GET') {
     }
     
     $name = trim($data['name'] ?? '');
+    $is_internal = isset($data['is_internal']) ? (int)$data['is_internal'] : 1;
     if (empty($name)) jsonResponse(['error' => 'Nome do setor é obrigatório'], 400);
 
-    $stmt = $pdo->prepare('INSERT INTO sectors (name) VALUES (?)');
-    $stmt->execute([$name]);
-    jsonResponse(['id' => $pdo->lastInsertId(), 'name' => $name, 'active' => 1]);
+    $stmt = $pdo->prepare('INSERT INTO sectors (name, is_internal) VALUES (?, ?)');
+    $stmt->execute([$name, $is_internal]);
+    jsonResponse(['id' => $pdo->lastInsertId(), 'name' => $name, 'is_internal' => $is_internal, 'active' => 1]);
 } elseif ($method === 'PUT') {
     $data = json_decode(file_get_contents('php://input'), true);
     
     $id = $data['id'] ?? 0;
     $name = trim($data['name'] ?? '');
+    $is_internal = isset($data['is_internal']) ? (int)$data['is_internal'] : 1;
     if (!$id || empty($name)) jsonResponse(['error' => 'ID e Nome são obrigatórios'], 400);
 
-    $stmt = $pdo->prepare('UPDATE sectors SET name = ? WHERE id = ?');
-    $stmt->execute([$name, $id]);
+    $stmt = $pdo->prepare('UPDATE sectors SET name = ?, is_internal = ? WHERE id = ?');
+    $stmt->execute([$name, $is_internal, $id]);
     jsonResponse(['success' => true]);
 } elseif ($method === 'DELETE') {
     $id = $_GET['id'] ?? 0;

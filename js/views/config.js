@@ -191,9 +191,12 @@ const configView = {
             tbody.innerHTML = this.sectors.map(s => `
                 <tr>
                     <td>#${s.id}</td>
-                    <td><strong>${s.name}</strong></td>
+                    <td>
+                        <strong>${s.name}</strong>
+                        ${s.is_internal ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;">Interno</span>' : '<span class="badge badge-neutral" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;">Externo</span>'}
+                    </td>
                     <td class="text-center">
-                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showSectorModal(${s.id}, '${s.name}')"><i class="fa-solid fa-pen"></i> Editar</button>
+                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', ${s.is_internal})"><i class="fa-solid fa-pen"></i> Editar</button>
                         <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:var(--bg-secondary); color:var(--primary); margin-left:5px;" onclick="configView.showMergeSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}')" title="Mesclar histórico com outro setor"><i class="fa-solid fa-code-merge"></i> Mesclar</button>
                         <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c; margin-left:5px;" onclick="configView.deleteSector(${s.id})"><i class="fa-solid fa-trash"></i></button>
                     </td>
@@ -387,18 +390,39 @@ const configView = {
         renderBadges();
     },
 
-    showSectorModal(id = null, currentName = '') {
+    showSectorModal(id = null, currentName = '', isInternal = 1) {
         const html = `
-            <div class="form-group">
+            <div class="form-group mb-1">
                 <label>Nome do Setor</label>
-                <input type="text" id="sec-name" required value="${currentName}" placeholder="Ex: Protocolo">
+                <input type="text" id="sec-name" required value="${currentName.replace(/"/g, '&quot;')}" placeholder="Ex: Protocolo">
+            </div>
+            <div class="form-group">
+                <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight: 500;">
+                    <input type="checkbox" id="sec-internal" ${isInternal ? 'checked' : ''}>
+                    Este setor faz parte da estrutura interna da SUBFIS?
+                </label>
+                <small class="text-secondary" style="margin-left: 1.5rem; display:block;">Isso permite tramitações consecutivas entre subsetores.</small>
             </div>
         `;
-        this.showModal(id ? 'Renomear Setor' : 'Novo Setor', html, async () => {
+        this.showModal(id ? 'Editar Setor' : 'Novo Setor', html, async () => {
             try {
                 const name = document.getElementById('sec-name').value;
-                if (id) await Api.sectors.update(id, name);
-                else await Api.sectors.create(name);
+                const is_internal = document.getElementById('sec-internal').checked ? 1 : 0;
+                
+                if (id) {
+                    await fetch('api/sectors.php', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id, name, is_internal })
+                    });
+                } else {
+                    await fetch('api/sectors.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, is_internal })
+                    });
+                }
+                
                 window.app.toast('Setor salvo!');
                 this.loadSectors();
             } catch(e) {

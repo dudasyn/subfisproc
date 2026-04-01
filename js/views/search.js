@@ -257,7 +257,7 @@ const searchView = {
                             ${m.parent_id ? `<small style="color:var(--text-secondary); font-size:0.7rem;">Apenso ao ${m.parent_process_number}</small>` : (m.attachments_count > 0 ? `<small style="color:var(--primary-color); font-size:0.7rem;">Possui ${m.attachments_count} apenso(s)</small>` : '')}
                         </div>
                         <div class="recent-status">
-                            <span class="badge-${m.action.toLowerCase()}">${m.action}</span>
+                            <span class="badge-${m.action.toLowerCase()}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : m.action}</span>
                             <p style="font-size: 0.7rem; margin-top: 4px;">${window.app.formatDate(m.movement_date)}</p>
                         </div>
                     </div>
@@ -282,7 +282,7 @@ const searchView = {
                     ${m.parent_id ? `<small style="color:var(--text-secondary); font-size:0.7rem;">Apenso ao ${m.parent_process_number}</small>` : (m.attachments_count > 0 ? `<small style="color:var(--primary-color); font-size:0.7rem;">Possui ${m.attachments_count} apenso(s)</small>` : '')}
                 </div>
                 <div class="recent-status">
-                    <span class="badge-${(m.action || 'NOVO').toLowerCase()}">${m.action || 'NOVO'}</span>
+                    <span class="badge-${(m.action || 'NOVO').toLowerCase()}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : (m.action || 'NOVO')}</span>
                     <p style="font-size: 0.7rem; margin-top: 4px;">${window.app.formatDate(m.movement_date)}</p>
                 </div>
             </div>
@@ -348,8 +348,9 @@ const searchView = {
                     // Current Status
                     const lastMov = history[0];
                     if (lastMov) {
-                        document.getElementById('res-status').textContent = lastMov.action === 'ENTRADA' ? 'Em posse da SUBFIS' : 'Enviado para ' + lastMov.destination_sector;
-                        document.getElementById('res-sector-now').textContent = lastMov.action === 'ENTRADA' ? 'SUBFIS' : lastMov.destination_sector;
+                        const setorName = lastMov.destination_sector || 'Não informado';
+                        document.getElementById('res-status').textContent = lastMov.action === 'ENTRADA' ? 'Em posse de ' + setorName : 'Enviado para ' + setorName;
+                        document.getElementById('res-sector-now').textContent = setorName;
                     } else {
                         document.getElementById('res-status').textContent = 'Sem movimentação';
                         document.getElementById('res-sector-now').textContent = '-';
@@ -373,7 +374,7 @@ const searchView = {
                     tbody.innerHTML = history.map(m => `
                         <tr>
                             <td>${window.app.formatDate(m.movement_date)}</td>
-                            <td><span class="badge-${m.action.toLowerCase()}">${m.action}</span></td>
+                            <td><span class="badge-${m.action.toLowerCase()}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : m.action}</span></td>
                             <td>${m.destination_sector}</td>
                             <td>${m.responsible_name || '<span style="color:var(--text-secondary);font-style:italic;">Não definido</span>'}</td>
                         </tr>

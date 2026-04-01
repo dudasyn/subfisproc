@@ -21,3 +21,6 @@
 
 ## Documentação
 - Sempre que houver mudanças estruturais, sugira atualizações nos arquivos de documentação (como o `walkthrough.md`).
+
+## Rotina ao terminar uma implementação
+- Sempre que terminar de implementar algo me dê uma sugestão de commit curta que resuma o que foi feito para eu fazer o deploy no github.

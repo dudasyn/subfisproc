@@ -6,13 +6,14 @@ USE subfisproc;
 CREATE TABLE IF NOT EXISTS sectors (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
+    is_internal BOOLEAN DEFAULT TRUE,
     active BOOLEAN DEFAULT TRUE,
     import_batch VARCHAR(50) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Inserindo setor padrão SUBFIS e outros setores básicos
-INSERT INTO sectors (name) VALUES ('SUBFIS');
+INSERT INTO sectors (name, is_internal) VALUES ('SUBFIS', 1);
 
 -- 2. Tabela de Responsáveis (Auditores, etc)
 CREATE TABLE IF NOT EXISTS responsibles (

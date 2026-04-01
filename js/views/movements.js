@@ -25,7 +25,7 @@ const movementsView = {
                                 <div class="form-group">
                                     <label>Ação *</label>
                                     <select id="mov-acao" required>
-                                        <option value="ENTRADA" selected>ENTRADA</option>
+                                        <option value="ENTRADA" selected>ENTRADA (Tramitação)</option>
                                         <option value="SAIDA">SAÍDA</option>
                                     </select>
                                 </div>
@@ -36,8 +36,8 @@ const movementsView = {
                                     </select>
                                 </div>
                                 <div class="form-group col-span-2">
-                                    <label>Responsável</label>
-                                    <select id="mov-responsavel">
+                                    <label>Auditor Responsável *</label>
+                                    <select id="mov-responsavel" required>
                                         <option value="">Nenhum / Não definido</option>
                                     </select>
                                 </div>
@@ -91,16 +91,16 @@ const movementsView = {
         try {
             this.responsibles = await Api.responsibles.list();
             responsavelSelect.innerHTML = '<option value="">Nenhum / Não definido</option>' +
-                this.responsibles.map(r => `<option value="${r.id}">${r.name} (${r.sector_name})</option>`).join('');
+                this.responsibles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
         } catch(e) {
             console.warn('Nao foi possivel carregar responsaveis', e);
         }
 
         // Load sectors list
         try {
-            const sectors = await Api.sectors.list();
+            this.sectors_data = await Api.sectors.list();
             destinoSelect.innerHTML = '<option value="">Selecione o setor...</option>' + 
-                sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                this.sectors_data.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
             
             // Auto-select user's sector by default since initial action is ENTRADA
             if (user && user.sector_id) {
@@ -144,32 +144,36 @@ const movementsView = {
                     requerenteInput.value = process.requester || '';
                     docInput.value = process.document_number || '';
                     obsInput.value = process.observations || '';
+                    
+                    // Auto-fill Auditor Responsável
+                    if (process.last_responsible_id) {
+                        responsavelSelect.value = process.last_responsible_id;
+                    }
 
                     // Lock fields if process exists
                     assuntoInput.disabled = true;
                     requerenteInput.disabled = true;
                     docInput.disabled = true;
 
-                    // Restriction logic
-                    // If last was ENTRADA, only SAIDA is allowed
-                    // If last was SAIDA, only ENTRADA is allowed
-                    if (process.last_action === 'ENTRADA') {
-                        acaoSelect.value = 'SAIDA';
-                        acaoSelect.querySelectorAll('option').forEach(opt => {
-                            if (opt.value === 'ENTRADA') opt.disabled = true;
-                            else opt.disabled = false;
-                        });
-                        // Trigger change to show destination if SAIDA
-                        acaoSelect.dispatchEvent(new Event('change'));
-                    } else if (process.last_action === 'SAIDA') {
+                    // Restriction logic 2.0 (Tramitação)
+                    // ACTION LOCKS:
+                    // 1. Se o último movimento foi SAIDA (externo), o próximo DEVE ser ENTRADA.
+                    // 2. Se o último movimento foi ENTRADA, agora permitimos outra ENTRADA SE o setor for interno.
+                    
+                    if (process.last_action === 'SAIDA') {
                         acaoSelect.value = 'ENTRADA';
                         acaoSelect.querySelectorAll('option').forEach(opt => {
-                            if (opt.value === 'SAIDA') opt.disabled = true;
-                            else opt.disabled = false;
+                            opt.disabled = (opt.value === 'SAIDA');
                         });
-                        acaoSelect.dispatchEvent(new Event('change'));
+                    } else if (process.last_action === 'ENTRADA') {
+                        // Se o último foi entrada em setor EXTERNO, força ENTRADA para voltar para dentro?
+                        // Na verdade, se o último foi entrada em setor INTERNO, qualquer um vale.
+                        acaoSelect.value = process.last_sector_is_internal ? 'ENTRADA' : 'ENTRADA';
+                        acaoSelect.querySelectorAll('option').forEach(opt => {
+                            opt.disabled = false; // Permite tudo se estiver "dentro"
+                        });
                     } else {
-                        // No movement yet, allow anything
+                        // No movement yet
                         acaoSelect.querySelectorAll('option').forEach(opt => opt.disabled = false);
                     }
 

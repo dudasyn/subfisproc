@@ -60,12 +60,21 @@ if ($method === 'GET') {
         $process = $stmt->fetch();
         
         if ($process) {
-            // Get last movement
-            $stmt = $pdo->prepare('SELECT action FROM movements WHERE process_id = ? ORDER BY movement_date DESC, created_at DESC LIMIT 1');
+            // Get last movement and its sector info
+            $stmt = $pdo->prepare('
+                SELECT m.action, s.is_internal as sector_is_internal, m.responsible_id
+                FROM movements m 
+                JOIN sectors s ON m.destination_sector_id = s.id
+                WHERE m.process_id = ? 
+                ORDER BY m.movement_date DESC, m.created_at DESC 
+                LIMIT 1
+            ');
             $stmt->execute([$process['id']]);
             $last_movement = $stmt->fetch();
             
             $process['last_action'] = $last_movement ? $last_movement['action'] : null;
+            $process['last_responsible_id'] = $last_movement ? $last_movement['responsible_id'] : null;
+            $process['last_sector_is_internal'] = $last_movement ? (bool)$last_movement['sector_is_internal'] : true; // Default to true if new
             jsonResponse($process);
         } else {
             jsonResponse(null);
