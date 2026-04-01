@@ -75,9 +75,9 @@ if ($method === 'GET') {
             $process['last_action'] = $last_movement ? $last_movement['action'] : null;
             $process['last_responsible_id'] = $last_movement ? $last_movement['responsible_id'] : null;
             $process['last_sector_is_internal'] = $last_movement ? (bool)$last_movement['sector_is_internal'] : true; // Default to true if new
-            jsonResponse($process);
+            jsonResponse(['exists' => true, 'process' => $process]);
         } else {
-            jsonResponse(null);
+            jsonResponse(['exists' => false]);
         }
     } elseif (isset($_GET['search']) || isset($_GET['sector_id'])) {
         $search = $_GET['search'] ?? '';

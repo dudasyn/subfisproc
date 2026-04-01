@@ -182,8 +182,8 @@ const movementsView = {
             const processNumber = processInput.value.trim();
             const warningEl = document.getElementById('mov-processo-warning');
             
-            // Regex to match DDD/NNNNNN/AAAA (3 digits, 6 digits, 4 digits separated by '/')
-            if (processNumber && !/^\d{3}\/\d{6}\/\d{4}$/.test(processNumber)) {
+            // Regex to match DDD/NNNN.../AAAA (3 digits, 3-10 digits, 4 digits separated by '/')
+            if (processNumber && !/^\d{3}\/\d{3,10}\/\d{4}$/.test(processNumber)) {
                 warningEl.style.display = 'block';
             } else {
                 warningEl.style.display = 'none';
@@ -194,6 +194,13 @@ const movementsView = {
         processInput.addEventListener('blur', async () => {
             const processNumber = processInput.value.trim();
             if (!processNumber) return;
+
+            // Limpa dados prévios antes de buscar
+            assuntoInput.value = '';
+            requerenteInput.value = '';
+            docInput.value = '';
+            obsInput.value = '';
+            responsavelSelect.value = '';
 
             try {
                 const data = await Api.movements.getByNumber(processNumber);
