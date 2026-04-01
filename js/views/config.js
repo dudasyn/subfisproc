@@ -774,7 +774,17 @@ const configView = {
         const parts = str.split(/ AP /i).map(s => s.trim()).filter(Boolean);
         
         const formatProcess = (pStr) => {
+            if (!pStr) return '';
+            // Remove everything except numbers and slashes
             let clean = pStr.replace(/[^\d/]/g, '').trim();
+            
+            // SECURITY: If it has too many slashes or is too long, it's garbage
+            const slashCount = (clean.match(/\//g) || []).length;
+            if (slashCount > 4 || clean.length > 30) {
+                console.warn('Lixo detectado no número do processo:', pStr);
+                return '';
+            }
+
             let segs = clean.split('/');
             if (segs.length === 3) {
                 let part1 = segs[0].padStart(3, '0');

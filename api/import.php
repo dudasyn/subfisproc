@@ -183,9 +183,12 @@ if ($method === 'POST') {
             }
 
             // 3. Process
-            $p_key = strtolower($process_number);
+            $p_key = strtolower(trim($process_number));
             if (!isset($processesCache[$p_key])) {
-                $stmt = $pdo->prepare("INSERT INTO processes (process_number, subject, requester, import_batch) VALUES (?, ?, ?, ?)");
+                // Use ON DUPLICATE KEY UPDATE to avoid errors even if cache missed it
+                $stmt = $pdo->prepare("INSERT INTO processes (process_number, subject, requester, import_batch) 
+                                     VALUES (?, ?, ?, ?) 
+                                     ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)");
                 $stmt->execute([$process_number, $subject, 'Importação de Dados', $batch_id]);
                 $processesCache[$p_key] = $pdo->lastInsertId();
                 $stats['processes_created']++;
@@ -209,7 +212,9 @@ if ($method === 'POST') {
                         if ($existing) {
                             $processesCache[$ap_key] = $existing;
                         } else {
-                            $stmt = $pdo->prepare("INSERT INTO processes (process_number, parent_id, subject, requester, import_batch) VALUES (?, ?, ?, ?, ?)");
+                            $stmt = $pdo->prepare("INSERT INTO processes (process_number, parent_id, subject, requester, import_batch) 
+                                                 VALUES (?, ?, ?, ?, ?) 
+                                                 ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)");
                             $stmt->execute([$attached_num, $current_process_id, "Apensado ao $process_number", 'Importação de Dados (Apenso)', $batch_id]);
                             $processesCache[$ap_key] = $pdo->lastInsertId();
                             $stats['apensos_created']++;
