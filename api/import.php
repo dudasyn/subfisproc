@@ -145,9 +145,9 @@ if ($method === 'POST') {
             if (!empty($responsible_name)) {
                 $r_key = strtolower($responsible_name);
                 if (!isset($responsiblesCache[$r_key])) {
-                    // New auditor: create with no sector yet
-                    $stmt = $pdo->prepare("INSERT INTO responsibles (name, import_batch) VALUES (?, ?)");
-                    $stmt->execute([$responsible_name, $batch_id]);
+                    // New auditor: create with current sector
+                    $stmt = $pdo->prepare("INSERT INTO responsibles (name, sector_id, import_batch) VALUES (?, ?, ?)");
+                    $stmt->execute([$responsible_name, $current_sector_id, $batch_id]);
                     $resp_id = $pdo->lastInsertId();
                     $responsiblesCache[$r_key] = $resp_id;
                     $stats['responsibles_created']++;
