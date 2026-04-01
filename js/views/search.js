@@ -69,9 +69,14 @@ const searchView = {
                         <button class="btn-secondary" id="btn-clear-search">
                             <i class="fa-solid fa-arrow-left"></i> Voltar para recentes
                         </button>
-                        <button class="btn-secondary" id="btn-delete-proc" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; display:none;">
-                            <i class="fa-solid fa-trash"></i> Excluir Processo
-                        </button>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="btn-secondary" id="btn-attach-proc" style="display:none;">
+                                <i class="fa-solid fa-link"></i> Apensar Processo
+                            </button>
+                            <button class="btn-secondary" id="btn-delete-proc" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; display:none;">
+                                <i class="fa-solid fa-trash"></i> Excluir Processo
+                            </button>
+                        </div>
                     </div>
                     <div class="grid-form mb-2">
                         <div class="card col-span-2">
@@ -99,8 +104,21 @@ const searchView = {
                                 </div>
                                 </div>
                                 <div id="res-attachment-info" class="mt-2" style="display:none; padding: 0.8rem; border-radius: var(--radius-md); background: #eff6ff; border: 1px solid #bfdbfe;">
-                                    <i class="fa-solid fa-link text-primary mr-1"></i>
-                                    <span id="res-attachment-text" style="font-size: 0.9rem; font-weight: 500; color: #1e40af;">-</span>
+                                    <div class="flex-between">
+                                        <div>
+                                            <i class="fa-solid fa-paperclip text-primary mr-1"></i>
+                                            <span id="res-attachment-text" style="font-size: 0.9rem; font-weight: 500; color: #1e40af;">-</span>
+                                        </div>
+                                        <button class="btn-secondary" id="btn-detach-main" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; background:white; display:none;">
+                                            <i class="fa-solid fa-link-slash"></i> Desapensar
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="res-children-list" class="mt-2" style="display:none;">
+                                    <span class="label">Processos Apensados:</span>
+                                    <div id="children-items-container" class="mt-1" style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                                        <!-- Children pills here -->
+                                    </div>
                                 </div>
                                 <div class="mt-2">
                                     <span class="label">Observações:</span>
@@ -235,6 +253,8 @@ const searchView = {
         const btnClearSearch = document.getElementById('btn-clear-search');
         const btnClearEmpty = document.getElementById('btn-clear-empty');
         const btnDeleteProc = document.getElementById('btn-delete-proc');
+        const btnAttachProc = document.getElementById('btn-attach-proc');
+        const btnDetachMain = document.getElementById('btn-detach-main');
         let currentProcessId = null;
 
         // Load Sectors for filter
@@ -360,14 +380,50 @@ const searchView = {
                     // Attachment Info in Details
                     const attachDiv = document.getElementById('res-attachment-info');
                     const attachText = document.getElementById('res-attachment-text');
+                    const childrenDiv = document.getElementById('res-children-list');
+                    const childrenContainer = document.getElementById('children-items-container');
+                    
                     if (process.parent_id) {
                         attachDiv.style.display = 'block';
                         attachText.textContent = `Este processo está APENSADO ao processo ${process.parent_process_number}`;
+                        btnDetachMain.style.display = 'block';
+                        childrenDiv.style.display = 'none';
+                        btnAttachProc.style.display = 'none'; // Cannot attach if already a child
                     } else if (process.attachments_count > 0) {
-                        attachDiv.style.display = 'block';
-                        attachText.textContent = `Este processo possui ${process.attachments_count} processo(s) apensado(s) a ele.`;
+                        attachDiv.style.display = 'none';
+                        childrenDiv.style.display = 'block';
+                        btnAttachProc.style.display = 'block';
+                        
+                        // Load children details from the API search to get the numbers
+                        const children = await Api.movements.search(process.process_number, null, false);
+                        // Filter to only those that have this as parent
+                        const actualChildren = children.filter(c => c.parent_id == process.id);
+                        
+                        childrenContainer.innerHTML = actualChildren.map(c => `
+                            <div class="attachment-pill">
+                                <i class="fa-solid fa-paperclip"></i>
+                                <span>${c.process_number}</span>
+                                <button class="btn-detach-child" data-id="${c.id}" title="Desapensar">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        `).join('');
+
+                        document.querySelectorAll('.btn-detach-child').forEach(btn => {
+                            btn.addEventListener('click', async (e) => {
+                                e.stopPropagation();
+                                const childId = btn.dataset.id;
+                                if(confirm('Deseja desapensar este processo?')) {
+                                    await Api.processes.detach(childId);
+                                    window.app.toast('Processo desapensado com sucesso!');
+                                    loadProcessDetails(number);
+                                }
+                            });
+                        });
                     } else {
                         attachDiv.style.display = 'none';
+                        childrenDiv.style.display = 'none';
+                        btnAttachProc.style.display = 'block';
                     }
 
                     // Fill History table
@@ -427,9 +483,77 @@ const searchView = {
             }
         });
 
+        btnAttachProc.addEventListener('click', async () => {
+            const childNumber = prompt('Digite o número do processo que deseja APENSAR a este:\n(O processo já deve estar cadastrado no sistema)');
+            if (!childNumber) return;
+
+            try {
+                btnAttachProc.disabled = true;
+                
+                // Validação: O processo filho deve existir
+                const check = await Api.movements.getByNumber(childNumber);
+                if (!check || !check.exists) {
+                    throw new Error('O processo informado não foi encontrado no sistema. Por favor, cadastre-o primeiro.');
+                }
+                
+                if (check.process.id == currentProcessId) {
+                    throw new Error('Um processo não pode ser apensado a si mesmo.');
+                }
+
+                await Api.processes.attach(currentProcessId, childNumber);
+                window.app.toast('Processo apensado com sucesso!');
+                loadProcessDetails(inputSearch.value);
+            } catch (err) {
+                window.app.toast(err.message, 'error');
+            } finally {
+                btnAttachProc.disabled = false;
+            }
+        });
+
+        btnDetachMain.addEventListener('click', async () => {
+            if (!confirm('Deseja desapensar este processo do seu processo pai?')) return;
+            try {
+                await Api.processes.detach(currentProcessId);
+                window.app.toast('Processo desapensado com sucesso!');
+                loadProcessDetails(inputSearch.value);
+            } catch (err) {
+                window.app.toast(err.message, 'error');
+            }
+        });
+
         btnClearSearch.addEventListener('click', resetView);
         btnClearEmpty.addEventListener('click', resetView);
         if(btnBackRecent) btnBackRecent.addEventListener('click', resetView);
+
+        // Styling for pills
+        const style = document.createElement('style');
+        style.textContent = `
+            .attachment-pill {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                background: #eff6ff;
+                border: 1px solid #bfdbfe;
+                padding: 0.3rem 0.8rem;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                color: #1e40af;
+                font-weight: 500;
+            }
+            .btn-detach-child {
+                border: none;
+                background: none;
+                color: #ef4444;
+                cursor: pointer;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                font-size: 1rem;
+                margin-left: 0.3rem;
+            }
+            .btn-detach-child:hover { color: #b91c1c; }
+        `;
+        document.head.appendChild(style);
 
         // Initial load
         loadRecent();

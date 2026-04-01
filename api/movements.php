@@ -197,6 +197,16 @@ if ($method === 'GET') {
         $stmt = $pdo->prepare('INSERT INTO movements (process_id, movement_date, action, destination_sector_id, responsible_id, user_id) VALUES (?, ?, ?, ?, ?, ?)');
         $stmt->execute([$process_id, $movement_date, $action, $destination_sector_id, $responsible_id, $_SESSION['user_id']]);
         
+        // JOINT MOVEMENT: If this process is a parent, move all children too
+        $stmt = $pdo->prepare('SELECT id FROM processes WHERE parent_id = ?');
+        $stmt->execute([$process_id]);
+        $children = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        foreach ($children as $child) {
+            $stmt = $pdo->prepare('INSERT INTO movements (process_id, movement_date, action, destination_sector_id, responsible_id, user_id) VALUES (?, ?, ?, ?, ?, ?)');
+            $stmt->execute([$child['id'], $movement_date, $action, $destination_sector_id, $responsible_id, $_SESSION['user_id']]);
+        }
+        
         $pdo->commit();
         jsonResponse(['success' => true]);
     } catch (Exception $e) {

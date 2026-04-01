@@ -56,12 +56,15 @@ const Api = {
         changePassword: (old_password, new_password) => Api.request('users.php', 'POST', { action: 'change-password', old_password, new_password })
     },
     processes: {
-        delete: (id) => Api.request(`processes.php?id=${id}`, 'DELETE')
+        delete: (id) => Api.request(`processes.php?id=${id}`, 'DELETE'),
+        attach: (parentId, childNumber) => Api.request('processes.php', 'POST', { action: 'attach', parent_id: parentId, child_number: childNumber }),
+        detach: (childId) => Api.request('processes.php', 'POST', { action: 'detach', child_id: childId })
     },
     reports: {
         movements: (start, end, action) => 
             Api.request(`reports.php?type=movements&start=${start}&end=${end}${action && action !== 'Todas' ? '&action='+action : ''}`, 'GET'),
-        stagnant: (days) => Api.request(`reports.php?type=stagnant&days=${days || 15}`, 'GET')
+        stagnant: (days, sectorId) => Api.request(`reports.php?type=stagnant&days=${days || 15}${sectorId ? '&sector_id=' + sectorId : ''}`, 'GET'),
+        auditorStats: () => Api.request('reports.php?type=auditors', 'GET')
     },
     import: {
         upload: (data, batchId) => Api.request(`import.php${batchId ? '?batch_id=' + batchId : ''}`, 'POST', data),

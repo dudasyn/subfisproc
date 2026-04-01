@@ -17,6 +17,10 @@ const movementsView = {
                                     <small id="mov-processo-warning" style="color:var(--warning-color, #eab308); font-weight: 500; display:none; margin-top:0.25rem;">
                                         <i class="fa-solid fa-triangle-exclamation"></i> Formato sugerido: 000/000000/0000
                                     </small>
+                                    <div id="mov-attachments-alert" style="display:none; background:#fff7ed; border:1px solid #ffedd5; color:#9a3412; padding:0.8rem; margin-top:0.5rem; border-radius:var(--radius-md); font-size:0.85rem; line-height:1.4;">
+                                        <i class="fa-solid fa-triangle-exclamation" style="color:#f97316;"></i> 
+                                        <strong>Atenção:</strong> Este processo possui <strong>apensos</strong> vinculados. Ao registrar esta ação, todos os apensos serão movimentados automaticamente para o mesmo destino.
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label>Data e Hora da Movimentação *</label>
@@ -195,7 +199,10 @@ const movementsView = {
             const processNumber = processInput.value.trim();
             if (!processNumber) return;
 
+            const attachmentsAlert = document.getElementById('mov-attachments-alert');
+
             // Limpa dados prévios antes de buscar
+            attachmentsAlert.style.display = 'none';
             assuntoInput.value = '';
             requerenteInput.value = '';
             docInput.value = '';
@@ -214,6 +221,11 @@ const movementsView = {
                     // Auto-fill Auditor Responsável
                     if (process.last_responsible_id) {
                         responsavelSelect.value = process.last_responsible_id;
+                    }
+
+                    // Show joint movement alert
+                    if (process.attachments_count > 0) {
+                        attachmentsAlert.style.display = 'block';
                     }
 
                     // Lock fields if process exists
@@ -287,6 +299,7 @@ const movementsView = {
                 document.getElementById('mov-data').value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
                 acaoSelect.value = 'ENTRADA';
                 destinoSelect.value = user && user.sector_id ? user.sector_id : '';
+                document.getElementById('mov-attachments-alert').style.display = 'none';
                 responsavelSelect.value = '';
             } catch (err) {
                 window.app.toast(err.message, 'error');
