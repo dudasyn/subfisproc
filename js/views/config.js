@@ -200,7 +200,8 @@ const configView = {
                 </tr>
             `).join('');
         } catch (e) {
-            document.getElementById('tbody-sectors').innerHTML = `<tr><td colspan="3" class="text-center text-danger">Erro ao carregar setores</td></tr>`;
+            const tbody = document.getElementById('tbody-sectors');
+            if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">Erro ao carregar setores: ${e.message}</td></tr>`;
         }
     },
 
@@ -229,7 +230,7 @@ const configView = {
             }).join('');
         } catch (e) {
             const tbody = document.getElementById('tbody-responsibles');
-            if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">Erro ao carregar responsáveis</td></tr>`;
+            if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">Erro ao carregar responsáveis: ${e.message}</td></tr>`;
         }
     },
 
@@ -258,7 +259,8 @@ const configView = {
                 </tr>
             `).join('');
         } catch (e) {
-            document.getElementById('tbody-users').innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erro ao carregar colaboradores</td></tr>`;
+            const tbody = document.getElementById('tbody-users');
+            if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erro ao carregar colaboradores: ${e.message}</td></tr>`;
         }
     },
 
@@ -516,7 +518,13 @@ const configView = {
                     </td>
                 </tr>
             `).join('');
-        } catch(e) { console.error('Erro ao carregar historico', e); }
+        } catch(e) {
+            console.error('Erro ao carregar historico', e);
+            const tbody = document.getElementById('tbody-import-history');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger" style="color:var(--danger)">Erro ao carregar histórico: ${e.message}</td></tr>`;
+            }
+        }
     },
 
     async deleteImportBatch(id) {
