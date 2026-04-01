@@ -13,12 +13,7 @@ const movementsView = {
                             <div class="grid-form">
                                 <div class="form-group col-span-2">
                                     <label>Número do Processo *</label>
-                                    <div class="input-with-button">
-                                        <input type="text" id="mov-processo" required placeholder="Ex: 009/000345/2026" autocomplete="off" style="flex:1">
-                                        <button type="button" id="btn-search-portal" class="btn-icon-primary" title="Consultar no Portal da Prefeitura">
-                                            <i class="fa-solid fa-magnifying-glass"></i>
-                                        </button>
-                                    </div>
+                                    <input type="text" id="mov-processo" required placeholder="Ex: 009/000345/2026" autocomplete="off">
                                     <small id="mov-processo-warning" style="color:var(--warning-color, #eab308); font-weight: 500; display:none; margin-top:0.25rem;">
                                         <i class="fa-solid fa-triangle-exclamation"></i> Formato sugerido: 000/000000/0000
                                     </small>
@@ -48,8 +43,12 @@ const movementsView = {
                                 </div>
                             </div>
                             
-                            <hr class="my-2">
-                            <h4>Dados do Processo</h4>
+                            <div class="flex-between my-2">
+                                <h4>Dados do Processo</h4>
+                                <button type="button" id="btn-search-portal" class="btn-outline-primary btn-sm">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Puxar do Portal
+                                </button>
+                            </div>
                             
                             <div class="grid-form">
                                 <div class="form-group col-span-2">
@@ -101,9 +100,10 @@ const movementsView = {
                 searchPortalBtn.disabled = true;
                 searchPortalBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                 
-                const scraped = await Api.scraper.fetch(processNumber);
+                const result = await Api.scraper.fetch(processNumber);
                 
-                if (scraped && (scraped.interessado || scraped.requerente || scraped.assunto)) {
+                if (result.success) {
+                    const scraped = result.data;
                     // Libera campos para preenchimento se estiverem bloqueados
                     requerenteInput.disabled = false;
                     assuntoInput.disabled = false;
@@ -122,7 +122,8 @@ const movementsView = {
                     
                     window.app.toast('Dados do portal carregados!', 'success');
                 } else {
-                    window.app.toast('Não foram encontrados novos dados no portal.', 'info');
+                    window.app.toast(result.message || 'Não foram encontrados novos dados no portal.', 'warning');
+                    console.error('Scraping Error:', result.message);
                 }
             } catch (err) {
                 console.error(err);
@@ -130,7 +131,7 @@ const movementsView = {
                 const btnSave = document.getElementById('btn-save-mov');
                 if (btnSave) btnSave.disabled = false;
                 searchPortalBtn.disabled = false;
-                searchPortalBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i>';
+                searchPortalBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Puxar do Portal';
             }
         };
 
@@ -214,14 +215,13 @@ const movementsView = {
                     docInput.disabled = true;
 
                     // Lógica especial de ENRIQUECIMENTO:
-                    // Se o processo veio de importação (nome genérico), tenta buscar no portal automaticamente
+                    // Se o processo veio de importação (nome genérico), mostra aviso mas NÃO puxa automático agora
                     if (process.requester === 'Importação de Dados' || process.requester === 'Processo Importado') {
-                        window.app.toast('Processo com dados genéricos. Tentando enriquecer pelo portal...', 'info');
-                        performScraping(processNumber);
+                        window.app.toast('Processo com dados genéricos. Se desejar, use o botão ao lado de Dados do Processo.', 'info');
                     } else {
                         window.app.toast('Dados do processo carregados!', 'success');
                     }
-
+                    
                     // Restriction logic 2.0 (Tramitação)
                     if (process.last_action === 'SAIDA') {
                         acaoSelect.value = 'ENTRADA';
@@ -242,9 +242,7 @@ const movementsView = {
                     requerenteInput.disabled = false;
                     docInput.disabled = false;
                     acaoSelect.querySelectorAll('option').forEach(opt => opt.disabled = false);
-                    window.app.toast('Novo processo. Buscando dados no portal...', 'info');
-                    
-                    performScraping(processNumber);
+                    window.app.toast('Novo processo identificado. Preencha ou use o botão Puxar do Portal.', 'info');
                 }
             } catch (err) {
                 console.error(err);

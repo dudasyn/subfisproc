@@ -90,12 +90,17 @@ const Api = {
         async fetch(processNumber) {
             try {
                 const response = await fetch(`${API_BASE}/scraper.php?process=${encodeURIComponent(processNumber)}`);
-                if (!response.ok) return null;
                 const result = await response.json();
-                return result.success ? result.data : null;
+                
+                if (!response.ok || !result.success) {
+                    console.error('Scraper Error:', result.message || 'Erro desconhecido');
+                    return { success: false, message: result.message || 'Erro de rede' };
+                }
+                
+                return { success: true, data: result.data };
             } catch (err) {
-                console.warn('Scraping falhou silenciosamente');
-                return null;
+                console.error('Fetch error:', err);
+                return { success: false, message: 'Erro de conexão local ou rede lenta' };
             }
         }
     }

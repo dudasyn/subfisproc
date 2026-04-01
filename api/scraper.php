@@ -53,6 +53,16 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 ]);
 
 $res = curl_exec($ch);
+
+if (curl_errno($ch)) {
+    $error_msg = curl_error($ch);
+    $error_code = curl_errno($ch);
+    curl_close($ch);
+    jsonResponse([
+        'success' => false, 
+        'message' => "Erro de conexão com o portal (Caxias): $error_msg (Código: $error_code). Isso pode ser causado por bloqueio de porta no servidor."
+    ], 500);
+}
 curl_close($ch);
 
 // 3. Parsea o resultado
