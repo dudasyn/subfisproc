@@ -126,18 +126,6 @@ const searchView = {
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="card">
-                            <div class="card-header border-bottom">
-                                <h4>Localização Atual</h4>
-                            </div>
-                            <div class="card-body text-center py-3">
-                                <div id="status-badge" class="status-indicator">
-                                    <i class="fa-solid fa-location-dot"></i>
-                                    <h2 id="res-sector-now">...</h2>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="card">
@@ -151,7 +139,8 @@ const searchView = {
                                         <th>Data</th>
                                         <th>Ação</th>
                                         <th>Destino / Local</th>
-                                        <th>Responsável</th>
+                                        <th>Auditor Responsável</th>
+                                        <th>Colaborador</th>
                                     </tr>
                                 </thead>
                                 <tbody id="history-body">
@@ -371,10 +360,8 @@ const searchView = {
                     if (lastMov) {
                         const setorName = lastMov.destination_sector || 'Não informado';
                         document.getElementById('res-status').textContent = lastMov.action === 'ENTRADA' ? 'Em posse de ' + setorName : 'Enviado para ' + setorName;
-                        document.getElementById('res-sector-now').textContent = setorName;
                     } else {
                         document.getElementById('res-status').textContent = 'Sem movimentação';
-                        document.getElementById('res-sector-now').textContent = '-';
                     }
 
                     // Attachment Info in Details
@@ -428,14 +415,15 @@ const searchView = {
 
                     // Fill History table
                     const tbody = document.getElementById('history-body');
-                    tbody.innerHTML = history.map(m => `
+                    tbody.innerHTML = history.length ? history.map(h => `
                         <tr>
-                            <td>${window.app.formatDate(m.movement_date)}</td>
-                            <td><span class="badge-${m.action.toLowerCase()}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : m.action}</span></td>
-                            <td>${m.destination_sector}</td>
-                            <td>${m.responsible_name || '<span style="color:var(--text-secondary);font-style:italic;">Não definido</span>'}</td>
+                            <td>${window.app.formatDate(h.movement_date)}</td>
+                            <td><span class="badge-${h.action.toLowerCase()}">${h.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : h.action}</span></td>
+                            <td>${h.destination_sector}</td>
+                            <td>${h.responsible_name || '-'}</td>
+                            <td>${h.user_name || '-'}</td>
                         </tr>
-                    `).join('');
+                    `).join('') : '<tr><td colspan="5" class="text-center">Nenhuma movimentação encontrada</td></tr>';
 
                     resultsDiv.style.display = 'block';
                     recentSection.style.display = 'none';
@@ -551,7 +539,18 @@ const searchView = {
                 font-size: 1rem;
                 margin-left: 0.3rem;
             }
-            .btn-detach-child:hover { color: #b91c1c; }
+            .attachment-pill:hover { background: #dbeafe; }
+            
+            #history-body td {
+                padding: 1rem 0.75rem;
+                vertical-align: middle;
+            }
+            #history-body tr {
+                border-bottom: 1px solid #f1f5f9;
+            }
+            #history-body tr:last-child {
+                border-bottom: none;
+            }
         `;
         document.head.appendChild(style);
 
