@@ -13,7 +13,12 @@ const movementsView = {
                             <div class="grid-form">
                                 <div class="form-group col-span-2">
                                     <label>Número do Processo *</label>
-                                    <input type="text" id="mov-processo" required placeholder="Ex: 009/000345/2026" autocomplete="off">
+                                    <div class="input-with-button">
+                                        <input type="text" id="mov-processo" required placeholder="Ex: 009/000345/2026" autocomplete="off" style="flex:1">
+                                        <button type="button" id="btn-search-portal" class="btn-icon-primary" title="Consultar no Portal da Prefeitura">
+                                            <i class="fa-solid fa-magnifying-glass"></i>
+                                        </button>
+                                    </div>
                                     <small id="mov-processo-warning" style="color:var(--warning-color, #eab308); font-weight: 500; display:none; margin-top:0.25rem;">
                                         <i class="fa-solid fa-triangle-exclamation"></i> Formato sugerido: 000/000000/0000
                                     </small>
@@ -82,10 +87,62 @@ const movementsView = {
         const destinoDiv = document.getElementById('div-destino');
         const destinoSelect = document.getElementById('mov-destino');
         const responsavelSelect = document.getElementById('mov-responsavel');
+        const searchPortalBtn = document.getElementById('btn-search-portal');
         const assuntoInput = document.getElementById('mov-assunto');
         const requerenteInput = document.getElementById('mov-requerente');
         const docInput = document.getElementById('mov-doc');
         const obsInput = document.getElementById('mov-obs');
+
+        // Função compartilhada para buscar no portal
+        const performScraping = async (processNumber) => {
+            try {
+                const btnSave = document.getElementById('btn-save-mov');
+                if (btnSave) btnSave.disabled = true;
+                searchPortalBtn.disabled = true;
+                searchPortalBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                
+                const scraped = await Api.scraper.fetch(processNumber);
+                
+                if (scraped && (scraped.interessado || scraped.requerente || scraped.assunto)) {
+                    // Libera campos para preenchimento se estiverem bloqueados
+                    requerenteInput.disabled = false;
+                    assuntoInput.disabled = false;
+                    
+                    if (!requerenteInput.value || requerenteInput.value === 'Importação de Dados' || requerenteInput.value === 'Processo Importado') {
+                        requerenteInput.value = scraped.interessado || scraped.requerente || '';
+                    }
+                    
+                    if (!assuntoInput.value || assuntoInput.value === 'Processo Importado' || assuntoInput.value === 'Assunto do processo') {
+                        assuntoInput.value = scraped.assunto || scraped.assunto_original || '';
+                    }
+                    
+                    if (!obsInput.value) {
+                        obsInput.value = scraped.observacao || '';
+                    }
+                    
+                    window.app.toast('Dados do portal carregados!', 'success');
+                } else {
+                    window.app.toast('Não foram encontrados novos dados no portal.', 'info');
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                const btnSave = document.getElementById('btn-save-mov');
+                if (btnSave) btnSave.disabled = false;
+                searchPortalBtn.disabled = false;
+                searchPortalBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i>';
+            }
+        };
+
+        // Manual search button
+        searchPortalBtn.addEventListener('click', () => {
+            const processNumber = processInput.value.trim();
+            if (processNumber) {
+                performScraping(processNumber);
+            } else {
+                window.app.toast('Informe o número do processo primeiro.', 'warning');
+            }
+        });
 
         // Load responsibles list
         try {
@@ -138,8 +195,9 @@ const movementsView = {
             if (!processNumber) return;
 
             try {
-                const process = await Api.movements.getByNumber(processNumber);
-                if (process) {
+                const data = await Api.movements.getByNumber(processNumber);
+                if (data && data.exists) {
+                    const process = data.process;
                     assuntoInput.value = process.subject || '';
                     requerenteInput.value = process.requester || '';
                     docInput.value = process.document_number || '';
@@ -155,36 +213,38 @@ const movementsView = {
                     requerenteInput.disabled = true;
                     docInput.disabled = true;
 
+                    // Lógica especial de ENRIQUECIMENTO:
+                    // Se o processo veio de importação (nome genérico), tenta buscar no portal automaticamente
+                    if (process.requester === 'Importação de Dados' || process.requester === 'Processo Importado') {
+                        window.app.toast('Processo com dados genéricos. Tentando enriquecer pelo portal...', 'info');
+                        performScraping(processNumber);
+                    } else {
+                        window.app.toast('Dados do processo carregados!', 'success');
+                    }
+
                     // Restriction logic 2.0 (Tramitação)
-                    // ACTION LOCKS:
-                    // 1. Se o último movimento foi SAIDA (externo), o próximo DEVE ser ENTRADA.
-                    // 2. Se o último movimento foi ENTRADA, agora permitimos outra ENTRADA SE o setor for interno.
-                    
                     if (process.last_action === 'SAIDA') {
                         acaoSelect.value = 'ENTRADA';
                         acaoSelect.querySelectorAll('option').forEach(opt => {
                             opt.disabled = (opt.value === 'SAIDA');
                         });
                     } else if (process.last_action === 'ENTRADA') {
-                        // Se o último foi entrada em setor EXTERNO, força ENTRADA para voltar para dentro?
-                        // Na verdade, se o último foi entrada em setor INTERNO, qualquer um vale.
                         acaoSelect.value = process.last_sector_is_internal ? 'ENTRADA' : 'ENTRADA';
                         acaoSelect.querySelectorAll('option').forEach(opt => {
-                            opt.disabled = false; // Permite tudo se estiver "dentro"
+                            opt.disabled = false;
                         });
                     } else {
-                        // No movement yet
                         acaoSelect.querySelectorAll('option').forEach(opt => opt.disabled = false);
                     }
-
-                    window.app.toast('Dados do processo carregados!', 'success');
                 } else {
                     // New process
                     assuntoInput.disabled = false;
                     requerenteInput.disabled = false;
                     docInput.disabled = false;
                     acaoSelect.querySelectorAll('option').forEach(opt => opt.disabled = false);
-                    window.app.toast('Novo processo identificado.', 'info');
+                    window.app.toast('Novo processo. Buscando dados no portal...', 'info');
+                    
+                    performScraping(processNumber);
                 }
             } catch (err) {
                 console.error(err);

@@ -83,5 +83,20 @@ const Api = {
     },
     dashboard: {
         getStats: () => Api.request('dashboard.php', 'GET')
+    },
+    
+    // Novo motorzinho Web Scraper
+    scraper: {
+        async fetch(processNumber) {
+            try {
+                const response = await fetch(`${API_BASE}/scraper.php?process=${encodeURIComponent(processNumber)}`);
+                if (!response.ok) return null;
+                const result = await response.json();
+                return result.success ? result.data : null;
+            } catch (err) {
+                console.warn('Scraping falhou silenciosamente');
+                return null;
+            }
+        }
     }
 };
