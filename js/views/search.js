@@ -334,14 +334,15 @@ const searchView = {
 
         const loadProcessDetails = async (number) => {
             try {
-                const process = await Api.movements.getByNumber(number);
-                if (process) {
+                const data = await Api.movements.getByNumber(number);
+                if (data && data.exists) {
+                    const process = data.process;
                     // Load history
                     const history = await Api.movements.listByProcess(process.id);
                     
                     // Fill Details
-                    document.getElementById('res-assunto').textContent = process.subject;
-                    document.getElementById('res-requerente').textContent = process.requester;
+                    document.getElementById('res-assunto').textContent = process.subject || 'Processo Importado';
+                    document.getElementById('res-requerente').textContent = process.requester || 'Importação de Dados';
                     document.getElementById('res-doc').textContent = process.document_number || 'Não informado';
                     document.getElementById('res-obs').textContent = process.observations || 'Sem observações';
                     
