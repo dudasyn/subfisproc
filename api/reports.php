@@ -23,6 +23,8 @@ if ($type === 'movements') {
             p.process_number,
             p.subject,
             p.requester,
+            p.parent_id,
+            (SELECT COUNT(*) FROM processes WHERE parent_id = p.id) as attachments_count,
             s.name as destination_sector,
             u.name as user_name
         FROM movements m
@@ -55,6 +57,8 @@ if ($type === 'movements') {
             p.process_number,
             p.subject,
             p.requester,
+            p.parent_id,
+            (SELECT COUNT(*) FROM processes WHERE parent_id = p.id) as attachments_count,
             m_last.movement_date as last_movement,
             DATEDIFF(CURRENT_DATE, m_last.movement_date) as idle_days
         FROM processes p

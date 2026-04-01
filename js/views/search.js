@@ -97,6 +97,11 @@ const searchView = {
                                         <span class="value" id="res-status">-</span>
                                     </div>
                                 </div>
+                                </div>
+                                <div id="res-attachment-info" class="mt-2" style="display:none; padding: 0.8rem; border-radius: var(--radius-md); background: #eff6ff; border: 1px solid #bfdbfe;">
+                                    <i class="fa-solid fa-link text-primary mr-1"></i>
+                                    <span id="res-attachment-text" style="font-size: 0.9rem; font-weight: 500; color: #1e40af;">-</span>
+                                </div>
                                 <div class="mt-2">
                                     <span class="label">Observações:</span>
                                     <p class="text-secondary mt-1" id="res-obs">-</p>
@@ -247,12 +252,13 @@ const searchView = {
                 recentList.innerHTML = latest.map(m => `
                     <div class="recent-item" data-number="${m.process_number}">
                         <div class="recent-info">
-                            <h5>${m.process_number}</h5>
+                            <h5>${m.process_number} ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="font-size:0.8rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="font-size:0.8rem; color:var(--primary-color);"></i>' : '')}</h5>
                             <p>${m.subject}</p>
+                            ${m.parent_id ? `<small style="color:var(--text-secondary); font-size:0.7rem;">Apenso ao ${m.parent_process_number}</small>` : (m.attachments_count > 0 ? `<small style="color:var(--primary-color); font-size:0.7rem;">Possui ${m.attachments_count} apenso(s)</small>` : '')}
                         </div>
                         <div class="recent-status">
                             <span class="badge-${m.action.toLowerCase()}">${m.action}</span>
-                            <p style="font-size: 0.7rem; margin-top: 4px;">${new Date(m.movement_date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                            <p style="font-size: 0.7rem; margin-top: 4px;">${window.app.formatDate(m.movement_date)}</p>
                         </div>
                     </div>
                 `).join('');
@@ -271,12 +277,13 @@ const searchView = {
         const renderProcessItem = (m) => `
             <div class="recent-item search-result-item" data-number="${m.process_number}">
                 <div class="recent-info">
-                    <h5>${m.process_number}</h5>
+                    <h5>${m.process_number} ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="font-size:0.8rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="font-size:0.8rem; color:var(--primary-color);"></i>' : '')}</h5>
                     <p>${m.subject || 'Sem assunto'}</p>
+                    ${m.parent_id ? `<small style="color:var(--text-secondary); font-size:0.7rem;">Apenso ao ${m.parent_process_number}</small>` : (m.attachments_count > 0 ? `<small style="color:var(--primary-color); font-size:0.7rem;">Possui ${m.attachments_count} apenso(s)</small>` : '')}
                 </div>
                 <div class="recent-status">
                     <span class="badge-${(m.action || 'NOVO').toLowerCase()}">${m.action || 'NOVO'}</span>
-                    <p style="font-size: 0.7rem; margin-top: 4px;">${m.movement_date ? new Date(m.movement_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</p>
+                    <p style="font-size: 0.7rem; margin-top: 4px;">${window.app.formatDate(m.movement_date)}</p>
                 </div>
             </div>
         `;
@@ -348,11 +355,24 @@ const searchView = {
                         document.getElementById('res-sector-now').textContent = '-';
                     }
 
+                    // Attachment Info in Details
+                    const attachDiv = document.getElementById('res-attachment-info');
+                    const attachText = document.getElementById('res-attachment-text');
+                    if (process.parent_id) {
+                        attachDiv.style.display = 'block';
+                        attachText.textContent = `Este processo está APENSADO ao processo ${process.parent_process_number}`;
+                    } else if (process.attachments_count > 0) {
+                        attachDiv.style.display = 'block';
+                        attachText.textContent = `Este processo possui ${process.attachments_count} processo(s) apensado(s) a ele.`;
+                    } else {
+                        attachDiv.style.display = 'none';
+                    }
+
                     // Fill History table
                     const tbody = document.getElementById('history-body');
                     tbody.innerHTML = history.map(m => `
                         <tr>
-                            <td>${new Date(m.movement_date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                            <td>${window.app.formatDate(m.movement_date)}</td>
                             <td><span class="badge-${m.action.toLowerCase()}">${m.action}</span></td>
                             <td>${m.destination_sector}</td>
                             <td>${m.responsible_name || '<span style="color:var(--text-secondary);font-style:italic;">Não definido</span>'}</td>

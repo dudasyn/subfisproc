@@ -19,8 +19,8 @@ const movementsView = {
                                     </small>
                                 </div>
                                 <div class="form-group">
-                                    <label>Data da Movimentação *</label>
-                                    <input type="date" id="mov-data" required value="${new Date().toISOString().split('T')[0]}">
+                                    <label>Data e Hora da Movimentação *</label>
+                                    <input type="datetime-local" id="mov-data" required value="${new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}">
                                 </div>
                                 <div class="form-group">
                                     <label>Ação *</label>
@@ -201,7 +201,7 @@ const movementsView = {
                 docInput.disabled = false;
                 acaoSelect.querySelectorAll('option').forEach(opt => opt.disabled = false);
                 
-                document.getElementById('mov-data').value = new Date().toISOString().split('T')[0];
+                document.getElementById('mov-data').value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
                 acaoSelect.value = 'ENTRADA';
                 destinoSelect.value = '';
                 responsavelSelect.value = '';

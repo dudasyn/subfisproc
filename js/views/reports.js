@@ -170,9 +170,12 @@ const reportsView = {
 
                 tbody.innerHTML = data.map(m => `
                     <tr>
-                        <td>${new Date(m.movement_date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                        <td>${window.app.formatDate(m.movement_date)}</td>
                         <td><span class="badge ${m.action === 'ENTRADA' ? 'badge-success' : 'badge-warning'}">${m.action}</span></td>
-                        <td><strong>${m.process_number}</strong></td>
+                        <td>
+                            <strong>${m.process_number}</strong>
+                            ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="margin-left:5px; font-size:0.7rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="margin-left:5px; font-size:0.7rem; color:var(--primary-color);"></i>' : '')}
+                        </td>
                         <td>${m.destination_sector}</td>
                         <td>${m.user_name}</td>
                     </tr>
@@ -213,10 +216,13 @@ const reportsView = {
                 const data = await Api.reports.stagnant(days);
                 tbody.innerHTML = data.map(p => `
                     <tr>
-                        <td><strong>${p.process_number}</strong></td>
+                        <td>
+                            <strong>${p.process_number}</strong>
+                            ${p.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="margin-left:5px; font-size:0.7rem; color:var(--text-secondary);"></i>' : (p.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="margin-left:5px; font-size:0.7rem; color:var(--primary-color);"></i>' : '')}
+                        </td>
                         <td>${p.subject}</td>
                         <td>${p.requester}</td>
-                        <td>${new Date(p.last_movement + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                        <td>${window.app.formatDate(p.last_movement)}</td>
                         <td class="text-center"><span class="badge badge-danger">${p.idle_days} dias</span></td>
                     </tr>
                 `).join('');

@@ -53,6 +53,17 @@
 .badge-neutral { background: #e2e8f0; color: #475569; }
 .badge-danger { background: #fee2e2; color: #b91c1c; }
 
+.badge-removable { 
+    display: inline-flex; align-items: center; gap: 0.5rem; 
+    padding-right: 0.5rem; transition: var(--transition);
+}
+.badge-remove-btn { 
+    cursor: pointer; display: flex; align-items: center; 
+    justify-content: center; width: 16px; height: 16px; 
+    border-radius: 50%; opacity: 0.6; transition: var(--transition);
+}
+.badge-remove-btn:hover { background: rgba(0,0,0,0.1); opacity: 1; color: var(--danger); }
+
 /* Forms */
 .grid-form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
 .col-span-2 { grid-column: span 2; }

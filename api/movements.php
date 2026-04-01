@@ -16,6 +16,9 @@ if ($method === 'GET') {
         // Return latest 10 unique processes that had movements
         $stmt = $pdo->query('
             SELECT m.id, p.process_number, p.subject, m.movement_date, m.action, 
+                   p.parent_id,
+                   (SELECT COUNT(*) FROM processes WHERE parent_id = p.id) as attachments_count,
+                   (SELECT process_number FROM processes WHERE id = p.parent_id) as parent_process_number,
                    s.name as destination_sector, u.name as user_name,
                    r.name as responsible_name
             FROM movements m
@@ -46,7 +49,13 @@ if ($method === 'GET') {
         jsonResponse($stmt->fetchAll());
     } elseif ($process_number) {
         // Fetch process details and last movement
-        $stmt = $pdo->prepare('SELECT id, subject, requester, document_number, observations FROM processes WHERE process_number = ?');
+        $stmt = $pdo->prepare('
+            SELECT id, subject, requester, document_number, observations, parent_id,
+                   (SELECT COUNT(*) FROM processes WHERE parent_id = processes.id) as attachments_count,
+                   (SELECT process_number FROM processes p2 WHERE p2.id = processes.parent_id) as parent_process_number
+            FROM processes 
+            WHERE process_number = ?
+        ');
         $stmt->execute([$process_number]);
         $process = $stmt->fetch();
         
@@ -67,7 +76,10 @@ if ($method === 'GET') {
         $only_current = isset($_GET['only_current']) && $_GET['only_current'] === '1';
         
         $params = [];
-        $sql = "SELECT DISTINCT p.id, p.process_number, p.subject, p.requester FROM processes p ";
+        $sql = "SELECT DISTINCT p.id, p.process_number, p.subject, p.requester, p.parent_id,
+                (SELECT COUNT(*) FROM processes WHERE parent_id = p.id) as attachments_count,
+                (SELECT process_number FROM processes WHERE id = p.parent_id) as parent_process_number 
+                FROM processes p ";
         
         if ($only_current && $sector_id) {
             $sql .= "
@@ -113,6 +125,9 @@ if ($method === 'GET') {
         // List all recent movements
         $stmt = $pdo->query('
             SELECT m.id, p.process_number, p.subject, m.movement_date, m.action, 
+                   p.parent_id,
+                   (SELECT COUNT(*) FROM processes WHERE parent_id = p.id) as attachments_count,
+                   (SELECT process_number FROM processes WHERE id = p.parent_id) as parent_process_number,
                    s.name as destination_sector, u.name as user_name,
                    r.name as responsible_name
             FROM movements m
@@ -134,7 +149,7 @@ if ($method === 'GET') {
     $document_number = trim($data['document_number'] ?? '');
     $observations = trim($data['observations'] ?? '');
     
-    $movement_date = $data['movement_date'] ?? date('Y-m-d');
+    $movement_date = !empty($data['movement_date']) ? $data['movement_date'] : date('Y-m-d H:i:s');
     $action = $data['action'] ?? ''; // ENTRADA or SAIDA
     $destination_sector_id = $data['destination_sector_id'] ?? null;
     $responsible_id = !empty($data['responsible_id']) ? $data['responsible_id'] : null;

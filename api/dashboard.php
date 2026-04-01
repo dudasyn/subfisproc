@@ -31,7 +31,10 @@ if ($method === 'GET') {
 
     // Recent activity (last 7 movements)
     $stmt = $pdo->query('
-        SELECT m.id, p.process_number, m.action, m.movement_date, s.name as destination_sector, u.name as user_name
+        SELECT m.id, p.process_number, m.action, m.movement_date, 
+               p.parent_id,
+               (SELECT COUNT(*) FROM processes WHERE parent_id = p.id) as attachments_count,
+               s.name as destination_sector, u.name as user_name
         FROM movements m
         JOIN processes p ON m.process_id = p.id
         JOIN sectors s ON m.destination_sector_id = s.id

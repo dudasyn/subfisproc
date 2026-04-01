@@ -308,41 +308,83 @@ const configView = {
     },
 
     showResponsibleModal(id = null, currentName = '', currentSectorIds = '') {
-        const selectedIds = currentSectorIds ? currentSectorIds.split(',').map(s => s.trim()) : [];
-        const checkboxes = this.sectors.map(s => `
-            <label style="display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0; cursor:pointer;">
-                <input type="checkbox" name="resp-sectors" value="${s.id}" ${selectedIds.includes(String(s.id)) ? 'checked' : ''}>
-                ${s.name}
-            </label>
-        `).join('');
+        let selectedSectors = [];
+        if (currentSectorIds) {
+            const ids = currentSectorIds.split(',').map(s => s.trim());
+            selectedSectors = this.sectors.filter(s => ids.includes(String(s.id)));
+        }
+
         const html = `
             <div class="form-group mb-1">
                 <label>Nome do Responsável</label>
-                <input type="text" id="resp-name" required value="${currentName}" placeholder="Ex: João da Silva">
+                <input type="text" id="resp-name" required value="${currentName.replace(/"/g, '&quot;')}" placeholder="Ex: João da Silva">
+            </div>
+            <div class="form-group mb-1">
+                <label>Adicionar Setor de Atuação</label>
+                <select id="resp-add-sector">
+                    <option value="">Selecione um setor para adicionar...</option>
+                    ${this.sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                </select>
             </div>
             <div class="form-group">
-                <label>Setores de Atuação</label>
-                <div style="max-height:200px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--radius); padding:0.5rem 1rem;">
-                    ${checkboxes}
+                <label>Setores Selecionados</label>
+                <div id="resp-badge-container" style="display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 44px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #f8fafc;">
+                    <!-- Badges injected here -->
                 </div>
             </div>
         `;
+
         this.showModal(id ? 'Editar Responsável' : 'Novo Responsável', html, async () => {
-            try {
-                const name = document.getElementById('resp-name').value;
-                const sector_ids = [...document.querySelectorAll('input[name="resp-sectors"]:checked')].map(cb => cb.value);
-                if (id) {
-                    await fetch('api/responsibles.php', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, name, sector_ids }) }).then(r => r.json());
-                } else {
-                    await fetch('api/responsibles.php', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name, sector_ids }) }).then(r => r.json());
-                }
-                window.app.toast('Responsável salvo!');
-                this.loadResponsibles();
-            } catch(e) {
-                window.app.toast(e.message, 'error');
-                throw e;
+            const name = document.getElementById('resp-name').value;
+            const sector_ids = selectedSectors.map(s => s.id);
+            if (id) {
+                await fetch('api/responsibles.php', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, name, sector_ids }) }).then(r => r.json());
+            } else {
+                await fetch('api/responsibles.php', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name, sector_ids }) }).then(r => r.json());
             }
+            window.app.toast('Responsável salvo!');
+            this.loadResponsibles();
         });
+
+        // Initialize UI logic after Modal is rendered
+        const container = document.getElementById('resp-badge-container');
+        const select = document.getElementById('resp-add-sector');
+
+        const renderBadges = () => {
+            if (selectedSectors.length === 0) {
+                container.innerHTML = '<span class="text-secondary" style="font-size: 0.85rem; padding: 0.2rem 0.5rem;">Nenhum setor selecionado</span>';
+                return;
+            }
+
+            container.innerHTML = selectedSectors.map(s => `
+                <span class="badge badge-neutral badge-removable" data-id="${s.id}" style="cursor: pointer;">
+                    ${s.name}
+                    <i class="fa-solid fa-xmark badge-remove-btn"></i>
+                </span>
+            `).join('');
+
+            // Attach individual remove events
+            container.querySelectorAll('.badge-removable').forEach(badge => {
+                badge.onclick = () => {
+                    const sid = badge.dataset.id;
+                    selectedSectors = selectedSectors.filter(s => String(s.id) !== String(sid));
+                    renderBadges();
+                };
+            });
+        };
+
+        select.onchange = () => {
+            const sid = select.value;
+            if (!sid) return;
+            if (!selectedSectors.some(s => String(s.id) === String(sid))) {
+                const sector = this.sectors.find(s => String(s.id) === String(sid));
+                if (sector) selectedSectors.push(sector);
+                renderBadges();
+            }
+            select.value = ''; // Reset
+        };
+
+        renderBadges();
     },
 
     showSectorModal(id = null, currentName = '') {
@@ -576,14 +618,39 @@ const configView = {
                 destination_sector: headers.find(h => /setor/i.test(h)) || headers[5]
             };
 
-            this.importData = json.map(row => ({
-                process_number: row[mapping.process_number],
-                movement_date: this.formatExcelDate(row[mapping.movement_date]),
-                action: row[mapping.action],
-                responsible: row[mapping.responsible],
-                subject: row[mapping.subject],
-                destination_sector: row[mapping.destination_sector]
-            })).filter(r => r.process_number);
+            // Detect if format is MM/DD/YYYY (US Format) by scanning the first 100 rows
+            let isUSFormat = false;
+            for (let i = 0; i < Math.min(json.length, 100); i++) {
+                const dateVal = json[i][mapping.movement_date];
+                if (typeof dateVal === 'string') {
+                    const parts = dateVal.split(/[\/\-]/).map(p => p.trim());
+                    if (parts.length === 3) {
+                        // If first part is > 12, it must be DD/MM
+                        if (parseInt(parts[0]) > 12) {
+                            isUSFormat = false;
+                            break;
+                        }
+                        // If second part is > 12, it must be MM/DD
+                        if (parseInt(parts[1]) > 12) {
+                            isUSFormat = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            this.importData = json.map(row => {
+                const procData = this.normalizeProcessStr(row[mapping.process_number]);
+                return {
+                    process_number: procData.main,
+                    attached_processes: procData.attached,
+                    movement_date: this.formatExcelDate(row[mapping.movement_date], isUSFormat),
+                    action: row[mapping.action],
+                    responsible: row[mapping.responsible],
+                    subject: row[mapping.subject],
+                    destination_sector: row[mapping.destination_sector]
+                };
+            }).filter(r => r.process_number);
 
             this.renderImportPreview(mapping, this.importData.slice(0, 5));
             
@@ -609,7 +676,7 @@ const configView = {
         reader.readAsBinaryString(file);
     },
 
-    formatExcelDate(val) {
+    formatExcelDate(val, isUSFormat = false) {
         if (!val) return null;
         if (typeof val === 'number') {
             // Excel serial date format
@@ -618,27 +685,95 @@ const configView = {
         }
         // Try to parse string DD/MM/YYYY or YYYY-MM-DD
         if (typeof val === 'string') {
-            const parts = val.split(/[\/\-]/);
+            const parts = val.split(/[\/\-]/).map(p => p.trim());
             if (parts.length === 3) {
-                if (parts[0].length === 4) return val; // YYYY-MM-DD
-                return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD/MM/YYYY
+                if (parts[0].length === 4) return val.trim(); // YYYY-MM-DD
+                
+                let day, month;
+                if (isUSFormat) {
+                    month = parts[0].padStart(2, '0');
+                    day = parts[1].padStart(2, '0');
+                } else {
+                    day = parts[0].padStart(2, '0');
+                    month = parts[1].padStart(2, '0');
+                }
+                
+                let year = parts[2];
+                
+                // Fix for 2 digit or malformed years (e.g. 24 -> 2024, 024 -> 2024)
+                if (year.length === 2) {
+                    year = parseInt(year) > 50 ? `19${year}` : `20${year}`;
+                } else if (year.length < 4) {
+                    year = `20` + year.slice(-2).padStart(2, '0');
+                } else if (year.length > 4) {
+                    year = year.substring(0, 4);
+                }
+                
+                if (!day || !month || !year || day === '00' || month === '00') return null;
+                
+                return `${year}-${month}-${day}`; // YYYY-MM-DD
             }
         }
-        return val;
+        return String(val).trim();
     },
 
     renderImportPreview(mapping, rows) {
         const headerRow = document.getElementById('preview-header');
         const bodyRows = document.getElementById('preview-body');
-        
+        if (!headerRow || !bodyRows) return;
+
         const cols = ['process_number', 'movement_date', 'action', 'responsible', 'subject', 'destination_sector'];
-        headerRow.innerHTML = cols.map(c => `<th>${c}</th>`).join('');
+        headerRow.innerHTML = cols.map(c => `<th>${c.toUpperCase()}</th>`).join('');
         
-        bodyRows.innerHTML = rows.map(r => `
-            <tr>
-                ${cols.map(c => `<td>${r[c] || '-'}</td>`).join('')}
-            </tr>
-        `).join('');
+        bodyRows.innerHTML = rows.map(row => {
+            const cells = cols.map(k => {
+                if (k === 'process_number') {
+                    const attached = row.attached_processes && row.attached_processes.length
+                        ? `<br><small style="color:var(--text-secondary);"><i class="fa-solid fa-link"></i> ${row.attached_processes.join(', ')}</small>`
+                        : '';
+                    return `<td>${row.process_number || '-'}${attached}</td>`;
+                }
+                return `<td>${row[k] || '-'}</td>`;
+            }).join('');
+            return `<tr>${cells}</tr>`;
+        }).join('');
+    },
+
+    normalizeProcessStr(val) {
+        if (!val) return { main: '', attached: [] };
+        // Normalize "ap" variations into " AP " for splitting
+        // matches 'ap ', 'ap.', 'AP', 'ap' followed by digit
+        let str = String(val).replace(/ap\./ig, ' AP ').replace(/ap([0-9\s])/ig, ' AP $1');
+        // If they miss spacing
+        str = str.replace(/ \/\s/g, '/');
+        
+        const parts = str.split(/ AP /i).map(s => s.trim()).filter(Boolean);
+        
+        const formatProcess = (pStr) => {
+            let clean = pStr.replace(/[^\d/]/g, '').trim();
+            let segs = clean.split('/');
+            if (segs.length === 3) {
+                let part1 = segs[0].padStart(3, '0');
+                let part2 = segs[1].padStart(6, '0');
+                let part3 = segs[2]; // year
+                if (part3.length === 2) {
+                    part3 = parseInt(part3) > 50 ? `19${part3}` : `20${part3}`;
+                } else if (part3.length === 3 && part3.startsWith('0')) {
+                    part3 = `2${part3}`;
+                } else if (part3.length > 4) {
+                    part3 = part3.substring(0, 4);
+                }
+                return `${part1}/${part2}/${part3}`;
+            }
+            return clean;
+        };
+
+        if (parts.length === 0) return { main: '', attached: [] };
+        
+        const mainProcess = formatProcess(parts[0]);
+        const attachedList = parts.slice(1).map(p => formatProcess(p)).filter(Boolean);
+        
+        return { main: mainProcess, attached: attachedList };
     },
 
     async processImport() {

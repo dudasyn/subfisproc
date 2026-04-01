@@ -25,6 +25,15 @@ CREATE TABLE IF NOT EXISTS responsibles (
     FOREIGN KEY (sector_id) REFERENCES sectors(id)
 );
 
+-- Tabela de vínculo N:N entre Responsáveis e Setores (Usada pela nova regra de negócio)
+CREATE TABLE IF NOT EXISTS responsible_sectors (
+    responsible_id INT NOT NULL,
+    sector_id INT NOT NULL,
+    PRIMARY KEY (responsible_id, sector_id),
+    FOREIGN KEY (responsible_id) REFERENCES responsibles(id) ON DELETE CASCADE,
+    FOREIGN KEY (sector_id) REFERENCES sectors(id) ON DELETE CASCADE
+);
+
 -- 2. Tabela de Usuários (Colaboradores / Admin)
 -- Roles: Admin, Gestor, Secretaria, Agente, Estagiario
 CREATE TABLE IF NOT EXISTS users (
@@ -58,19 +67,21 @@ VALUES (
 CREATE TABLE IF NOT EXISTS processes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     process_number VARCHAR(255) UNIQUE NOT NULL,
+    parent_id INT DEFAULT NULL,
     subject VARCHAR(255) NOT NULL,
     requester VARCHAR(255) NOT NULL,
     document_number VARCHAR(20), -- CPF ou CNPJ
     observations TEXT,
     import_batch VARCHAR(50) DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_id) REFERENCES processes(id) ON DELETE SET NULL
 );
 
 -- 4. Tabela de Movimentações
 CREATE TABLE IF NOT EXISTS movements (
     id INT AUTO_INCREMENT PRIMARY KEY,
     process_id INT NOT NULL,
-    movement_date DATE NOT NULL,
+    movement_date DATETIME NOT NULL,
     action ENUM('ENTRADA', 'SAIDA', 'REDISTRIBUIÇÃO') NOT NULL,
     destination_sector_id INT NOT NULL,
     responsible_id INT,

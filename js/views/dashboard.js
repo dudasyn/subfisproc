@@ -10,13 +10,16 @@ const dashboardView = {
             
             let tbody = stats.recent_activity.map(m => `
                 <tr>
-                    <td><strong>${m.process_number}</strong></td>
+                    <td>
+                        <strong>${m.process_number}</strong>
+                        ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="margin-left:5px; font-size:0.7rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="margin-left:5px; font-size:0.7rem; color:var(--primary-color);"></i>' : '')}
+                    </td>
                     <td>
                         <span class="badge badge-${m.action === 'ENTRADA' ? 'success' : 'warning'}">
                             ${m.action}
                         </span>
                     </td>
-                    <td>${new Date(m.movement_date).toLocaleDateString('pt-BR')}</td>
+                    <td>${window.app.formatDate(m.movement_date)}</td>
                     <td>${m.destination_sector}</td>
                     <td>${m.user_name}</td>
                 </tr>

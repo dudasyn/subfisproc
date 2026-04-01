@@ -213,6 +213,15 @@ class AppManager {
             setTimeout(() => d.remove(), 300);
         }, 3000);
     }
+
+    formatDate(dateStr) {
+        if (!dateStr) return '-';
+        if (dateStr.includes(' ')) {
+            const d = new Date(dateStr.replace(' ', 'T'));
+            return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        }
+        return new Date(dateStr + 'T00:00:00').toLocaleDateString('pt-BR');
+    }
 }
 
 // Global App Instance

@@ -58,10 +58,11 @@ if ($method === 'POST') {
         $pdo->beginTransaction();
 
         $stats = [
-            'sectors_created' => 0,
-            'responsibles_created' => 0,
+            'movements_created' => 0,
             'processes_created' => 0,
-            'movements_created' => 0
+            'apensos_created' => 0,
+            'responsibles_created' => 0,
+            'sectors_created' => 0
         ];
 
         $sectorsCache = []; 
@@ -109,7 +110,24 @@ if ($method === 'POST') {
         foreach ($data as $row) {
             // Limpeza robusta (remove espaços invisíveis e afins)
             $process_number = trim(preg_replace('/\s+/', ' ', $row['process_number'] ?? ''));
-            $movement_date = !empty($row['movement_date']) ? $row['movement_date'] : date('Y-m-d');
+            $movement_date = trim($row['movement_date'] ?? '');
+            $is_valid_date = false;
+            
+            // Format check
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $movement_date) || preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $movement_date)) {
+                // Logical check (no 00-00-00 or month > 12)
+                try {
+                    $dt = new DateTime($movement_date);
+                    // Ensure it didn't just wrap around (e.g. 2024-13-01 -> 2025-01-01)
+                    if ($dt && $dt->format('Y-m-d') === substr($movement_date, 0, 10)) {
+                        $is_valid_date = true;
+                    }
+                } catch (Exception $e) { $is_valid_date = false; }
+            }
+            
+            if (!$is_valid_date) {
+                $movement_date = date('Y-m-d H:i:s');
+            }
             
             $mov_action_raw = trim($row['action'] ?? 'ENTRADA');
             
@@ -173,6 +191,38 @@ if ($method === 'POST') {
                 $stats['processes_created']++;
             }
             $current_process_id = $processesCache[$p_key];
+
+            // 3.1. Attached Processes (Apensos)
+            $attached_processes = $row['attached_processes'] ?? [];
+            if (is_array($attached_processes)) {
+                foreach ($attached_processes as $attached_num) {
+                    $attached_num = trim($attached_num);
+                    if (empty($attached_num)) continue;
+                    
+                    $ap_key = strtolower($attached_num);
+                    if (!isset($processesCache[$ap_key])) {
+                        // Check DB directly if not in cache
+                        $stmt = $pdo->prepare("SELECT id FROM processes WHERE process_number = ?");
+                        $stmt->execute([$attached_num]);
+                        $existing = $stmt->fetchColumn();
+                        
+                        if ($existing) {
+                            $processesCache[$ap_key] = $existing;
+                        } else {
+                            $stmt = $pdo->prepare("INSERT INTO processes (process_number, parent_id, subject, requester, import_batch) VALUES (?, ?, ?, ?, ?)");
+                            $stmt->execute([$attached_num, $current_process_id, "Apensado ao $process_number", 'Importação de Dados (Apenso)', $batch_id]);
+                            $processesCache[$ap_key] = $pdo->lastInsertId();
+                            $stats['apensos_created']++;
+                        }
+                    }
+                    
+                    // Update the parent_id to ensure linkage
+                    if ($processesCache[$ap_key] != $current_process_id) {
+                        $stmt = $pdo->prepare("UPDATE processes SET parent_id = ? WHERE id = ?");
+                        $stmt->execute([$current_process_id, $processesCache[$ap_key]]);
+                    }
+                }
+            }
 
             // 4. Movement
             $stmt = $pdo->prepare("INSERT INTO movements (process_id, movement_date, action, destination_sector_id, responsible_id, user_id, import_batch) VALUES (?, ?, ?, ?, ?, ?, ?)");
