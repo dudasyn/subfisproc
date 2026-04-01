@@ -101,9 +101,23 @@ const movementsView = {
             const sectors = await Api.sectors.list();
             destinoSelect.innerHTML = '<option value="">Selecione o setor...</option>' + 
                 sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            
+            // Auto-select user's sector by default since initial action is ENTRADA
+            if (user && user.sector_id) {
+                destinoSelect.value = user.sector_id;
+            }
         } catch(err) {
             window.app.toast('Erro ao carregar setores', 'error');
         }
+
+        // Handle logical defaults changing based on Action
+        acaoSelect.addEventListener('change', () => {
+            if (acaoSelect.value === 'ENTRADA' && user && user.sector_id) {
+                destinoSelect.value = user.sector_id;
+            } else if (acaoSelect.value === 'SAIDA') {
+                destinoSelect.value = ''; // Force them to pick destination for outgoing
+            }
+        });
 
         // Format verification warning (non-blocking)
         processInput.addEventListener('input', () => {
@@ -203,7 +217,7 @@ const movementsView = {
                 
                 document.getElementById('mov-data').value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
                 acaoSelect.value = 'ENTRADA';
-                destinoSelect.value = '';
+                destinoSelect.value = user && user.sector_id ? user.sector_id : '';
                 responsavelSelect.value = '';
             } catch (err) {
                 window.app.toast(err.message, 'error');
