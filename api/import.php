@@ -267,12 +267,11 @@ if ($method === 'DELETE') {
         $stmt = $pdo->prepare("DELETE FROM processes WHERE import_batch = ?");
         $stmt->execute([$batch_id]);
 
-        $stmt = $pdo->prepare("DELETE FROM responsibles WHERE import_batch = ?");
-        $stmt->execute([$batch_id]);
-
-        $stmt = $pdo->prepare("DELETE FROM sectors WHERE import_batch = ?");
-        $stmt->execute([$batch_id]);
-
+        // Preservar Setores e Responsáveis: 
+        // Mesmo ao desfazer um lote, não apagamos os setores ou auditores criados.
+        // Isso evita quebras de integridade caso eles tenham sido usados em outros processos 
+        // e mantém o "ganho" de novos cadastros no sistema.
+        
         $pdo->commit();
         jsonResponse(['success' => true]);
     } catch (Exception $e) {
