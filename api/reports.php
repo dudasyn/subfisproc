@@ -170,7 +170,7 @@ if ($type === 'movements') {
         GROUP BY s.id
         ORDER BY (total_entries + total_exits) DESC, s.name ASC
     ");
-    $stmt->execute([$start, $end]);
+    $stmt->execute([$start . ' 00:00:00', $end . ' 23:59:59']);
     jsonResponse($stmt->fetchAll());
 
 } else {
