@@ -9,8 +9,8 @@ const reportsView = {
             <div class="view-section">
                 <div class="tabs-header">
                     <button class="tab-btn active" data-tab="movimentacoes"><i class="fa-solid fa-arrow-right-arrow-left"></i> Entradas / Saídas / Tramit.</button>
-                    <button class="tab-btn" data-tab="parados"><i class="fa-solid fa-hourglass-half"></i> Processos Parados</button>
-                    <button class="tab-btn" data-tab="auditores"><i class="fa-solid fa-user-tie"></i> Auditores (Carga Atual)</button>
+                    <button class="tab-btn" data-tab="parados"><i class="fa-solid fa-hourglass-half"></i> Processos Parados por Setor</button>
+                    <button class="tab-btn" data-tab="auditores"><i class="fa-solid fa-user-tie"></i> Auditores (Carga Atual de Processos)</button>
                 </div>
 
                 <!-- MOVIMENTACOES TAB -->
@@ -85,7 +85,7 @@ const reportsView = {
                     <div class="card mb-1">
                         <div class="card-header border-bottom flex-between">
                             <div>
-                                <h3>Processos Stagnados</h3>
+                                <h3>Processos Parados por Setor</h3>
                                 <p>Processos em posse da SUBFIS há muitos dias.</p>
                             </div>
                             <div class="flex-center" style="gap:10px;">
@@ -129,7 +129,7 @@ const reportsView = {
                     <div class="card mb-1">
                         <div class="card-header border-bottom flex-between">
                             <div>
-                                <h3>Carga Atual por Auditor</h3>
+                                <h3>Carga Atual de Processos por Auditor</h3>
                                 <p>Processos que estão atualmente sob responsabilidade de cada auditor.</p>
                             </div>
                             <button class="btn-primary" id="btn-gen-auditors" style="width:auto; height: 38px;"><i class="fa-solid fa-sync"></i> Atualizar</button>
