@@ -44,7 +44,10 @@ const configView = {
                                 <h3>Responsáveis</h3>
                                 <p>Gerencie os Auditores Fiscais e demais responsáveis pelos processos.</p>
                             </div>
-                            <button class="btn-primary" id="btn-add-responsible" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-user-plus"></i> Novo Responsável</button>
+                             <div style="display:flex; gap:0.5rem;">
+                                <button class="btn-secondary" id="btn-clear-all-responsible-sectors" style="width:auto; padding:0.6rem 1.2rem; background:#fee2e2; color:#b91c1c; border-color:#fecaca;"><i class="fa-solid fa-eraser"></i> Limpar Todos Setores</button>
+                                <button class="btn-primary" id="btn-add-responsible" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-user-plus"></i> Novo Responsável</button>
+                             </div>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
@@ -149,6 +152,7 @@ const configView = {
         document.getElementById('btn-add-sector').onclick = () => this.showSectorModal();
         document.getElementById('btn-delete-all-sectors').onclick = () => this.deleteAllSectors();
         document.getElementById('btn-add-responsible').onclick = () => this.showResponsibleModal();
+        document.getElementById('btn-clear-all-responsible-sectors').onclick = () => this.clearAllResponsibleSectors();
         if (isAdmin) {
             document.getElementById('btn-add-user').onclick = () => this.showUserModal();
         }
@@ -294,6 +298,7 @@ const configView = {
                     <td>${sectorBadges}</td>
                     <td class="text-center">
                         <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showResponsibleModal(${r.id}, '${r.name.replace(/'/g, "\\'")}', '${r.sector_ids || ''}')"><i class="fa-solid fa-pen"></i> Editar</button>
+                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:var(--bg-secondary); color:var(--primary); margin-left:5px;" onclick="configView.showMergeResponsibleModal(${r.id}, '${r.name.replace(/'/g, "\\'")}')" title="Mesclar auditor duplicado"><i class="fa-solid fa-code-merge"></i> Mesclar</button>
                         <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c; margin-left:5px;" onclick="configView.deleteResponsible(${r.id})"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>`;
@@ -302,6 +307,66 @@ const configView = {
             const tbody = document.getElementById('tbody-responsibles');
             if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">Erro ao carregar responsáveis: ${e.message}</td></tr>`;
         }
+    },
+
+    async clearAllResponsibleSectors() {
+        if (!confirm('ATENÇÃO: Isso irá remover TODOS os vínculos de setores de TODOS os responsáveis (Auditores). Esta ação não pode ser desfeita. Deseja continuar?')) return;
+        
+        try {
+            const res = await fetch('api/responsibles.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'clear_all_sectors' })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            
+            window.app.toast('Vínculos de setores removidos com sucesso!');
+            this.loadResponsibles();
+        } catch (e) {
+            window.app.toast(e.message, 'error');
+        }
+    },
+
+    showMergeResponsibleModal(sourceId, sourceName) {
+        const otherResponsibles = this.responsibles_list.filter(r => r.id !== sourceId);
+        const html = `
+            <div class="alert alert-warning mb-1">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Esta ação moverá <strong>toda a história</strong> (movimentações onde este auditor foi citado) do auditor "<b>${sourceName}</b>" para o auditor selecionado abaixo. O auditor antigo será desativado.
+            </div>
+            <div class="form-group">
+                <label>Auditor de Destino (Onde os dados serão consolidados)</label>
+                <select id="merge-resp-target" required>
+                    <option value="">Selecione o auditor correto...</option>
+                    ${otherResponsibles.map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
+                </select>
+            </div>
+        `;
+        this.showModal('Mesclar Auditores', html, async () => {
+            try {
+                const targetId = document.getElementById('merge-resp-target').value;
+                if (!targetId) throw new Error('Selecione um auditor de destino');
+
+                const res = await fetch('api/responsibles.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'merge',
+                        source_id: sourceId,
+                        target_id: targetId
+                    })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                window.app.toast('Auditores mesclados com sucesso!');
+                this.loadResponsibles();
+            } catch(e) {
+                window.app.toast(e.message, 'error');
+                throw e;
+            }
+        });
     },
 
     async loadUsers() {

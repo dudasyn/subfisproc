@@ -23,6 +23,44 @@ if ($method === 'GET') {
 
 } elseif ($method === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
+    $action = $data['action'] ?? '';
+
+    if ($action === 'clear_all_sectors') {
+        try {
+            $pdo->exec('DELETE FROM responsible_sectors');
+            jsonResponse(['success' => true, 'message' => 'Vínculos de todos os responsáveis limpos com sucesso']);
+        } catch (Exception $e) {
+            jsonResponse(['error' => 'Falha ao limpar setores: ' . $e->getMessage()], 500);
+        }
+    }
+
+    if ($action === 'merge') {
+        $source_id = (int)($data['source_id'] ?? 0);
+        $target_id = (int)($data['target_id'] ?? 0);
+        
+        if (!$source_id || !$target_id || $source_id === $target_id) {
+            jsonResponse(['error' => 'ID de origem e destino inválidos ou iguais'], 400);
+        }
+
+        try {
+            $pdo->beginTransaction();
+            
+            // 1. Update Movements (responsible_id)
+            $stmt = $pdo->prepare('UPDATE movements SET responsible_id = ? WHERE responsible_id = ?');
+            $stmt->execute([$target_id, $source_id]);
+            
+            // 2. Deactivate Source Responsible
+            $stmt = $pdo->prepare('UPDATE responsibles SET active = 0 WHERE id = ?');
+            $stmt->execute([$source_id]);
+            
+            $pdo->commit();
+            jsonResponse(['success' => true, 'message' => 'Responsáveis mesclados com sucesso']);
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            jsonResponse(['error' => 'Falha ao mesclar responsáveis: ' . $e->getMessage()], 500);
+        }
+    }
+
     $name = trim($data['name'] ?? '');
     $sector_ids = $data['sector_ids'] ?? []; // array of sector IDs
 
