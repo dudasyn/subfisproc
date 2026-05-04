@@ -163,7 +163,7 @@ const movementsView = {
         try {
             this.sectors_data = await Api.sectors.list();
             destinoSelect.innerHTML = '<option value="">Selecione o setor...</option>' + 
-                this.sectors_data.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                this.sectors_data.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('');
             
             // Auto-select user's sector by default since initial action is ENTRADA
             if (user && user.sector_id) {

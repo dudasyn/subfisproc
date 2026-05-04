@@ -201,16 +201,18 @@ const configView = {
                 
                 const isSubfis = s.is_internal ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Órgão Central: Todas as tramitações para este setor ou seus subsetores serão tratadas como ENTRADA">Órgão Central</span>' : (s.is_internal_hierarchy ? '<span class="badge badge-success" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Parte da hierarquia de um Órgão Central">Setor Interno</span>' : '<span class="badge badge-neutral" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Fora da hierarquia interna">Externo</span>');
                 
+                const displayName = s.alias ? `<b>${s.alias}</b> <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">(${s.name})</span>` : `<b>${s.name}</b>`;
+                
                 return `
                     <tr class="sector-row" data-id="${s.id}" data-parent="${s.parent_id || ''}">
                         <td>#${s.id}</td>
                         <td style="padding-left: ${level * 1.5}rem;">
                             ${toggleIcon}
-                            <strong>${s.name}</strong>
+                            ${displayName}
                             ${isSubfis}
                         </td>
                         <td class="text-center">
-                            <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', ${s.is_internal}, ${s.parent_id})"><i class="fa-solid fa-pen"></i> Editar</button>
+                            <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', '${(s.alias || '').replace(/'/g, "\\'")}', ${s.is_internal}, ${s.parent_id || 'null'})"><i class="fa-solid fa-pen"></i> Editar</button>
                             <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:var(--bg-secondary); color:var(--primary); margin-left:5px;" onclick="configView.showMergeSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}')" title="Mesclar histórico com outro setor"><i class="fa-solid fa-code-merge"></i> Mesclar</button>
                             <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c; margin-left:5px;" onclick="configView.deleteSector(${s.id})"><i class="fa-solid fa-trash"></i></button>
                         </td>
@@ -391,7 +393,7 @@ const configView = {
                 <label>Adicionar Setor de Atuação</label>
                 <select id="resp-add-sector">
                     <option value="">Selecione um setor para adicionar...</option>
-                    ${this.sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                    ${this.sectors.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('')}
                 </select>
             </div>
             <div class="form-group">
@@ -426,7 +428,7 @@ const configView = {
 
             container.innerHTML = selectedSectors.map(s => `
                 <span class="badge badge-neutral badge-removable" data-id="${s.id}" style="cursor: pointer;">
-                    ${s.name}
+                    ${s.alias || s.name}
                     <i class="fa-solid fa-xmark badge-remove-btn"></i>
                 </span>
             `).join('');
@@ -455,16 +457,22 @@ const configView = {
         renderBadges();
     },
 
-    showSectorModal(id = null, currentName = '', isInternal = 0, parentId = null) {
+    showSectorModal(id = null, currentName = '', currentAlias = '', isInternal = 0, parentId = null) {
         const parentOptions = this.sectors
             .filter(s => s.id !== id)
-            .map(s => `<option value="${s.id}" ${s.id === parentId ? 'selected' : ''}>${s.name}</option>`)
+            .map(s => `<option value="${s.id}" ${s.id === parentId ? 'selected' : ''}>${s.alias || s.name}</option>`)
             .join('');
 
         const html = `
-            <div class="form-group mb-1">
-                <label>Nome do Setor</label>
-                <input type="text" id="sec-name" required value="${currentName.replace(/"/g, '&quot;')}" placeholder="Ex: Protocolo">
+            <div class="grid-form mb-1" style="grid-template-columns: 2fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label>Nome do Setor</label>
+                    <input type="text" id="sec-name" required value="${currentName.replace(/"/g, '&quot;')}" placeholder="Ex: Protocolo Central">
+                </div>
+                <div class="form-group">
+                    <label>Apelido / Sigla</label>
+                    <input type="text" id="sec-alias" value="${(currentAlias || '').replace(/"/g, '&quot;')}" placeholder="Ex: PROT">
+                </div>
             </div>
             <div class="form-group mb-1">
                 <label>Setor Pai (Opcional)</label>
@@ -487,6 +495,7 @@ const configView = {
         this.showModal(id ? 'Editar Setor' : 'Novo Setor', html, async () => {
             try {
                 const name = document.getElementById('sec-name').value;
+                const alias = document.getElementById('sec-alias').value;
                 const is_internal = document.getElementById('sec-internal').checked ? 1 : 0;
                 const parent_id = document.getElementById('sec-parent').value || null;
                 
@@ -494,13 +503,13 @@ const configView = {
                     await fetch('api/sectors.php', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id, name, is_internal, parent_id })
+                        body: JSON.stringify({ id, name, alias, is_internal, parent_id })
                     });
                 } else {
                     await fetch('api/sectors.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, is_internal, parent_id })
+                        body: JSON.stringify({ name, alias, is_internal, parent_id })
                     });
                 }
                 
@@ -523,7 +532,7 @@ const configView = {
                 <label>Setor de Destino (Onde os dados serão consolidados)</label>
                 <select id="merge-target" required>
                     <option value="">Selecione o setor correto...</option>
-                    ${otherSectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                    ${otherSectors.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('')}
                 </select>
             </div>
         `;
@@ -556,7 +565,7 @@ const configView = {
     },
 
     showUserModal() {
-        const sectorsOpts = this.sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        const sectorsOpts = this.sectors.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('');
         const html = `
             <div class="form-group mb-1">
                 <label>Nome Completo</label>

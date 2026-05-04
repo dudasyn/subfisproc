@@ -248,7 +248,7 @@ const searchView = {
 
         // Load Sectors for filter
         const sectors = await Api.sectors.list();
-        filterSector.innerHTML += sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        filterSector.innerHTML += sectors.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('');
 
         const loadRecent = async () => {
             try {
