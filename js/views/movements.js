@@ -32,10 +32,10 @@ const movementsView = {
                                         <option value="ENTRADA" selected>ENTRADA (Tramitação)</option>
                                         <option value="SAIDA">SAÍDA</option>
                                     </select>
-                                    <small class="text-secondary" style="display:block; margin-top:0.25rem;">Calculada automaticamente com base no Setor de Destino.</small>
+                                    <small class="text-secondary" style="display:block; margin-top:0.25rem;">Calculada automaticamente com base no Setor.</small>
                                 </div>
                                 <div class="form-group col-span-2" id="div-destino">
-                                    <label>Setor de Destino *</label>
+                                    <label>Setor *</label>
                                     <select id="mov-destino" required>
                                         <option value="">Nenhum / Não definido</option>
                                     </select>
