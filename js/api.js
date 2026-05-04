@@ -61,8 +61,8 @@ const Api = {
         detach: (childId) => Api.request('processes.php', 'POST', { action: 'detach', child_id: childId })
     },
     reports: {
-        movements: (start, end, action) => 
-            Api.request(`reports.php?type=movements&start=${start}&end=${end}${action && action !== 'Todas' ? '&action='+action : ''}`, 'GET'),
+        movements: (start, end, action, sectorId) => 
+            Api.request(`reports.php?type=movements&start=${start}&end=${end}${action && action !== 'Todas' ? '&action='+action : ''}${sectorId ? '&sector_id=' + sectorId : ''}`, 'GET'),
         stagnant: (days, sectorId) => Api.request(`reports.php?type=stagnant&days=${days || 15}${sectorId ? '&sector_id=' + sectorId : ''}`, 'GET'),
         auditorStats: () => Api.request('reports.php?type=auditors', 'GET')
     },

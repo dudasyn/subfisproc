@@ -39,6 +39,12 @@ const reportsView = {
                                     </select>
                                 </div>
                                 <div class="form-group">
+                                    <label>Setor</label>
+                                    <select id="rep-mov-sector" style="height: 48px;">
+                                        <option value="">Todos</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
                                     <button class="btn-primary" id="btn-gen-mov" style="height: 48px; width: 100%;"><i class="fa-solid fa-sync"></i> Gerar</button>
                                 </div>
                             </div>
@@ -177,8 +183,14 @@ const reportsView = {
         const btn = document.getElementById('btn-gen-mov');
         const startInput = document.getElementById('rep-mov-start');
         const endInput = document.getElementById('rep-mov-end');
+        const sectorSelect = document.getElementById('rep-mov-sector');
         const results = document.getElementById('mov-results');
         const tbody = document.getElementById('tbody-mov');
+
+        // Load sectors for filter
+        Api.sectors.list().then(sectors => {
+            sectorSelect.innerHTML += sectors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        }).catch(e => console.warn('Erro ao carregar setores no filtro de movimentações', e));
 
         // Set default dates (current month)
         const d = new Date();
@@ -191,13 +203,14 @@ const reportsView = {
             const start = startInput.value;
             const end = endInput.value;
             const action = document.getElementById('rep-mov-action').value;
+            const sectorId = sectorSelect.value;
             if (!start || !end) return window.app.toast('Selecione as datas', 'error');
 
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
             try {
-                const data = await Api.reports.movements(start, end, action);
+                const data = await Api.reports.movements(start, end, action, sectorId);
                 
                 const summaryText = document.getElementById('mov-summary-text');
                 if (action === 'ENTRADA') {

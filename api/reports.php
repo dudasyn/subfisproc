@@ -15,6 +15,7 @@ if ($type === 'movements') {
     
     // Entradas e Saídas no período
     $action = $_GET['action'] ?? '';
+    $sector_id = $_GET['sector_id'] ?? '';
     
     $sql = "
         SELECT 
@@ -39,6 +40,11 @@ if ($type === 'movements') {
     if ($action === 'ENTRADA' || $action === 'SAIDA') {
         $sql .= " AND m.action = ?";
         $params[] = $action;
+    }
+
+    if (!empty($sector_id)) {
+        $sql .= " AND m.destination_sector_id = ?";
+        $params[] = $sector_id;
     }
     
     $sql .= " ORDER BY m.movement_date DESC, m.created_at DESC";
