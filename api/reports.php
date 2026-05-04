@@ -151,6 +151,28 @@ if ($type === 'movements') {
     $stmt->execute([$responsible_id]);
     jsonResponse($stmt->fetchAll());
 
+} elseif ($type === 'sector_stats') {
+    // Total de entradas e saídas por setor no período
+    if (empty($start) || empty($end)) {
+        jsonResponse(['error' => 'Datas de início e fim são obrigatórias'], 400);
+    }
+    
+    $stmt = $pdo->prepare("
+        SELECT 
+            s.id,
+            s.name as sector_name,
+            s.alias as sector_alias,
+            SUM(CASE WHEN m.action = 'ENTRADA' THEN 1 ELSE 0 END) as total_entries,
+            SUM(CASE WHEN m.action = 'SAIDA' THEN 1 ELSE 0 END) as total_exits
+        FROM sectors s
+        LEFT JOIN movements m ON s.id = m.destination_sector_id AND m.movement_date BETWEEN ? AND ?
+        WHERE s.active = 1
+        GROUP BY s.id
+        ORDER BY (total_entries + total_exits) DESC, s.name ASC
+    ");
+    $stmt->execute([$start, $end]);
+    jsonResponse($stmt->fetchAll());
+
 } else {
     jsonResponse(['error' => 'Tipo de relatório inválido'], 400);
 }

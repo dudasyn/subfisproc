@@ -75,6 +75,7 @@ const Api = {
         },
         auditorStats: () => Api.request('reports.php?type=auditors', 'GET'),
         auditorProcesses: (responsible_id) => Api.request(`reports.php?type=auditor_processes&responsible_id=${responsible_id}`, 'GET'),
+        sectorStats: (start, end) => Api.request(`reports.php?type=sector_stats&start=${start}&end=${end}`, 'GET'),
     },
     import: {
         upload: (data, batchId) => Api.request(`import.php${batchId ? '?batch_id=' + batchId : ''}`, 'POST', data),

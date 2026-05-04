@@ -10,7 +10,8 @@ const reportsView = {
                 <div class="tabs-header">
                     <button class="tab-btn active" data-tab="movimentacoes"><i class="fa-solid fa-arrow-right-arrow-left"></i> Entradas / Saídas / Tramit.</button>
                     <button class="tab-btn" data-tab="parados"><i class="fa-solid fa-hourglass-half"></i> Processos Parados por Setor</button>
-                    <button class="tab-btn" data-tab="auditores"><i class="fa-solid fa-user-tie"></i> Auditores (Carga Atual de Processos)</button>
+                    <button class="tab-btn" data-tab="sector-stats"><i class="fa-solid fa-chart-pie"></i> Entradas / Saídas por Setor</button>
+                    <button class="tab-btn" data-tab="auditores"><i class="fa-solid fa-user-tie"></i> Auditores (Carga Atual)</button>
                 </div>
 
                 <!-- MOVIMENTACOES TAB -->
@@ -124,6 +125,56 @@ const reportsView = {
                     </div>
                 </div>
 
+                    </div>
+                </div>
+
+                <!-- SECTOR STATS TAB -->
+                <div class="tab-content" id="tab-sector-stats">
+                    <div class="card mb-1">
+                        <div class="card-header border-bottom">
+                            <h3>Totais por Setor (Entradas e Saídas)</h3>
+                            <p>Resumo quantitativo de movimentações agrupadas por setor no período selecionado.</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="grid-form" style="align-items: end;">
+                                <div class="form-group">
+                                    <label>Data Início</label>
+                                    <input type="date" id="rep-sec-start">
+                                </div>
+                                <div class="form-group">
+                                    <label>Data Fim</label>
+                                    <input type="date" id="rep-sec-end">
+                                </div>
+                                <div class="form-group">
+                                    <button class="btn-primary" id="btn-gen-sec" style="height: 48px; width: 100%;"><i class="fa-solid fa-sync"></i> Gerar Relatório</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="sec-results" style="display:none;">
+                        <div class="flex-end mb-1" style="gap:10px;">
+                            <button class="btn-secondary" id="btn-sec-xlsx" style="width:auto;"><i class="fa-solid fa-file-excel"></i> Exportar XLSX</button>
+                            <button class="btn-secondary" id="btn-sec-pdf" style="width:auto;"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button>
+                        </div>
+                        <div class="card">
+                            <div class="table-responsive">
+                                <table class="data-table" id="table-sec">
+                                    <thead>
+                                        <tr>
+                                            <th>Setor</th>
+                                            <th class="text-center">Total de Entradas</th>
+                                            <th class="text-center">Total de Saídas</th>
+                                            <th class="text-center">Saldo / Fluxo Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-sec"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- AUDITORES TAB -->
                 <div class="tab-content" id="tab-auditores">
                     <div class="card mb-1">
@@ -189,6 +240,7 @@ const reportsView = {
         this.attachTabEvents();
         this.initMovements();
         this.initStagnant();
+        this.initSectorStats();
         this.initAuditors();
     },
 
@@ -372,6 +424,56 @@ const reportsView = {
 
         document.getElementById('btn-aud-xlsx').onclick = () => this.exportXLSX('table-aud', 'Relatorio_Auditores');
         document.getElementById('btn-aud-pdf').onclick = () => this.exportPDF('table-aud', 'Carga de Trabalho por Auditor');
+    },
+
+    initSectorStats() {
+        const btn = document.getElementById('btn-gen-sec');
+        const startInput = document.getElementById('rep-sec-start');
+        const endInput = document.getElementById('rep-sec-end');
+        const results = document.getElementById('sec-results');
+        const tbody = document.getElementById('tbody-sec');
+
+        // Set default dates (current month)
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        startInput.value = `${y}-${m}-01`;
+        endInput.value = new Date().toISOString().split('T')[0];
+
+        btn.onclick = async () => {
+            const start = startInput.value;
+            const end = endInput.value;
+            if (!start || !end) return window.app.toast('Selecione as datas', 'error');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+            try {
+                const data = await Api.reports.sectorStats(start, end);
+                tbody.innerHTML = data.map(s => `
+                    <tr>
+                        <td>
+                            <strong>${s.sector_alias || s.sector_name}</strong>
+                            <div style="font-size:0.75rem; color:var(--text-secondary);">${s.sector_alias ? s.sector_name : ''}</div>
+                        </td>
+                        <td class="text-center"><span class="badge badge-success" style="font-size:0.9rem;">${s.total_entries}</span></td>
+                        <td class="text-center"><span class="badge badge-warning" style="font-size:0.9rem;">${s.total_exits}</span></td>
+                        <td class="text-center"><strong>${parseInt(s.total_entries) + parseInt(s.total_exits)}</strong></td>
+                    </tr>
+                `).join('');
+
+                if (data.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhum dado encontrado para o período</td></tr>';
+                results.style.display = 'block';
+            } catch (e) {
+                window.app.toast(e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-sync"></i> Gerar Relatório';
+            }
+        };
+
+        document.getElementById('btn-sec-xlsx').onclick = () => this.exportXLSX('table-sec', 'Relatorio_Totais_Setor');
+        document.getElementById('btn-sec-pdf').onclick = () => this.exportPDF('table-sec', 'Totais de Movimentações por Setor');
     },
 
     async showAuditorDrawer(responsibleId, name) {
