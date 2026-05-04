@@ -7,8 +7,35 @@ header('Content-Type: application/json');
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-    $stmt = $pdo->query('SELECT id, name, is_internal, active, created_at FROM sectors WHERE active = 1 ORDER BY name ASC');
-    jsonResponse($stmt->fetchAll());
+    $stmt = $pdo->query('SELECT id, parent_id, name, is_internal, active, created_at FROM sectors WHERE active = 1 ORDER BY name ASC');
+    $sectors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Encontrar todos os setores marcados como "Órgão Central" (is_internal = 1)
+    $central_org_ids = [];
+    foreach ($sectors as $s) {
+        if ($s['is_internal']) {
+            $central_org_ids[] = $s['id'];
+        }
+    }
+
+    // Coletar todos os descendentes recursivamente
+    $internal_descendants = $central_org_ids;
+    $added = true;
+    while ($added) {
+        $added = false;
+        foreach ($sectors as $s) {
+            if ($s['parent_id'] !== null && in_array($s['parent_id'], $internal_descendants) && !in_array($s['id'], $internal_descendants)) {
+                $internal_descendants[] = $s['id'];
+                $added = true;
+            }
+        }
+    }
+
+    foreach ($sectors as &$s) {
+        $s['is_internal_hierarchy'] = in_array($s['id'], $internal_descendants);
+    }
+
+    jsonResponse($sectors);
 } elseif ($method === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     $action = $data['action'] ?? '';
@@ -50,31 +77,38 @@ if ($method === 'GET') {
     }
     
     $name = trim($data['name'] ?? '');
+    $parent_id = !empty($data['parent_id']) ? (int)$data['parent_id'] : null;
     $is_internal = isset($data['is_internal']) ? (int)$data['is_internal'] : 1;
     if (empty($name)) jsonResponse(['error' => 'Nome do setor é obrigatório'], 400);
 
-    $stmt = $pdo->prepare('INSERT INTO sectors (name, is_internal) VALUES (?, ?)');
-    $stmt->execute([$name, $is_internal]);
-    jsonResponse(['id' => $pdo->lastInsertId(), 'name' => $name, 'is_internal' => $is_internal, 'active' => 1]);
+    $stmt = $pdo->prepare('INSERT INTO sectors (name, parent_id, is_internal) VALUES (?, ?, ?)');
+    $stmt->execute([$name, $parent_id, $is_internal]);
+    jsonResponse(['id' => $pdo->lastInsertId(), 'parent_id' => $parent_id, 'name' => $name, 'is_internal' => $is_internal, 'active' => 1]);
 } elseif ($method === 'PUT') {
     $data = json_decode(file_get_contents('php://input'), true);
     
     $id = $data['id'] ?? 0;
     $name = trim($data['name'] ?? '');
+    $parent_id = !empty($data['parent_id']) ? (int)$data['parent_id'] : null;
     $is_internal = isset($data['is_internal']) ? (int)$data['is_internal'] : 1;
     if (!$id || empty($name)) jsonResponse(['error' => 'ID e Nome são obrigatórios'], 400);
 
-    $stmt = $pdo->prepare('UPDATE sectors SET name = ?, is_internal = ? WHERE id = ?');
-    $stmt->execute([$name, $is_internal, $id]);
+    $stmt = $pdo->prepare('UPDATE sectors SET name = ?, parent_id = ?, is_internal = ? WHERE id = ?');
+    $stmt->execute([$name, $parent_id, $is_internal, $id]);
     jsonResponse(['success' => true]);
 } elseif ($method === 'DELETE') {
     $id = $_GET['id'] ?? 0;
     
     if (!$id) jsonResponse(['error' => 'ID é obrigatório'], 400);
 
-    // Soft delete to maintain history in movements and users
-    $stmt = $pdo->prepare('UPDATE sectors SET active = 0 WHERE id = ?');
-    $stmt->execute([$id]);
+    if ($id === 'all') {
+        $stmt = $pdo->prepare('UPDATE sectors SET active = 0 WHERE id > 0');
+        $stmt->execute();
+    } else {
+        // Soft delete to maintain history in movements and users
+        $stmt = $pdo->prepare('UPDATE sectors SET active = 0 WHERE id = ?');
+        $stmt->execute([$id]);
+    }
     jsonResponse(['success' => true]);
 } else {
     jsonResponse(['error' => 'Método inválido'], 405);

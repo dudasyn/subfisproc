@@ -28,10 +28,11 @@ const movementsView = {
                                 </div>
                                 <div class="form-group">
                                     <label>Ação *</label>
-                                    <select id="mov-acao" required>
+                                    <select id="mov-acao" required style="background-color: var(--bg-secondary); cursor: not-allowed;">
                                         <option value="ENTRADA" selected>ENTRADA (Tramitação)</option>
                                         <option value="SAIDA">SAÍDA</option>
                                     </select>
+                                    <small class="text-secondary" style="display:block; margin-top:0.25rem;">Calculada automaticamente com base no Setor de Destino.</small>
                                 </div>
                                 <div class="form-group col-span-2" id="div-destino">
                                     <label>Setor de Destino *</label>
@@ -172,14 +173,27 @@ const movementsView = {
             window.app.toast('Erro ao carregar setores', 'error');
         }
 
-        // Handle logical defaults changing based on Action
-        acaoSelect.addEventListener('change', () => {
-            if (acaoSelect.value === 'ENTRADA' && user && user.sector_id) {
-                destinoSelect.value = user.sector_id;
-            } else if (acaoSelect.value === 'SAIDA') {
-                destinoSelect.value = ''; // Force them to pick destination for outgoing
+        // Variable to hold process state for action calculation
+        let currentProcessState = {
+            isNew: true,
+            lastAction: null
+        };
+
+        const updateActionAutomatically = () => {
+            const sectorId = destinoSelect.value;
+            if (!sectorId) return;
+
+            const sector = this.sectors_data.find(s => String(s.id) === String(sectorId));
+            if (!sector) return;
+
+            if (sector.is_internal_hierarchy || sector.is_internal) {
+                acaoSelect.value = 'ENTRADA';
+            } else {
+                acaoSelect.value = 'SAIDA';
             }
-        });
+        };
+
+        destinoSelect.addEventListener('change', updateActionAutomatically);
 
         // Format verification warning (non-blocking)
         processInput.addEventListener('input', () => {
@@ -241,26 +255,18 @@ const movementsView = {
                         window.app.toast('Dados do processo carregados!', 'success');
                     }
                     
-                    // Restriction logic 2.0 (Tramitação)
-                    if (process.last_action === 'SAIDA') {
-                        acaoSelect.value = 'ENTRADA';
-                        acaoSelect.querySelectorAll('option').forEach(opt => {
-                            opt.disabled = (opt.value === 'SAIDA');
-                        });
-                    } else if (process.last_action === 'ENTRADA') {
-                        acaoSelect.value = process.last_sector_is_internal ? 'ENTRADA' : 'ENTRADA';
-                        acaoSelect.querySelectorAll('option').forEach(opt => {
-                            opt.disabled = false;
-                        });
-                    } else {
-                        acaoSelect.querySelectorAll('option').forEach(opt => opt.disabled = false);
-                    }
+                    currentProcessState = {
+                        isNew: false,
+                        lastAction: process.last_action
+                    };
+                    updateActionAutomatically();
                 } else {
                     // New process
+                    currentProcessState = { isNew: true, lastAction: null };
                     assuntoInput.disabled = false;
                     requerenteInput.disabled = false;
                     docInput.disabled = false;
-                    acaoSelect.querySelectorAll('option').forEach(opt => opt.disabled = false);
+                    updateActionAutomatically();
                     window.app.toast('Novo processo identificado. Preencha ou use o botão Puxar do Portal.', 'info');
                 }
             } catch (err) {
@@ -291,10 +297,10 @@ const movementsView = {
                 window.app.toast('Movimentação registrada com sucesso!');
                 form.reset();
                 // Reset state
+                currentProcessState = { isNew: true, lastAction: null };
                 assuntoInput.disabled = false;
                 requerenteInput.disabled = false;
                 docInput.disabled = false;
-                acaoSelect.querySelectorAll('option').forEach(opt => opt.disabled = false);
                 
                 document.getElementById('mov-data').value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
                 acaoSelect.value = 'ENTRADA';

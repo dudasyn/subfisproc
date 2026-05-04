@@ -20,7 +20,10 @@ const configView = {
                                 <h3>Setores Ativos</h3>
                                 <p>Gerencie os setores de destino dos processos.</p>
                             </div>
-                            <button class="btn-primary" id="btn-add-sector" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-plus"></i> Novo Setor</button>
+                            <div style="display:flex; gap:0.5rem; align-items:center;">
+                                <button class="btn-secondary" id="btn-delete-all-sectors" style="padding:0.6rem 1.2rem; background:#fee2e2; color:#b91c1c; border-color:#fecaca;"><i class="fa-solid fa-trash-can"></i> Excluir Todos</button>
+                                <button class="btn-primary" id="btn-add-sector" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-plus"></i> Novo Setor</button>
+                            </div>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
@@ -144,6 +147,7 @@ const configView = {
         
         // Add listeners
         document.getElementById('btn-add-sector').onclick = () => this.showSectorModal();
+        document.getElementById('btn-delete-all-sectors').onclick = () => this.deleteAllSectors();
         document.getElementById('btn-add-responsible').onclick = () => this.showResponsibleModal();
         if (isAdmin) {
             document.getElementById('btn-add-user').onclick = () => this.showUserModal();
@@ -188,20 +192,81 @@ const configView = {
                 return;
             }
 
-            tbody.innerHTML = this.sectors.map(s => `
-                <tr>
-                    <td>#${s.id}</td>
-                    <td>
-                        <strong>${s.name}</strong>
-                        ${s.is_internal ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;">Interno</span>' : '<span class="badge badge-neutral" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;">Externo</span>'}
-                    </td>
-                    <td class="text-center">
-                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', ${s.is_internal})"><i class="fa-solid fa-pen"></i> Editar</button>
-                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:var(--bg-secondary); color:var(--primary); margin-left:5px;" onclick="configView.showMergeSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}')" title="Mesclar histórico com outro setor"><i class="fa-solid fa-code-merge"></i> Mesclar</button>
-                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c; margin-left:5px;" onclick="configView.deleteSector(${s.id})"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>
-            `).join('');
+            const buildRow = (s, level = 0) => {
+                const indent = '&nbsp;'.repeat(level * 4);
+                const hasChildren = this.sectors.some(child => child.parent_id === s.id);
+                const toggleIcon = hasChildren 
+                    ? `<i class="fa-solid fa-chevron-down toggle-children" data-id="${s.id}" style="cursor:pointer; width: 1.5rem; text-align:center; color: var(--primary-color);"></i> ` 
+                    : `<span style="display:inline-block; width: 1.5rem;"></span>`;
+                
+                const isSubfis = s.is_internal ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Órgão Central: Todas as tramitações para este setor ou seus subsetores serão tratadas como ENTRADA">Órgão Central</span>' : (s.is_internal_hierarchy ? '<span class="badge badge-success" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Parte da hierarquia de um Órgão Central">Setor Interno</span>' : '<span class="badge badge-neutral" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Fora da hierarquia interna">Externo</span>');
+                
+                return `
+                    <tr class="sector-row" data-id="${s.id}" data-parent="${s.parent_id || ''}">
+                        <td>#${s.id}</td>
+                        <td style="padding-left: ${level * 1.5}rem;">
+                            ${toggleIcon}
+                            <strong>${s.name}</strong>
+                            ${isSubfis}
+                        </td>
+                        <td class="text-center">
+                            <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', ${s.is_internal}, ${s.parent_id})"><i class="fa-solid fa-pen"></i> Editar</button>
+                            <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:var(--bg-secondary); color:var(--primary); margin-left:5px;" onclick="configView.showMergeSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}')" title="Mesclar histórico com outro setor"><i class="fa-solid fa-code-merge"></i> Mesclar</button>
+                            <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c; margin-left:5px;" onclick="configView.deleteSector(${s.id})"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            };
+
+            const rootSectors = this.sectors.filter(s => !s.parent_id);
+            let html = '';
+            
+            const renderTree = (parentId, level) => {
+                const children = this.sectors.filter(s => s.parent_id === parentId);
+                children.forEach(c => {
+                    html += buildRow(c, level);
+                    renderTree(c.id, level + 1);
+                });
+            };
+
+            rootSectors.forEach(r => {
+                html += buildRow(r, 0);
+                renderTree(r.id, 1);
+            });
+
+            tbody.innerHTML = html;
+
+            const hideDescendants = (parentId) => {
+                tbody.querySelectorAll(`.sector-row[data-parent="${parentId}"]`).forEach(row => {
+                    row.style.display = 'none';
+                    hideDescendants(row.dataset.id);
+                });
+            };
+
+            const showDirectChildren = (parentId) => {
+                tbody.querySelectorAll(`.sector-row[data-parent="${parentId}"]`).forEach(row => {
+                    row.style.display = '';
+                    const icon = row.querySelector('.toggle-children');
+                    if (icon && icon.classList.contains('fa-chevron-down')) {
+                        showDirectChildren(row.dataset.id);
+                    }
+                });
+            };
+
+            tbody.querySelectorAll('.toggle-children').forEach(icon => {
+                icon.addEventListener('click', () => {
+                    const parentId = icon.dataset.id;
+                    if (icon.classList.contains('fa-chevron-down')) {
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-right');
+                        hideDescendants(parentId);
+                    } else {
+                        icon.classList.remove('fa-chevron-right');
+                        icon.classList.add('fa-chevron-down');
+                        showDirectChildren(parentId);
+                    }
+                });
+            });
         } catch (e) {
             const tbody = document.getElementById('tbody-sectors');
             if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">Erro ao carregar setores: ${e.message}</td></tr>`;
@@ -390,36 +455,52 @@ const configView = {
         renderBadges();
     },
 
-    showSectorModal(id = null, currentName = '', isInternal = 1) {
+    showSectorModal(id = null, currentName = '', isInternal = 0, parentId = null) {
+        const parentOptions = this.sectors
+            .filter(s => s.id !== id)
+            .map(s => `<option value="${s.id}" ${s.id === parentId ? 'selected' : ''}>${s.name}</option>`)
+            .join('');
+
         const html = `
             <div class="form-group mb-1">
                 <label>Nome do Setor</label>
                 <input type="text" id="sec-name" required value="${currentName.replace(/"/g, '&quot;')}" placeholder="Ex: Protocolo">
             </div>
-            <div class="form-group">
-                <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight: 500;">
-                    <input type="checkbox" id="sec-internal" ${isInternal ? 'checked' : ''}>
-                    Este setor faz parte da estrutura interna da SUBFIS?
+            <div class="form-group mb-1">
+                <label>Setor Pai (Opcional)</label>
+                <select id="sec-parent">
+                    <option value="">Nenhum (Setor Raiz)</option>
+                    ${parentOptions}
+                </select>
+                <small class="text-secondary">Selecione apenas se este for um subsetor de outro setor já existente.</small>
+            </div>
+            <div class="form-group mt-3" style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-md); display:flex; align-items:center; gap: 0.8rem;">
+                <input type="checkbox" id="sec-internal" ${isInternal ? 'checked' : ''} style="width: 1.2rem; height: 1.2rem; margin:0; flex-shrink: 0;">
+                <label for="sec-internal" style="margin:0; font-weight: 500; font-size: 0.95rem; cursor: pointer;">
+                    Definir como Órgão Central
+                    <small style="display:block; font-weight:normal; color:var(--text-secondary); margin-top:0.2rem; line-height: 1.3;">
+                        Se marcado, as movimentações entre este setor e todos os seus subsetores serão sempre tratadas como <strong>ENTRADA (Tramitação Interna)</strong>. Movimentações para fora dessa árvore serão <strong>SAÍDA</strong>.
+                    </small>
                 </label>
-                <small class="text-secondary" style="margin-left: 1.5rem; display:block;">Isso permite tramitações consecutivas entre subsetores.</small>
             </div>
         `;
         this.showModal(id ? 'Editar Setor' : 'Novo Setor', html, async () => {
             try {
                 const name = document.getElementById('sec-name').value;
                 const is_internal = document.getElementById('sec-internal').checked ? 1 : 0;
+                const parent_id = document.getElementById('sec-parent').value || null;
                 
                 if (id) {
                     await fetch('api/sectors.php', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id, name, is_internal })
+                        body: JSON.stringify({ id, name, is_internal, parent_id })
                     });
                 } else {
                     await fetch('api/sectors.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, is_internal })
+                        body: JSON.stringify({ name, is_internal, parent_id })
                     });
                 }
                 
@@ -548,6 +629,15 @@ const configView = {
         try {
             await Api.sectors.delete(id);
             window.app.toast('Setor excluído!');
+            this.loadSectors();
+        } catch(e) { window.app.toast(e.message, 'error'); }
+    },
+
+    async deleteAllSectors() {
+        if (!confirm('CUIDADO: Deseja realmente excluir TODOS os setores? Esta ação não tem volta e afeta os relatórios atuais.')) return;
+        try {
+            await Api.sectors.delete('all');
+            window.app.toast('Todos os setores foram excluídos!');
             this.loadSectors();
         } catch(e) { window.app.toast(e.message, 'error'); }
     },

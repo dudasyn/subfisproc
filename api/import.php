@@ -91,6 +91,29 @@ if ($method === 'POST') {
             $processesCache[strtolower(trim($p['process_number']))] = $p['id'];
         }
 
+        // Build Internal hierarchy (Roots are sectors with is_internal = 1)
+        $stmt = $pdo->query("SELECT id, parent_id, name, is_internal FROM sectors");
+        $all_sectors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $central_org_ids = [];
+        foreach ($all_sectors as $s) {
+            if ($s['is_internal']) {
+                $central_org_ids[] = $s['id'];
+            }
+        }
+
+        $internal_descendants = $central_org_ids;
+        $added = true;
+        while ($added) {
+            $added = false;
+            foreach ($all_sectors as $s) {
+                if ($s['parent_id'] !== null && in_array($s['parent_id'], $internal_descendants) && !in_array($s['id'], $internal_descendants)) {
+                    $internal_descendants[] = $s['id'];
+                    $added = true;
+                }
+            }
+        }
+
         // Helper: returns true if the sector name is clearly garbage/data-entry error
         $isInvalidSector = function(string $name): bool {
             if (empty($name)) return true;
@@ -133,8 +156,6 @@ if ($method === 'POST') {
             
             if (preg_match('/SA[IÍ]/iu', $mov_action_raw)) {
                 $mov_action = 'SAIDA';
-            } elseif (preg_match('/REDISTRI/iu', $mov_action_raw)) {
-                $mov_action = 'REDISTRIBUIÇÃO';
             } else {
                 $mov_action = 'ENTRADA';
             }
@@ -143,7 +164,6 @@ if ($method === 'POST') {
             $subject = trim($row['subject'] ?? 'Processo Importado');
             $sector_raw = trim(preg_replace('/\s+/', ' ', $row['destination_sector'] ?? ''));
 
-            // Sanitize sector: if it looks like a data-entry error, fall back to SUBFIS
             $sector_name = $isInvalidSector($sector_raw) ? 'SUBFIS' : $sector_raw;
 
             if (empty($process_number)) continue;
@@ -151,12 +171,27 @@ if ($method === 'POST') {
             // 1. Sector
             $s_key = strtolower($sector_name);
             if (!isset($sectorsCache[$s_key])) {
+                // Determine if parent_id should be set based on something? No, imports are top-level or handled manually later.
                 $stmt = $pdo->prepare("INSERT INTO sectors (name, import_batch) VALUES (?, ?)");
                 $stmt->execute([$sector_name, $batch_id]);
                 $sectorsCache[$s_key] = $pdo->lastInsertId();
                 $stats['sectors_created']++;
             }
             $current_sector_id = $sectorsCache[$s_key];
+
+            // Override action based on internal hierarchy
+            if (!in_array($current_sector_id, $internal_descendants)) {
+                $stmt_internal = $pdo->prepare("SELECT is_internal FROM sectors WHERE id = ?");
+                $stmt_internal->execute([$current_sector_id]);
+                $is_int = $stmt_internal->fetchColumn();
+                if (!$is_int) {
+                    $mov_action = 'SAIDA';
+                } else {
+                    $mov_action = 'ENTRADA';
+                }
+            } else {
+                $mov_action = 'ENTRADA';
+            }
 
             // 2. Responsible — lookup by name only, link to sector via pivot table
             $resp_id = null;

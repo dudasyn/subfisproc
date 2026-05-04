@@ -5,11 +5,13 @@ USE subfisproc;
 -- 1. Tabela de Setores
 CREATE TABLE IF NOT EXISTS sectors (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    parent_id INT DEFAULT NULL,
     name VARCHAR(100) NOT NULL,
     is_internal BOOLEAN DEFAULT TRUE,
     active BOOLEAN DEFAULT TRUE,
     import_batch VARCHAR(50) DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_id) REFERENCES sectors(id) ON DELETE SET NULL
 );
 
 -- Inserindo setor padrão SUBFIS e outros setores básicos

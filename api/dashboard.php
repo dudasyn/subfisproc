@@ -11,7 +11,7 @@ if ($method === 'GET') {
 
     $count_sql = "
         SELECT 
-            SUM(CASE WHEN m.action IN ('ENTRADA', 'REDISTRIBUIÇÃO') THEN 1 ELSE 0 END) as entradas,
+            SUM(CASE WHEN m.action = 'ENTRADA' THEN 1 ELSE 0 END) as entradas,
             SUM(CASE WHEN m.action = 'SAIDA' THEN 1 ELSE 0 END) as saidas
         FROM movements m
         INNER JOIN (

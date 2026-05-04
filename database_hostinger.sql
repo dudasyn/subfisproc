@@ -9,10 +9,13 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- 1. Tabela de Setores
 CREATE TABLE IF NOT EXISTS sectors (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    parent_id INT DEFAULT NULL,
     name VARCHAR(100) NOT NULL,
+    is_internal BOOLEAN DEFAULT TRUE,
     active BOOLEAN DEFAULT TRUE,
     import_batch VARCHAR(50) DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_id) REFERENCES sectors(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Setor padrão SUBFIS
@@ -65,19 +68,21 @@ WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'admin@subfis.gov');
 CREATE TABLE IF NOT EXISTS processes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     process_number VARCHAR(255) UNIQUE NOT NULL,
+    parent_id INT DEFAULT NULL,
     subject VARCHAR(255) NOT NULL,
     requester VARCHAR(255) NOT NULL,
     document_number VARCHAR(20),
     observations TEXT,
     import_batch VARCHAR(50) DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_id) REFERENCES processes(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 6. Tabela de Movimentações
 CREATE TABLE IF NOT EXISTS movements (
     id INT AUTO_INCREMENT PRIMARY KEY,
     process_id INT NOT NULL,
-    movement_date DATE NOT NULL,
+    movement_date DATETIME NOT NULL,
     action ENUM('ENTRADA', 'SAIDA', 'REDISTRIBUIÇÃO') NOT NULL,
     destination_sector_id INT NOT NULL,
     responsible_id INT,
