@@ -49,14 +49,18 @@ if ($method === 'GET') {
         $stmt->execute([$_SESSION['user_id']]);
         $user = $stmt->fetch();
 
-        if ($user && password_verify($oldPass, $user['password'])) {
-            $hashed = password_hash($newPass, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare('UPDATE users SET password = ?, force_password_change = 0 WHERE id = ?');
-            $stmt->execute([$hashed, $_SESSION['user_id']]);
-            $_SESSION['force_password_change'] = false;
-            jsonResponse(['success' => true]);
-        } else {
-            jsonResponse(['error' => 'Senha atual incorreta'], 401);
+        try {
+            if ($user && password_verify($oldPass, $user['password'])) {
+                $hashed = password_hash($newPass, PASSWORD_DEFAULT);
+                $stmt = $pdo->prepare('UPDATE users SET password = ?, force_password_change = 0 WHERE id = ?');
+                $stmt->execute([$hashed, $_SESSION['user_id']]);
+                $_SESSION['force_password_change'] = false;
+                jsonResponse(['success' => true]);
+            } else {
+                jsonResponse(['error' => 'Senha atual incorreta'], 401);
+            }
+        } catch (PDOException $e) {
+            jsonResponse(['error' => 'Erro ao atualizar senha no banco: ' . $e->getMessage()], 500);
         }
         exit;
     }
@@ -87,7 +91,7 @@ if ($method === 'GET') {
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
     try {
-        $stmt = $pdo->prepare('INSERT INTO users (cpf, name, email, password, role, department, sector_id) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        $stmt = $pdo->prepare('INSERT INTO users (cpf, name, email, password, role, department, sector_id, force_password_change) VALUES (?, ?, ?, ?, ?, ?, ?, 1)');
         $stmt->execute([$cpf, $name, $email, $hashedPassword, $role, $department, $sector_id]);
         jsonResponse(['success' => true, 'id' => $pdo->lastInsertId()]);
     } catch (PDOException $e) {
