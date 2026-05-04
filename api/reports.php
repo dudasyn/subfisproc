@@ -157,20 +157,41 @@ if ($type === 'movements') {
         jsonResponse(['error' => 'Datas de início e fim são obrigatórias'], 400);
     }
     
-    $stmt = $pdo->prepare("
+    $sql = "
         SELECT 
             s.id,
             s.name as sector_name,
             s.alias as sector_alias,
-            SUM(CASE WHEN m.action = 'ENTRADA' THEN 1 ELSE 0 END) as total_entries,
-            SUM(CASE WHEN m.action = 'SAIDA' THEN 1 ELSE 0 END) as total_exits
+            COALESCE(entries.total, 0) as total_entries,
+            COALESCE(exits.total, 0) as total_exits
         FROM sectors s
-        LEFT JOIN movements m ON s.id = m.destination_sector_id AND m.movement_date BETWEEN ? AND ?
-        WHERE s.active = 1
-        GROUP BY s.id
-        ORDER BY (total_entries + total_exits) DESC, s.name ASC
-    ");
-    $stmt->execute([$start . ' 00:00:00', $end . ' 23:59:59']);
+        LEFT JOIN (
+            SELECT destination_sector_id, COUNT(*) as total
+            FROM movements
+            WHERE movement_date BETWEEN ? AND ?
+            GROUP BY destination_sector_id
+        ) entries ON s.id = entries.destination_sector_id
+        LEFT JOIN (
+            -- Conta saídas baseadas no setor da movimentação anterior
+            SELECT m_prev.destination_sector_id, COUNT(*) as total
+            FROM movements m_next
+            JOIN movements m_prev ON m_next.process_id = m_prev.process_id
+            WHERE m_next.movement_date BETWEEN ? AND ?
+              AND m_prev.id = (
+                  SELECT MAX(id) FROM movements m_aux 
+                  WHERE m_aux.process_id = m_next.process_id AND m_aux.id < m_next.id
+              )
+            GROUP BY m_prev.destination_sector_id
+        ) exits ON s.id = exits.destination_sector_id
+        WHERE s.active = 1 OR entries.total > 0 OR exits.total > 0
+        ORDER BY (COALESCE(entries.total, 0) + COALESCE(exits.total, 0)) DESC, s.name ASC
+    ";
+    
+    $stmt = $pdo->prepare($sql);
+    $start_full = $start . ' 00:00:00';
+    $end_full = $end . ' 23:59:59';
+    
+    $stmt->execute([$start_full, $end_full, $start_full, $end_full]);
     jsonResponse($stmt->fetchAll());
 
 } else {
