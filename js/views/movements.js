@@ -168,6 +168,8 @@ const movementsView = {
             // Auto-select user's sector by default since initial action is ENTRADA
             if (user && user.sector_id) {
                 destinoSelect.value = user.sector_id;
+                // Manually trigger the action update since changing value via JS doesn't fire 'change' event
+                setTimeout(() => updateActionAutomatically(), 100);
             }
         } catch(err) {
             window.app.toast('Erro ao carregar setores', 'error');
