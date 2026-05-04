@@ -96,15 +96,17 @@ if ($type === 'movements') {
 
 } elseif ($type === 'auditors') {
     // Estatísticas de carga de trabalho por auditor
-    // Conta processos onde a última movimentação foi ENTRADA para o auditor
+    // Usa responsible_sectors (many-to-many) para pegar o setor principal (primeiro setor vinculado)
     $stmt = $pdo->query("
         SELECT 
             r.id,
             r.name,
-            s.name as sector_name,
+            COALESCE(
+                (SELECT s2.name FROM responsible_sectors rs2 JOIN sectors s2 ON rs2.sector_id = s2.id WHERE rs2.responsible_id = r.id ORDER BY s2.id ASC LIMIT 1),
+                'Sem setor'
+            ) as sector_name,
             COUNT(p.process_id) as current_workload
         FROM responsibles r
-        JOIN sectors s ON r.sector_id = s.id
         LEFT JOIN (
             SELECT m.responsible_id, m.process_id
             FROM movements m
@@ -119,6 +121,34 @@ if ($type === 'movements') {
         GROUP BY r.id
         ORDER BY current_workload DESC, r.name ASC
     ");
+    jsonResponse($stmt->fetchAll());
+
+} elseif ($type === 'auditor_processes') {
+    // Lista de processos atualmente em posse de um auditor específico
+    $responsible_id = (int)($_GET['responsible_id'] ?? 0);
+    if (!$responsible_id) jsonResponse(['error' => 'responsible_id obrigatório'], 400);
+
+    $stmt = $pdo->prepare("
+        SELECT 
+            p.process_number,
+            p.subject,
+            p.requester,
+            m.movement_date as last_movement,
+            s.name as current_sector,
+            DATEDIFF(CURRENT_DATE, m.movement_date) as idle_days
+        FROM movements m
+        INNER JOIN (
+            SELECT process_id, MAX(id) as max_id
+            FROM movements
+            GROUP BY process_id
+        ) latest ON m.id = latest.max_id
+        JOIN processes p ON m.process_id = p.id
+        JOIN sectors s ON m.destination_sector_id = s.id
+        WHERE m.action = 'ENTRADA'
+          AND m.responsible_id = ?
+        ORDER BY m.movement_date ASC
+    ");
+    $stmt->execute([$responsible_id]);
     jsonResponse($stmt->fetchAll());
 
 } else {

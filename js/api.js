@@ -61,10 +61,19 @@ const Api = {
         detach: (childId) => Api.request('processes.php', 'POST', { action: 'detach', child_id: childId })
     },
     reports: {
-        movements: (start, end, action, sectorId) => 
-            Api.request(`reports.php?type=movements&start=${start}&end=${end}${action && action !== 'Todas' ? '&action='+action : ''}${sectorId ? '&sector_id=' + sectorId : ''}`, 'GET'),
-        stagnant: (days, sectorId) => Api.request(`reports.php?type=stagnant&days=${days || 15}${sectorId ? '&sector_id=' + sectorId : ''}`, 'GET'),
-        auditorStats: () => Api.request('reports.php?type=auditors', 'GET')
+        movements: (start, end, action, sector_id) => {
+            let url = `reports.php?type=movements&start=${start}&end=${end}`;
+            if (action && action !== 'Todas') url += `&action=${action}`;
+            if (sector_id) url += `&sector_id=${sector_id}`;
+            return Api.request(url, 'GET');
+        },
+        stagnant: (days, sector_id) => {
+            let url = `reports.php?type=stagnant&days=${days || 15}`;
+            if (sector_id) url += `&sector_id=${sector_id}`;
+            return Api.request(url, 'GET');
+        },
+        auditorStats: () => Api.request('reports.php?type=auditors', 'GET'),
+        auditorProcesses: (responsible_id) => Api.request(`reports.php?type=auditor_processes&responsible_id=${responsible_id}`, 'GET'),
     },
     import: {
         upload: (data, batchId) => Api.request(`import.php${batchId ? '?batch_id=' + batchId : ''}`, 'POST', data),

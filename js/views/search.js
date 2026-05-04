@@ -1,5 +1,5 @@
 const searchView = {
-    async render(container, user) {
+    async render(container, user, viewParts = []) {
         container.innerHTML = `
             <div class="view-section">
                 <div class="card mb-1">
@@ -556,6 +556,20 @@ const searchView = {
 
         // Initial load
         loadRecent();
+
+        // Expose for external calls (e.g., from auditor drawer)
+        this._autoSearch = (processNumber) => {
+            inputSearch.value = processNumber;
+            filterSector.value = '';
+            // Single process lookup goes directly to detail view
+            loadProcessDetails(processNumber);
+        };
+
+        // If navigated with a process number in hash (e.g. #search/009/001/2023)
+        const preload = viewParts.slice(1).join('/');
+        if (preload) {
+            setTimeout(() => this._autoSearch(preload), 100);
+        }
     }
 };
 

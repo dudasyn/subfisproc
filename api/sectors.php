@@ -68,8 +68,8 @@ if ($method === 'GET') {
             $stmt = $pdo->prepare('UPDATE users SET sector_id = ? WHERE sector_id = ?');
             $stmt->execute([$target_id, $source_id]);
             
-            // 3. Update Responsibles (sector_id)
-            $stmt = $pdo->prepare('UPDATE responsibles SET sector_id = ? WHERE sector_id = ?');
+            // 3. Update Responsibles (via pivot table responsible_sectors)
+            $stmt = $pdo->prepare('UPDATE responsible_sectors SET sector_id = ? WHERE sector_id = ?');
             $stmt->execute([$target_id, $source_id]);
             
             // 4. Deactivate Source Sector

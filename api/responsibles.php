@@ -68,9 +68,8 @@ if ($method === 'GET') {
 
     $pdo->beginTransaction();
     try {
-        $default_sector = !empty($sector_ids) ? $sector_ids[0] : 1;
-        $stmt = $pdo->prepare('INSERT INTO responsibles (name, sector_id) VALUES (?, ?)');
-        $stmt->execute([$name, $default_sector]);
+        $stmt = $pdo->prepare('INSERT INTO responsibles (name) VALUES (?)');
+        $stmt->execute([$name]);
         $resp_id = $pdo->lastInsertId();
 
         if (!empty($sector_ids)) {
