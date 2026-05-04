@@ -28,7 +28,7 @@ const configView = {
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="data-table">
-                                    <thead><tr><th>ID</th><th>Nome do Setor</th><th class="text-center">Ações</th></tr></thead>
+                                    <thead><tr><th>Nome do Setor</th><th class="text-center">Ações</th></tr></thead>
                                     <tbody id="tbody-sectors"><tr><td colspan="3" class="text-center">Carregando...</td></tr></tbody>
                                 </table>
                             </div>
@@ -200,16 +200,17 @@ const configView = {
                 const indent = '&nbsp;'.repeat(level * 4);
                 const hasChildren = this.sectors.some(child => child.parent_id === s.id);
                 const toggleIcon = hasChildren 
-                    ? `<i class="fa-solid fa-chevron-down toggle-children" data-id="${s.id}" style="cursor:pointer; width: 1.5rem; text-align:center; color: var(--primary-color);"></i> ` 
+                    ? `<i class="fa-solid fa-chevron-right toggle-children" data-id="${s.id}" style="cursor:pointer; width: 1.5rem; text-align:center; color: var(--primary-color);"></i> ` 
                     : `<span style="display:inline-block; width: 1.5rem;"></span>`;
                 
                 const isSubfis = s.is_internal ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Órgão Central: Todas as tramitações para este setor ou seus subsetores serão tratadas como ENTRADA">Órgão Central</span>' : (s.is_internal_hierarchy ? '<span class="badge badge-success" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Parte da hierarquia de um Órgão Central">Setor Interno</span>' : '<span class="badge badge-neutral" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Fora da hierarquia interna">Externo</span>');
                 
                 const displayName = s.alias ? `<b>${s.alias}</b> <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">(${s.name})</span>` : `<b>${s.name}</b>`;
                 
+                const isHidden = s.parent_id ? 'display: none;' : '';
+                
                 return `
-                    <tr class="sector-row" data-id="${s.id}" data-parent="${s.parent_id || ''}">
-                        <td>#${s.id}</td>
+                    <tr class="sector-row" data-id="${s.id}" data-parent="${s.parent_id || ''}" style="${isHidden}">
                         <td style="padding-left: ${level * 1.5}rem;">
                             ${toggleIcon}
                             ${displayName}
