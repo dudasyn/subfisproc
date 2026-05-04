@@ -7,7 +7,16 @@ header('Content-Type: application/json');
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-    $stmt = $pdo->query('SELECT id, parent_id, name, alias, is_internal, active, created_at FROM sectors WHERE active = 1 ORDER BY (parent_id IS NOT NULL) ASC, name ASC');
+    $stmt = $pdo->query('
+        SELECT s.*, 
+        (SELECT COUNT(*) FROM sectors s2 WHERE s2.parent_id = s.id AND s2.active = 1) as children_count
+        FROM sectors s 
+        WHERE s.active = 1 
+        ORDER BY 
+            (s.parent_id IS NOT NULL) ASC, 
+            (CASE WHEN (SELECT COUNT(*) FROM sectors s2 WHERE s2.parent_id = s.id AND s2.active = 1) > 0 THEN 0 ELSE 1 END) ASC,
+            s.name ASC
+    ');
     $sectors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Encontrar todos os setores marcados como "Órgão Central" (is_internal = 1)
