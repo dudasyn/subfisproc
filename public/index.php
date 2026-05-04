@@ -1,0 +1,51 @@
+<?php
+session_start();
+
+spl_autoload_register(function ($class) {
+    $prefix = 'App\\';
+    $base_dir = __DIR__ . '/../src/';
+
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
+
+    $relative_class = substr($class, $len);
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+    if (file_exists($file)) {
+        require_once $file;
+    }
+});
+
+use App\Core\Router;
+use App\Controllers\AuthController;
+use App\Controllers\UserController;
+use App\Controllers\SectorController;
+use App\Controllers\DashboardController;
+
+$router = new Router();
+
+// ========================
+// Rotas de Autenticação
+// ========================
+$router->post('/api/auth/login', [AuthController::class, 'login']);
+$router->get('/api/auth/logout', [AuthController::class, 'logout']);
+$router->get('/api/auth/session', [AuthController::class, 'session']);
+
+// ========================
+// Rotas de Usuários
+// ========================
+$router->get('/api/users', [UserController::class, 'index']);
+
+// Rotas de Dashboard
+$router->get('/api/dashboard', [DashboardController::class, 'index']);
+$router->post('/api/users', [UserController::class, 'store']);
+$router->put('/api/users', [UserController::class, 'update']);
+$router->delete('/api/users', [UserController::class, 'destroy']);
+$router->post('/api/users/reset-password', [UserController::class, 'resetPassword']);
+$router->post('/api/users/change-password', [UserController::class, 'changePassword']);
+
+// Em breve adicionaremos as rotas para processos e movimentos...
+
+$router->run();

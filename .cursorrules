@@ -1,5 +1,12 @@
 # Regras de Desenvolvimento para Antigravity (SUBFIS)
 
+## Agent Skills (Estratégia Anthropic)
+- Consulte sempre a pasta `.skills/` para diretrizes específicas de cada domínio:
+  - `database.md`: Regras de banco de dados e persistência.
+  - `architecture.md`: Padrões MVC, namespaces e organização.
+  - `deploy.md`: Docker, Nginx e ambiente de execução.
+  - `documentation.md`: Padrões de comentários e documentação técnica.
+
 ## Fluxo de Trabalho e Git
 - **PROIBIDO**: Não execute comandos de Git para deploy ou versionamento, como `git add .`, `git commit` ou `git push`. O usuário fará o gerenciamento das versões e deploys manualmente.
 - Informe ao usuário quando as alterações estiverem prontas para serem commitadas.
