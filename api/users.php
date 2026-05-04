@@ -143,4 +143,3 @@ if ($method === 'GET') {
 } else {
     jsonResponse(['error' => 'Método inválido'], 405);
 }
-?>
