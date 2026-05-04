@@ -21,6 +21,7 @@ const configView = {
                                 <p>Gerencie os setores de destino dos processos.</p>
                             </div>
                             <div style="display:flex; gap:0.5rem; align-items:center;">
+                                <button class="btn-secondary" id="btn-show-inactive-sectors" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-eye"></i> Exibir Inativos c/ Dados</button>
                                 <button class="btn-secondary" id="btn-delete-all-sectors" style="padding:0.6rem 1.2rem; background:#fee2e2; color:#b91c1c; border-color:#fecaca;"><i class="fa-solid fa-trash-can"></i> Excluir Todos</button>
                                 <button class="btn-primary" id="btn-add-sector" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-plus"></i> Novo Setor</button>
                             </div>
@@ -28,8 +29,23 @@ const configView = {
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="data-table">
-                                    <thead><tr><th>Nome do Setor</th><th class="text-center">Ações</th></tr></thead>
+                                    <thead><tr><th>Nome do Setor</th><th class="text-center">Movimentações</th><th class="text-center">Ações</th></tr></thead>
                                     <tbody id="tbody-sectors"><tr><td colspan="3" class="text-center">Carregando...</td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="card-inactive-sectors" class="card mb-1" style="display:none;">
+                        <div class="card-header border-bottom">
+                            <h3 style="color: var(--text-secondary);">Setores Inativos (com histórico)</h3>
+                            <p>Estes setores não aparecem nas buscas, mas possuem registros vinculados. Recomendamos mesclá-los com setores ativos.</p>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead><tr><th>Nome do Setor</th><th class="text-center">Movimentações</th><th class="text-center">Ações</th></tr></thead>
+                                    <tbody id="tbody-inactive-sectors"></tbody>
                                 </table>
                             </div>
                         </div>
@@ -149,16 +165,16 @@ const configView = {
         this.attachTabEvents();
         
         // Add listeners
-        document.getElementById('btn-add-sector').onclick = () => this.showSectorModal();
-        document.getElementById('btn-delete-all-sectors').onclick = () => this.deleteAllSectors();
-        document.getElementById('btn-add-responsible').onclick = () => this.showResponsibleModal();
-        document.getElementById('btn-clear-all-responsible-sectors').onclick = () => this.clearAllResponsibleSectors();
-        if (isAdmin) {
-            document.getElementById('btn-add-user').onclick = () => this.showUserModal();
-        }
-        
         // Fetch Data
         if (isAdmin) {
+            document.getElementById('btn-show-inactive-sectors').onclick = () => {
+                this.showInactive = !this.showInactive;
+                const btn = document.getElementById('btn-show-inactive-sectors');
+                btn.innerHTML = this.showInactive ? '<i class="fa-solid fa-eye-slash"></i> Ocultar Inativos' : '<i class="fa-solid fa-eye"></i> Exibir Inativos c/ Dados';
+                document.getElementById('card-inactive-sectors').style.display = this.showInactive ? 'block' : 'none';
+                this.loadSectors();
+            };
+
             await Promise.all([
                 this.loadSectors(), 
                 this.loadUsers(), 
@@ -183,13 +199,13 @@ const configView = {
         });
     },
 
-    sectors: [],
-    responsibles_list: [],
-    
+    showInactive: false,
+
     async loadSectors() {
         try {
-            this.sectors = await Api.sectors.list();
+            this.sectors = await Api.sectors.list(this.showInactive);
             const tbody = document.getElementById('tbody-sectors');
+            const tbodyInactive = document.getElementById('tbody-inactive-sectors');
             
             if (this.sectors.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="3" class="text-center">Nenhum setor cadastrado</td></tr>`;
@@ -198,51 +214,64 @@ const configView = {
 
             const buildRow = (s, level = 0) => {
                 const indent = '&nbsp;'.repeat(level * 4);
-                const hasChildren = this.sectors.some(child => child.parent_id === s.id);
+                const hasChildren = this.sectors.some(child => child.parent_id === s.id && child.active === 1);
                 const toggleIcon = hasChildren 
                     ? `<i class="fa-solid fa-chevron-right toggle-children" data-id="${s.id}" style="cursor:pointer; width: 1.5rem; text-align:center; color: var(--primary-color);"></i> ` 
                     : `<span style="display:inline-block; width: 1.5rem;"></span>`;
                 
-                const isSubfis = s.is_internal ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Órgão Central: Todas as tramitações para este setor ou seus subsetores serão tratadas como ENTRADA">Órgão Central</span>' : (s.is_internal_hierarchy ? '<span class="badge badge-success" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Parte da hierarquia de um Órgão Central">Setor Interno</span>' : '<span class="badge badge-neutral" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Fora da hierarquia interna">Externo</span>');
+                const isSubfis = s.is_internal ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Órgão Central">Órgão Central</span>' : (s.is_internal_hierarchy ? '<span class="badge badge-success" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Parte da hierarquia de um Órgão Central">Setor Interno</span>' : '<span class="badge badge-neutral" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Fora da hierarquia interna">Externo</span>');
                 
                 const displayName = s.alias ? `<b>${s.alias}</b> <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">(${s.name})</span>` : `<b>${s.name}</b>`;
                 
                 const isHidden = s.parent_id ? 'display: none;' : '';
+                const opacity = s.active === '0' || s.active === 0 ? 'opacity: 0.6; background: #f8fafc;' : '';
                 
                 return `
-                    <tr class="sector-row" data-id="${s.id}" data-parent="${s.parent_id || ''}" style="${isHidden}">
+                    <tr class="sector-row ${s.active == 0 ? 'inactive-sector' : ''}" data-id="${s.id}" data-parent="${s.parent_id || ''}" style="${isHidden} ${opacity}">
                         <td style="padding-left: ${level * 1.5}rem;">
                             ${toggleIcon}
                             ${displayName}
                             ${isSubfis}
+                            ${s.active == 0 ? '<span class="badge badge-danger" style="margin-left:8px; font-size:0.7rem;">Inativo</span>' : ''}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge badge-neutral" style="background:#e2e8f0; color:#475569;">${s.movement_count || 0}</span>
                         </td>
                         <td class="text-center">
                             <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', '${(s.alias || '').replace(/'/g, "\\'")}', ${s.is_internal}, ${s.parent_id || 'null'})"><i class="fa-solid fa-pen"></i> Editar</button>
                             <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:var(--bg-secondary); color:var(--primary); margin-left:5px;" onclick="configView.showMergeSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}')" title="Mesclar histórico com outro setor"><i class="fa-solid fa-code-merge"></i> Mesclar</button>
-                            <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c; margin-left:5px;" onclick="configView.deleteSector(${s.id})"><i class="fa-solid fa-trash"></i></button>
+                            ${s.active == 1 ? `<button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c; margin-left:5px;" onclick="configView.deleteSector(${s.id})"><i class="fa-solid fa-trash"></i></button>` : ''}
                         </td>
                     </tr>
                 `;
             };
 
-            const rootSectors = this.sectors.filter(s => !s.parent_id);
-            let html = '';
-            
+            // Separar ativos e inativos
+            const activeSectors = this.sectors.filter(s => s.active == 1);
+            const inactiveSectors = this.sectors.filter(s => s.active == 0);
+
+            // Renderizar Árvore de Ativos
+            const rootSectors = activeSectors.filter(s => !s.parent_id);
+            let htmlActive = '';
             const renderTree = (parentId, level) => {
-                const children = this.sectors.filter(s => s.parent_id === parentId);
+                const children = activeSectors.filter(s => s.parent_id === parentId);
                 children.forEach(c => {
-                    html += buildRow(c, level);
+                    htmlActive += buildRow(c, level);
                     renderTree(c.id, level + 1);
                 });
             };
-
             rootSectors.forEach(r => {
-                html += buildRow(r, 0);
+                htmlActive += buildRow(r, 0);
                 renderTree(r.id, 1);
             });
+            tbody.innerHTML = htmlActive || '<tr><td colspan="3" class="text-center">Nenhum setor ativo</td></tr>';
 
-            tbody.innerHTML = html;
+            // Renderizar Inativos (Lista simples)
+            if (tbodyInactive) {
+                tbodyInactive.innerHTML = inactiveSectors.map(s => buildRow(s, 0)).join('') || '<tr><td colspan="3" class="text-center text-secondary">Nenhum setor inativo com dados encontrado</td></tr>';
+            }
 
+            // Lógica de Expandir/Recolher (apenas para ativos)
             const hideDescendants = (parentId) => {
                 tbody.querySelectorAll(`.sector-row[data-parent="${parentId}"]`).forEach(row => {
                     row.style.display = 'none';

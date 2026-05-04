@@ -7,16 +7,26 @@ header('Content-Type: application/json');
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-    $stmt = $pdo->query('
+    $include_inactive = isset($_GET['include_inactive']) && $_GET['include_inactive'] == 1;
+    
+    $where_clause = "WHERE s.active = 1";
+    if ($include_inactive) {
+        // Se pedir inativos, mostramos apenas os que têm alguma movimentação (para limpar lixo)
+        $where_clause = "WHERE s.active = 1 OR EXISTS (SELECT 1 FROM movements m WHERE m.destination_sector_id = s.id)";
+    }
+
+    $stmt = $pdo->query("
         SELECT s.*, 
-        (SELECT COUNT(*) FROM sectors s2 WHERE s2.parent_id = s.id AND s2.active = 1) as children_count
+        (SELECT COUNT(*) FROM sectors s2 WHERE s2.parent_id = s.id AND s2.active = 1) as children_count,
+        (SELECT COUNT(*) FROM movements m WHERE m.destination_sector_id = s.id) as movement_count
         FROM sectors s 
-        WHERE s.active = 1 
+        $where_clause 
         ORDER BY 
+            s.active DESC,
             (s.parent_id IS NOT NULL) ASC, 
             (CASE WHEN (SELECT COUNT(*) FROM sectors s2 WHERE s2.parent_id = s.id AND s2.active = 1) > 0 THEN 0 ELSE 1 END) ASC,
             s.name ASC
-    ');
+    ");
     $sectors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Encontrar todos os setores marcados como "Órgão Central" (is_internal = 1)

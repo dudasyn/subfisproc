@@ -37,7 +37,7 @@ const Api = {
         check: () => Api.request('auth.php', 'GET')
     },
     sectors: {
-        list: () => Api.request('sectors.php', 'GET'),
+        list: (include_inactive = false) => Api.request(`sectors.php${include_inactive ? '?include_inactive=1' : ''}`, 'GET'),
         create: (name) => Api.request('sectors.php', 'POST', { name }),
         update: (id, name) => Api.request('sectors.php', 'PUT', { id, name }),
         delete: (id) => Api.request(`sectors.php?id=${id}`, 'DELETE')
