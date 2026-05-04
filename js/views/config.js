@@ -434,6 +434,7 @@ const configView = {
                     <td><span class="badge badge-neutral">${u.sector_name || 'N/A'}</span></td>
                     <td><span class="badge ${u.role === 'Admin' ? 'badge-primary' : (u.role === 'Gestor' ? 'badge-success' : 'badge-warning')}">${u.role}</span></td>
                     <td class="text-center" style="display: flex; justify-content: center; gap: 5px;">
+                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#f1f5f9; color:#475569;" title="Editar" onclick="configView.showEditUserModal(${JSON.stringify(u).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
                         <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#f1f5f9; color:#475569;" title="Resetar Senha" onclick="configView.resetUserPassword(${u.id}, '${u.name}')"><i class="fa-solid fa-key"></i></button>
                         <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c;" title="Remover" onclick="configView.deleteUser(${u.id})"><i class="fa-solid fa-trash"></i></button>
                     </td>
@@ -737,6 +738,67 @@ const configView = {
             } catch(e) {
                 window.app.toast(e.message, 'error');
             }
+        });
+    },
+
+    showEditUserModal(user) {
+        const sectorsOpts = this.sectors.map(s => `<option value="${s.id}" ${s.id == user.sector_id ? 'selected' : ''}>${s.alias || s.name}</option>`).join('');
+        const html = `
+            <div class="form-group mb-1">
+                <label>Nome Completo</label>
+                <input type="text" id="usr-name" value="${user.name}" required>
+            </div>
+            <div class="grid-form mb-1" style="grid-template-columns: 1fr 1fr;">
+                <div class="form-group col-span-1">
+                    <label>CPF (Apenas números)</label>
+                    <input type="text" id="usr-cpf" value="${user.cpf}" required maxlength="11">
+                </div>
+                <div class="form-group col-span-1">
+                    <label>E-mail</label>
+                    <input type="email" id="usr-email" value="${user.email}" required>
+                </div>
+            </div>
+            <div class="form-group mb-1">
+                <label>Secretaria</label>
+                <input type="text" id="usr-dept" value="${user.department || ''}" placeholder="Ex: Secretaria de Fazenda">
+            </div>
+            <div class="grid-form mb-1" style="grid-template-columns: 1fr 1fr;">
+                <div class="form-group col-span-1">
+                    <label>Função</label>
+                    <select id="usr-role" required>
+                        <option value="Assistente Operacional" ${user.role === 'Assistente Operacional' ? 'selected' : ''}>Assistente Operacional</option>
+                        <option value="Estagiario" ${user.role === 'Estagiario' ? 'selected' : ''}>Estagiário</option>
+                        <option value="Gestor" ${user.role === 'Gestor' ? 'selected' : ''}>Gestor</option>
+                        <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Administrador</option>
+                    </select>
+                </div>
+                <div class="form-group col-span-1">
+                    <label>Setor</label>
+                    <select id="usr-sec" required>
+                        <option value="">Selecione...</option>
+                        ${sectorsOpts}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Alterar Senha (Opcional)</label>
+                <input type="password" id="usr-pass" placeholder="Deixe em branco para manter a atual">
+            </div>
+        `;
+        this.showModal('Editar Colaborador', html, async () => {
+            const data = {
+                id: user.id,
+                name: document.getElementById('usr-name').value,
+                cpf: document.getElementById('usr-cpf').value,
+                email: document.getElementById('usr-email').value,
+                department: document.getElementById('usr-dept').value,
+                role: document.getElementById('usr-role').value,
+                sector_id: document.getElementById('usr-sec').value,
+                password: document.getElementById('usr-pass').value
+            };
+            await Api.users.update(data);
+            window.app.toast('Colaborador atualizado com sucesso!');
+            this.loadUsers();
         });
     },
 
