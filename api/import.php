@@ -198,9 +198,9 @@ if ($method === 'POST') {
             if (!empty($responsible_name)) {
                 $r_key = strtolower($responsible_name);
                 if (!isset($responsiblesCache[$r_key])) {
-                    // New auditor: create without sector_id (pivot table handles associations)
-                    $stmt = $pdo->prepare("INSERT INTO responsibles (name, import_batch) VALUES (?, ?)");
-                    $stmt->execute([$responsible_name, $batch_id]);
+                    // New auditor: create with initial sector_id to satisfy foreign key constraint
+                    $stmt = $pdo->prepare("INSERT INTO responsibles (name, sector_id, import_batch) VALUES (?, ?, ?)");
+                    $stmt->execute([$responsible_name, $current_sector_id, $batch_id]);
                     $resp_id = $pdo->lastInsertId();
                     $responsiblesCache[$r_key] = $resp_id;
                     $stats['responsibles_created']++;
