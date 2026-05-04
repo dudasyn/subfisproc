@@ -74,8 +74,8 @@ const configView = {
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="data-table">
-                                    <thead><tr><th>Nome</th><th>E-mail</th><th>Setor</th><th>Função</th><th class="text-center">Ações</th></tr></thead>
-                                    <tbody id="tbody-users"><tr><td colspan="5" class="text-center">Carregando...</td></tr></tbody>
+                                    <thead><tr><th>Nome</th><th>E-mail</th><th>Secretaria</th><th>Setor</th><th>Função</th><th class="text-center">Ações</th></tr></thead>
+                                    <tbody id="tbody-users"><tr><td colspan="6" class="text-center">Carregando...</td></tr></tbody>
                                 </table>
                             </div>
                         </div>
@@ -376,7 +376,7 @@ const configView = {
             const tbody = document.getElementById('tbody-users');
             
             if (users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center">Nenhum colaborador cadastrado</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center">Nenhum colaborador cadastrado</td></tr>`;
                 return;
             }
 
@@ -387,16 +387,18 @@ const configView = {
                         <div style="font-size: 0.75rem; color:var(--text-secondary)">CPF: ${u.cpf}</div>
                     </td>
                     <td>${u.email}</td>
+                    <td>${u.department || '-'}</td>
                     <td><span class="badge badge-neutral">${u.sector_name || 'N/A'}</span></td>
                     <td><span class="badge ${u.role === 'Admin' ? 'badge-primary' : (u.role === 'Gestor' ? 'badge-success' : 'badge-warning')}">${u.role}</span></td>
-                    <td class="text-center">
-                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c;" onclick="configView.deleteUser(${u.id})"><i class="fa-solid fa-trash"></i></button>
+                    <td class="text-center" style="display: flex; justify-content: center; gap: 5px;">
+                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#f1f5f9; color:#475569;" title="Resetar Senha" onclick="configView.resetUserPassword(${u.id}, '${u.name}')"><i class="fa-solid fa-key"></i></button>
+                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c;" title="Remover" onclick="configView.deleteUser(${u.id})"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
             `).join('');
         } catch (e) {
             const tbody = document.getElementById('tbody-users');
-            if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erro ao carregar colaboradores: ${e.message}</td></tr>`;
+            if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Erro ao carregar colaboradores: ${e.message}</td></tr>`;
         }
     },
 
@@ -647,6 +649,10 @@ const configView = {
                     <input type="email" id="usr-email" required>
                 </div>
             </div>
+            <div class="form-group mb-1">
+                <label>Secretaria</label>
+                <input type="text" id="usr-dept" placeholder="Ex: Secretaria de Fazenda">
+            </div>
             <div class="grid-form mb-1" style="grid-template-columns: 1fr 1fr;">
                 <div class="form-group col-span-1">
                     <label>Função</label>
@@ -679,6 +685,7 @@ const configView = {
                     cpf: document.getElementById('usr-cpf').value,
                     email: document.getElementById('usr-email').value,
                     role: document.getElementById('usr-role').value,
+                    department: document.getElementById('usr-dept').value,
                     sector_id: document.getElementById('usr-sec').value,
                     password: document.getElementById('usr-pass').value,
                 });
@@ -723,6 +730,14 @@ const configView = {
             await Api.users.delete(id);
             window.app.toast('Colaborador desativado!');
             this.loadUsers();
+        } catch(e) { window.app.toast(e.message, 'error'); }
+    },
+
+    async resetUserPassword(id, name) {
+        if (!confirm(`Deseja resetar a senha de "${name}"? \n\nA senha voltará para o padrão (6 últimos dígitos do CPF) e o usuário será obrigado a trocá-la no próximo acesso.`)) return;
+        try {
+            await Api.users.resetPassword(id);
+            window.app.toast('Senha resetada com sucesso!');
         } catch(e) { window.app.toast(e.message, 'error'); }
     },
 

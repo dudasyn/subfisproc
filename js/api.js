@@ -53,7 +53,8 @@ const Api = {
         create: (data) => Api.request('users.php', 'POST', data),
         update: (data) => Api.request('users.php', 'PUT', data),
         delete: (id) => Api.request(`users.php?id=${id}`, 'DELETE'),
-        changePassword: (old_password, new_password) => Api.request('users.php', 'POST', { action: 'change-password', old_password, new_password })
+        changePassword: (old_password, new_password) => Api.request('users.php', 'POST', { action: 'change-password', old_password, new_password }),
+        resetPassword: (userId) => Api.request('users.php', 'POST', { action: 'reset-password', user_id: userId })
     },
     processes: {
         delete: (id) => Api.request(`processes.php?id=${id}`, 'DELETE'),

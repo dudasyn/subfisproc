@@ -8,7 +8,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
     $stmt = $pdo->query('
-        SELECT u.id, u.cpf, u.name, u.email, u.role, u.sector_id, u.active, s.name as sector_name 
+        SELECT u.id, u.cpf, u.name, u.email, u.role, u.department, u.sector_id, u.active, s.name as sector_name 
         FROM users u 
         LEFT JOIN sectors s ON u.sector_id = s.id 
         WHERE u.active = 1 
@@ -18,6 +18,26 @@ if ($method === 'GET') {
 } elseif ($method === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     $action = $data['action'] ?? '';
+
+    if ($action === 'reset-password') {
+        checkAuth(['Admin', 'Gestor']);
+        $userId = $data['user_id'] ?? 0;
+        if (!$userId) jsonResponse(['error' => 'ID do usuário é obrigatório'], 400);
+
+        $stmt = $pdo->prepare('SELECT cpf FROM users WHERE id = ?');
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
+        if (!$user) jsonResponse(['error' => 'Usuário não encontrado'], 404);
+
+        $cleanCpf = preg_replace('/\D/', '', $user['cpf']);
+        $defaultPassword = substr($cleanCpf, -6);
+        $hashed = password_hash($defaultPassword, PASSWORD_DEFAULT);
+
+        $stmt = $pdo->prepare('UPDATE users SET password = ?, force_password_change = 1 WHERE id = ?');
+        $stmt->execute([$hashed, $userId]);
+        jsonResponse(['success' => true]);
+        exit;
+    }
 
     if ($action === 'change-password') {
         $oldPass = $data['old_password'] ?? '';
@@ -48,6 +68,7 @@ if ($method === 'GET') {
     $email = trim($data['email'] ?? '');
     $password = $data['password'] ?? '';
     $role = $data['role'] ?? 'Assistente Operacional';
+    $department = trim($data['department'] ?? '');
     $sector_id = $data['sector_id'] ?? null;
 
     if (empty($cpf) || empty($name)) {
@@ -66,8 +87,8 @@ if ($method === 'GET') {
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
     try {
-        $stmt = $pdo->prepare('INSERT INTO users (cpf, name, email, password, role, sector_id) VALUES (?, ?, ?, ?, ?, ?)');
-        $stmt->execute([$cpf, $name, $email, $hashedPassword, $role, $sector_id]);
+        $stmt = $pdo->prepare('INSERT INTO users (cpf, name, email, password, role, department, sector_id) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        $stmt->execute([$cpf, $name, $email, $hashedPassword, $role, $department, $sector_id]);
         jsonResponse(['success' => true, 'id' => $pdo->lastInsertId()]);
     } catch (PDOException $e) {
         if ($e->getCode() == 23000) {
@@ -84,6 +105,7 @@ if ($method === 'GET') {
     $name = trim($data['name'] ?? '');
     $email = trim($data['email'] ?? '');
     $role = $data['role'] ?? 'Assistente Operacional';
+    $department = trim($data['department'] ?? '');
     $sector_id = $data['sector_id'] ?? null;
     $password = $data['password'] ?? '';
 
@@ -94,11 +116,11 @@ if ($method === 'GET') {
     try {
         if (!empty($password)) {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare('UPDATE users SET cpf=?, name=?, email=?, password=?, role=?, sector_id=? WHERE id=?');
-            $stmt->execute([$cpf, $name, $email, $hashedPassword, $role, $sector_id, $id]);
+            $stmt = $pdo->prepare('UPDATE users SET cpf=?, name=?, email=?, password=?, role=?, department=?, sector_id=? WHERE id=?');
+            $stmt->execute([$cpf, $name, $email, $hashedPassword, $role, $department, $sector_id, $id]);
         } else {
-            $stmt = $pdo->prepare('UPDATE users SET cpf=?, name=?, email=?, role=?, sector_id=? WHERE id=?');
-            $stmt->execute([$cpf, $name, $email, $role, $sector_id, $id]);
+            $stmt = $pdo->prepare('UPDATE users SET cpf=?, name=?, email=?, role=?, department=?, sector_id=? WHERE id=?');
+            $stmt->execute([$cpf, $name, $email, $role, $department, $sector_id, $id]);
         }
         jsonResponse(['success' => true]);
     } catch (PDOException $e) {
