@@ -94,7 +94,7 @@ if ($method === 'GET') {
         if ($e->getCode() == 23000) {
             jsonResponse(['error' => 'CPF ou E-mail já cadastrados'], 400);
         }
-        jsonResponse(['error' => 'Erro interno ao cadastrar'], 500);
+        jsonResponse(['error' => 'Erro interno ao cadastrar: ' . $e->getMessage()], 500);
     }
 } elseif ($method === 'PUT') {
     checkAuth(['Admin', 'Gestor']);
