@@ -41,8 +41,8 @@ const movementsView = {
                                     </select>
                                 </div>
                                 <div class="form-group col-span-2">
-                                    <label>Auditor Responsável *</label>
-                                    <select id="mov-responsavel" required>
+                                    <label>Auditor Responsável</label>
+                                    <select id="mov-responsavel">
                                         <option value="">Nenhum / Não definido</option>
                                     </select>
                                 </div>
