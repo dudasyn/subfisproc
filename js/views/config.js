@@ -134,9 +134,14 @@ const configView = {
                     </div>
 
                     <div class="card">
-                        <div class="card-header border-bottom">
-                            <h3>Histórico de Importações</h3>
-                            <p>Desfaça importações em lote se necessário.</p>
+                        <div class="card-header border-bottom flex-center" style="justify-content: space-between;">
+                            <div>
+                                <h3>Histórico de Importações</h3>
+                                <p>Desfaça importações em lote se necessário.</p>
+                            </div>
+                            <button class="btn-secondary" id="btn-wipe-database" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; width:auto; padding:0.6rem 1.2rem;">
+                                <i class="fa-solid fa-radiation"></i> Zerar Sistema (DANGER)
+                            </button>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
@@ -165,8 +170,16 @@ const configView = {
         this.attachTabEvents();
         
         // Add listeners
-        // Fetch Data
+        document.getElementById('btn-add-sector').onclick = () => this.showSectorModal();
+        document.getElementById('btn-delete-all-sectors').onclick = () => this.deleteAllSectors();
+        document.getElementById('btn-add-responsible').onclick = () => this.showResponsibleModal();
+        document.getElementById('btn-clear-all-responsible-sectors').onclick = () => this.clearAllResponsibleSectors();
+        
         if (isAdmin) {
+            document.getElementById('btn-add-user').onclick = () => this.showUserModal();
+            document.getElementById('btn-wipe-database').onclick = () => this.wipeDatabase();
+
+            // Toggle Inativos
             document.getElementById('btn-show-inactive-sectors').onclick = () => {
                 this.showInactive = !this.showInactive;
                 const btn = document.getElementById('btn-show-inactive-sectors');
@@ -175,6 +188,7 @@ const configView = {
                 this.loadSectors();
             };
 
+            // Fetch Data
             await Promise.all([
                 this.loadSectors(), 
                 this.loadUsers(), 
@@ -810,6 +824,25 @@ const configView = {
             window.app.toast('Importação desfeita com sucesso!');
             await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles(), this.loadImportHistory()]);
         } catch(e) { window.app.toast(e.message, 'error'); }
+    },
+
+    async wipeDatabase() {
+        if (!confirm('!!! ATENÇÃO TOTAL !!!\n\nEsta ação irá APAGAR PERMANENTEMENTE:\n- Todas as movimentações\n- Todos os processos\n- Todos os Auditores (Responsáveis)\n- Todos os setores inativos e órfãos\n\nOs Colaboradores (usuários) serão mantidos. Deseja realmente ZERAR o sistema para começar uma importação limpa?')) return;
+        
+        if (!confirm('Confirmação final: Você tem certeza ABSOLUTA? Esta ação não tem volta.')) return;
+
+        try {
+            const res = await Api.import.wipe();
+            window.app.toast('Sistema resetado com sucesso!');
+            await Promise.all([
+                this.loadSectors(), 
+                this.loadUsers(), 
+                this.loadResponsibles(), 
+                this.loadImportHistory()
+            ]);
+        } catch(e) {
+            window.app.toast(e.message, 'error');
+        }
     },
 
     initImportLogic() {

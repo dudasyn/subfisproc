@@ -293,6 +293,30 @@ if ($method === 'POST') {
 
 // DELETE (Undo)
 if ($method === 'DELETE') {
+    $action = $_GET['action'] ?? '';
+
+    if ($action === 'wipe') {
+        try {
+            $pdo->beginTransaction();
+            
+            // Nuclear Wipe: Limpa tudo menos os usuários
+            $pdo->exec('DELETE FROM movements');
+            $pdo->exec('DELETE FROM responsible_sectors');
+            $pdo->exec('DELETE FROM responsibles');
+            // Delete processes (handle foreign keys if any, but movements are gone)
+            $pdo->exec('DELETE FROM processes');
+            // Delete sectors EXCEPT those linked to users
+            $pdo->exec('DELETE FROM sectors WHERE id NOT IN (SELECT DISTINCT sector_id FROM users WHERE sector_id IS NOT NULL)');
+            
+            $pdo->commit();
+            jsonResponse(['success' => true, 'message' => 'Sistema resetado com sucesso!']);
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            jsonResponse(['error' => 'Falha ao resetar sistema: ' . $e->getMessage()], 500);
+        }
+        exit;
+    }
+
     $batch_id = $_GET['batch'] ?? '';
     if (empty($batch_id)) {
         jsonResponse(['error' => 'Lote não informado'], 400);

@@ -80,6 +80,7 @@ const Api = {
     import: {
         upload: (data, batchId) => Api.request(`import.php${batchId ? '?batch_id=' + batchId : ''}`, 'POST', data),
         undo: (batchId) => Api.request(`import.php?batch=${batchId}`, 'DELETE'),
+        wipe: () => Api.request('import.php?action=wipe', 'DELETE'),
         history: () => Api.request('import.php?action=history', 'GET')
     },
     movements: {
