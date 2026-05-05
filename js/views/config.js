@@ -226,16 +226,17 @@ const configView = {
                 return;
             }
 
-            const buildRow = (s, level = 0) => {
+            const buildRow = (s, level = 0, parentIsInternal = false) => {
                 const indent = '&nbsp;'.repeat(level * 4);
                 const hasChildren = this.sectors.some(child => child.parent_id === s.id && child.active === 1);
                 const toggleIcon = hasChildren
                     ? `<i class="fa-solid fa-chevron-right toggle-children" data-id="${s.id}" style="cursor:pointer; width: 1.5rem; text-align:center; color: var(--primary-color);"></i> `
                     : `<span style="display:inline-block; width: 1.5rem;"></span>`;
 
-                const isSubfis = s.name === 'SUBFIS'
+                const isInternalEffective = s.is_internal == 1 || parentIsInternal;
+                const statusBadge = (!s.parent_id && s.is_internal == 1)
                     ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Órgão Central">Órgão Central</span>'
-                    : (s.is_internal == 1
+                    : (isInternalEffective
                         ? '<span class="badge badge-success" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem; background:#d1fae5; color:#065f46;" title="Setor Interno">Setor Interno</span>'
                         : '<span class="badge badge-neutral" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Setor Externo">Externo</span>');
 
@@ -249,7 +250,7 @@ const configView = {
                         <td style="padding-left: ${level * 1.5}rem;">
                             ${toggleIcon}
                             ${displayName}
-                            ${isSubfis}
+                            ${statusBadge}
                             ${s.active == 0 ? '<span class="badge badge-danger" style="margin-left:8px; font-size:0.7rem;">Inativo</span>' : ''}
                         </td>
                         <td class="text-center">
@@ -271,16 +272,16 @@ const configView = {
             // Renderizar Árvore de Ativos
             const rootSectors = activeSectors.filter(s => !s.parent_id);
             let htmlActive = '';
-            const renderTree = (parentId, level) => {
+            const renderTree = (parentId, level, parentIsInternal) => {
                 const children = activeSectors.filter(s => s.parent_id === parentId);
                 children.forEach(c => {
-                    htmlActive += buildRow(c, level);
-                    renderTree(c.id, level + 1);
+                    htmlActive += buildRow(c, level, parentIsInternal);
+                    renderTree(c.id, level + 1, parentIsInternal || c.is_internal == 1);
                 });
             };
             rootSectors.forEach(r => {
-                htmlActive += buildRow(r, 0);
-                renderTree(r.id, 1);
+                htmlActive += buildRow(r, 0, false);
+                renderTree(r.id, 1, r.is_internal == 1);
             });
             tbody.innerHTML = htmlActive || '<tr><td colspan="3" class="text-center">Nenhum setor ativo</td></tr>';
 
