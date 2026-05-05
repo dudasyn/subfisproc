@@ -11,14 +11,9 @@ if ($method === 'GET') {
 
     $count_sql = "
         SELECT 
-            SUM(CASE WHEN m.action = 'ENTRADA' THEN 1 ELSE 0 END) as entradas,
-            SUM(CASE WHEN m.action = 'SAIDA' THEN 1 ELSE 0 END) as saidas
-        FROM movements m
-        INNER JOIN (
-            SELECT process_id, MAX(id) as max_id
-            FROM movements
-            GROUP BY process_id
-        ) latest ON m.id = latest.max_id";
+            (SELECT COUNT(*) FROM movements WHERE action = 'ENTRADA') as entradas,
+            (SELECT COUNT(*) FROM movements WHERE action = 'SAIDA') as saidas
+    ";
     
     $counts = $pdo->query($count_sql)->fetch();
     $stats['entradas'] = $counts['entradas'] ?: 0;

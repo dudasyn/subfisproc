@@ -233,7 +233,11 @@ const configView = {
                     ? `<i class="fa-solid fa-chevron-right toggle-children" data-id="${s.id}" style="cursor:pointer; width: 1.5rem; text-align:center; color: var(--primary-color);"></i> ` 
                     : `<span style="display:inline-block; width: 1.5rem;"></span>`;
                 
-                const isSubfis = s.is_internal ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Órgão Central">Órgão Central</span>' : (s.is_internal_hierarchy ? '<span class="badge badge-success" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Parte da hierarquia de um Órgão Central">Setor Interno</span>' : '<span class="badge badge-neutral" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Fora da hierarquia interna">Externo</span>');
+                const isSubfis = s.name === 'SUBFIS' 
+                    ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Órgão Central">Órgão Central</span>' 
+                    : (s.is_internal == 1 
+                        ? '<span class="badge badge-success" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem; background:#d1fae5; color:#065f46;" title="Setor Interno">Setor Interno</span>' 
+                        : '<span class="badge badge-neutral" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Setor Externo">Externo</span>');
                 
                 const displayName = s.alias ? `<b>${s.alias}</b> <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">(${s.name})</span>` : `<b>${s.name}</b>`;
                 
@@ -432,7 +436,15 @@ const configView = {
                     <td>${u.email}</td>
                     <td>${u.department || '-'}</td>
                     <td><span class="badge badge-neutral">${u.sector_name || 'N/A'}</span></td>
-                    <td><span class="badge ${u.role === 'Admin' ? 'badge-primary' : (u.role === 'Gestor' ? 'badge-success' : 'badge-warning')}">${u.role}</span></td>
+                    <td>
+                        ${u.sector_name === 'SUBFIS' 
+                            ? '<span class="badge badge-primary">Órgão Central</span>' 
+                            : (u.is_internal == 1 
+                                ? '<span class="badge badge-success" style="background:#d1fae5; color:#065f46;">Setor Interno</span>' 
+                                : '<span class="badge badge-neutral">Externo</span>'
+                              )
+                        }
+                    </td>
                     <td class="text-center" style="display: flex; justify-content: center; gap: 5px;">
                         <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#f1f5f9; color:#475569;" title="Editar" onclick="configView.showEditUserModal(${JSON.stringify(u).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
                         <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#f1f5f9; color:#475569;" title="Resetar Senha" onclick="configView.resetUserPassword(${u.id}, '${u.name}')"><i class="fa-solid fa-key"></i></button>

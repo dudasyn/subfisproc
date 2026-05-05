@@ -35,7 +35,9 @@ if ($type === 'movements') {
         WHERE m.movement_date BETWEEN ? AND ?
     ";
     
-    $params = [$start, $end];
+    $start_full = $start . ' 00:00:00';
+    $end_full = $end . ' 23:59:59';
+    $params = [$start_full, $end_full];
     
     if ($action === 'ENTRADA' || $action === 'SAIDA') {
         $sql .= " AND m.action = ?";
@@ -183,7 +185,7 @@ if ($type === 'movements') {
               )
             GROUP BY m_prev.destination_sector_id
         ) exits ON s.id = exits.destination_sector_id
-        WHERE s.active = 1
+        WHERE s.active = 1 AND s.is_internal = 1
         ORDER BY s.id = 1 DESC, (COALESCE(entries.total, 0) + COALESCE(exits.total, 0)) DESC, s.name ASC
     ";
     
