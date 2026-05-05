@@ -702,6 +702,8 @@ const configView = {
                     <label>Função</label>
                     <select id="usr-role" required>
                         <option value="Assistente Operacional">Assistente Operacional</option>
+                        <option value="Agente">Agente</option>
+                        <option value="Secretaria">Secretaria</option>
                         <option value="Estagiario">Estagiário</option>
                         <option value="Gestor">Gestor</option>
                         <option value="Admin">Administrador</option>
@@ -767,6 +769,8 @@ const configView = {
                     <label>Função</label>
                     <select id="usr-role" required>
                         <option value="Assistente Operacional" ${user.role === 'Assistente Operacional' ? 'selected' : ''}>Assistente Operacional</option>
+                        <option value="Agente" ${user.role === 'Agente' ? 'selected' : ''}>Agente</option>
+                        <option value="Secretaria" ${user.role === 'Secretaria' ? 'selected' : ''}>Secretaria</option>
                         <option value="Estagiario" ${user.role === 'Estagiario' ? 'selected' : ''}>Estagiário</option>
                         <option value="Gestor" ${user.role === 'Gestor' ? 'selected' : ''}>Gestor</option>
                         <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Administrador</option>
