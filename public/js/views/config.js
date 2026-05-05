@@ -840,21 +840,22 @@ const configView = {
                 </select>
                 <small class="text-secondary">Selecione apenas se este for um subsetor de outro setor já existente.</small>
             </div>
-            <div class="form-group mt-3" style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-md); display:flex; align-items:center; gap: 0.8rem;">
-                <input type="checkbox" id="sec-internal" ${isInternal ? 'checked' : ''} style="width: 1.2rem; height: 1.2rem; margin:0; flex-shrink: 0;">
-                <label for="sec-internal" style="margin:0; font-weight: 500; font-size: 0.95rem; cursor: pointer;">
-                    Definir como Órgão Central
-                    <small style="display:block; font-weight:normal; color:var(--text-secondary); margin-top:0.2rem; line-height: 1.3;">
-                        Se marcado, as movimentações entre este setor e todos os seus subsetores serão sempre tratadas como <strong>ENTRADA (Tramitação Interna)</strong>. Movimentações para fora dessa árvore serão <strong>SAÍDA</strong>.
-                    </small>
-                </label>
+            <div class="form-group mb-1">
+                <label>Tipo de Setor (Interno / Externo)</label>
+                <select id="sec-internal">
+                    <option value="1" ${isInternal ? 'selected' : ''}>Setor Interno SMF</option>
+                    <option value="0" ${!isInternal ? 'selected' : ''}>Externo Não SMF</option>
+                </select>
+                <small class="text-secondary">
+                    <strong>Setor Interno SMF:</strong> As movimentações entre este setor e subsetores serão tratadas como tramitação interna. <strong>Externo Não SMF:</strong> Trata de movimentações de saída para órgãos fora da administração ou outras secretarias.
+                </small>
             </div>
         `;
         this.showModal(id ? 'Editar Setor' : 'Novo Setor', html, async () => {
             try {
                 const name = document.getElementById('sec-name').value;
                 const alias = document.getElementById('sec-alias').value;
-                const is_internal = document.getElementById('sec-internal').checked ? 1 : 0;
+                const is_internal = parseInt(document.getElementById('sec-internal').value, 10);
                 const parent_id = document.getElementById('sec-parent').value || null;
                 
                 if (id) {

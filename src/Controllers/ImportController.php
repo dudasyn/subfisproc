@@ -454,8 +454,36 @@ class ImportController {
                 $this->logger->warning($batchId, 'restore', 'Snapshot pré-importação legada falhou: ' . $e->getMessage());
             }
 
+            // 2.5 Remover tabelas existentes para evitar conflitos com CREATE TABLE do dump
+            try {
+                $db = \App\Config\Database::getConnection();
+                $db->exec('SET FOREIGN_KEY_CHECKS = 0');
+                $db->exec('DROP TABLE IF EXISTS `movements`');
+                $db->exec('DROP TABLE IF EXISTS `responsible_sectors`');
+                $db->exec('DROP TABLE IF EXISTS `responsibles`');
+                $db->exec('DROP TABLE IF EXISTS `processes`');
+                $db->exec('DROP TABLE IF EXISTS `sectors`');
+                $db->exec('DROP TABLE IF EXISTS `users`');
+                $db->exec('SET FOREIGN_KEY_CHECKS = 1');
+                $this->logger->info($batchId, 'restore', 'Tabelas antigas deletadas preventivamente para importação legada');
+            } catch (\Exception $e) {
+                $this->logger->warning($batchId, 'restore', 'Falha ao deletar tabelas preventivamente: ' . $e->getMessage());
+            }
+
             // 3. Executar restauração usando o arquivo enviado
             $this->snapshotService->restoreSnapshot($destPath, $batchId);
+
+            // 3.5 Resetar as senhas das contas de Admin para 'admin123'
+            try {
+                $adminHash = '$2y$10$wT6yCyVa4P0zp.2QM18RR.QKmbxGWso26V9/bjo8hcAD0ikKtvO/a';
+                $db = \App\Config\Database::getConnection();
+                $stmt = $db->prepare("UPDATE users SET password = ? WHERE role = 'Admin' OR email IN ('admin@subfis.gov', 'felipealvesbento@gmail.com')");
+                $stmt->execute([$adminHash]);
+                $this->logger->info($batchId, 'restore', 'Senhas administrativas redefinidas para admin123');
+            } catch (\Exception $e) {
+                $this->logger->warning($batchId, 'restore', 'Falha ao redefinir senhas administrativas: ' . $e->getMessage());
+            }
+
             $this->versionModel->updateStatus($batchId, 'completed');
 
             $this->logger->info($batchId, 'restore', "Base legada importada com sucesso a partir de " . $file['name']);

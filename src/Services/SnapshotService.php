@@ -150,12 +150,12 @@ class SnapshotService {
             $dbName = getenv('DB_NAME') ?: 'subfisproc';
 
             $cmd = sprintf(
-                'mysql --skip-ssl --host=%s --user=%s --password=%s %s < %s 2>&1',
+                '(echo "SET FOREIGN_KEY_CHECKS = 0;"; cat %s; echo "SET FOREIGN_KEY_CHECKS = 1;") | mysql --skip-ssl --host=%s --user=%s --password=%s %s 2>&1',
+                escapeshellarg($snapshotFile),
                 escapeshellarg($dbHost),
                 escapeshellarg($dbUser),
                 escapeshellarg($dbPass),
-                escapeshellarg($dbName),
-                escapeshellarg($snapshotFile)
+                escapeshellarg($dbName)
             );
 
             exec($cmd, $output, $returnCode);
