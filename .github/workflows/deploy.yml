@@ -9,17 +9,20 @@ jobs:
   web-deploy:
     name: 🎉 Deploy
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
     - name: 🚚 Get latest code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: 📂 Sync files
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         server-dir: ./ # Ajuste se precisar subir em uma subpasta específica
+        state-name: none # Evita erros 550 ao não usar arquivo de estado
         exclude: |
           **/.git*
           **/.git*/**
@@ -28,6 +31,7 @@ jobs:
           .env
           .env.example
           brain/**
+          scratch/**
           SETUP_DEV.md
           README.md
           *.sql
