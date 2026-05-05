@@ -33,7 +33,6 @@ if ($type === 'movements') {
         JOIN sectors s ON m.destination_sector_id = s.id
         JOIN users u ON m.user_id = u.id
         WHERE m.movement_date BETWEEN ? AND ?
-          AND s.is_internal = 1
     ";
     
     $params = [$start, $end];
@@ -79,7 +78,6 @@ if ($type === 'movements') {
         JOIN sectors s ON m_last.destination_sector_id = s.id
         LEFT JOIN responsibles r ON m_last.responsible_id = r.id
         WHERE m_last.action = 'ENTRADA' 
-          AND s.is_internal = 1
           AND DATEDIFF(CURRENT_DATE, m_last.movement_date) >= ?
     ";
     
@@ -185,9 +183,8 @@ if ($type === 'movements') {
               )
             GROUP BY m_prev.destination_sector_id
         ) exits ON s.id = exits.destination_sector_id
-        WHERE (s.active = 1 OR entries.total > 0 OR exits.total > 0)
-          AND s.is_internal = 1
-        ORDER BY (COALESCE(entries.total, 0) + COALESCE(exits.total, 0)) DESC, s.name ASC
+        WHERE s.active = 1
+        ORDER BY s.id = 1 DESC, (COALESCE(entries.total, 0) + COALESCE(exits.total, 0)) DESC, s.name ASC
     ";
     
     $stmt = $pdo->prepare($sql);
