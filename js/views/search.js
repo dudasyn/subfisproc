@@ -286,10 +286,12 @@ const searchView = {
                             <p>${m.subject}</p>
                             ${m.parent_id ? `<small style="color:var(--text-secondary); font-size:0.7rem;">Apenso ao ${m.parent_process_number}</small>` : (m.attachments_count > 0 ? `<small style="color:var(--primary-color); font-size:0.7rem;">Possui ${m.attachments_count} apenso(s)</small>` : '')}
                         </div>
-                        <div class="recent-status">
+                        <div class="recent-status" style="min-width: 180px;">
                             <span class="badge-${m.action.toLowerCase()}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : m.action}</span>
-                            <p style="font-size: 0.7rem; margin-top: 4px;">${window.app.formatDate(m.movement_date)}</p>
-                            <p style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px;"><i class="fa-solid fa-user" style="font-size:0.6rem;"></i> ${m.user_name || '-'}</p>
+                            <p style="font-size: 0.75rem; margin-top: 6px; font-weight: 500; color: var(--text-primary);">${window.app.formatDate(m.movement_date)}</p>
+                            <p style="font-size: 0.7rem; color: var(--primary-color); margin-top: 2px; font-weight: 600;">
+                                <i class="fa-solid fa-user-pen" style="font-size:0.65rem; margin-right: 3px;"></i> Por: ${m.user_name || '-'}
+                            </p>
                         </div>
                     </div>
                 `).join('');
@@ -312,10 +314,12 @@ const searchView = {
                     <p>${m.subject || 'Sem assunto'}</p>
                     ${m.parent_id ? `<small style="color:var(--text-secondary); font-size:0.7rem;">Apenso ao ${m.parent_process_number}</small>` : (m.attachments_count > 0 ? `<small style="color:var(--primary-color); font-size:0.7rem;">Possui ${m.attachments_count} apenso(s)</small>` : '')}
                 </div>
-                <div class="recent-status">
+                <div class="recent-status" style="min-width: 180px;">
                     <span class="badge-${(m.action || 'NOVO').toLowerCase()}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : (m.action || 'NOVO')}</span>
-                    <p style="font-size: 0.7rem; margin-top: 4px;">${window.app.formatDate(m.movement_date)}</p>
-                    <p style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px;"><i class="fa-solid fa-user" style="font-size:0.6rem;"></i> ${m.user_name || '-'}</p>
+                    <p style="font-size: 0.75rem; margin-top: 6px; font-weight: 500; color: var(--text-primary);">${window.app.formatDate(m.movement_date)}</p>
+                    <p style="font-size: 0.7rem; color: var(--primary-color); margin-top: 2px; font-weight: 600;">
+                        <i class="fa-solid fa-user-pen" style="font-size:0.65rem; margin-right: 3px;"></i> Por: ${m.user_name || '-'}
+                    </p>
                 </div>
             </div>
         `;
