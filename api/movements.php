@@ -123,11 +123,19 @@ if ($method === 'GET') {
         $processes = $stmt->fetchAll();
         
         foreach ($processes as &$p) {
-            $stmt2 = $pdo->prepare('SELECT action, movement_date FROM movements WHERE process_id = ? ORDER BY movement_date DESC, id DESC LIMIT 1');
+            $stmt2 = $pdo->prepare('
+                SELECT m.action, m.movement_date, u.name as user_name 
+                FROM movements m
+                JOIN users u ON m.user_id = u.id
+                WHERE m.process_id = ? 
+                ORDER BY m.movement_date DESC, m.id DESC 
+                LIMIT 1
+            ');
             $stmt2->execute([$p['id']]);
             $last = $stmt2->fetch();
             $p['action'] = $last ? $last['action'] : 'NOVO';
             $p['movement_date'] = $last ? $last['movement_date'] : null;
+            $p['user_name'] = $last ? $last['user_name'] : '-';
         }
         jsonResponse($processes);
     } else {

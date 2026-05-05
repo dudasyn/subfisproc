@@ -289,6 +289,7 @@ const searchView = {
                         <div class="recent-status">
                             <span class="badge-${m.action.toLowerCase()}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : m.action}</span>
                             <p style="font-size: 0.7rem; margin-top: 4px;">${window.app.formatDate(m.movement_date)}</p>
+                            <p style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px;"><i class="fa-solid fa-user" style="font-size:0.6rem;"></i> ${m.user_name || '-'}</p>
                         </div>
                     </div>
                 `).join('');
@@ -314,6 +315,7 @@ const searchView = {
                 <div class="recent-status">
                     <span class="badge-${(m.action || 'NOVO').toLowerCase()}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : (m.action || 'NOVO')}</span>
                     <p style="font-size: 0.7rem; margin-top: 4px;">${window.app.formatDate(m.movement_date)}</p>
+                    <p style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px;"><i class="fa-solid fa-user" style="font-size:0.6rem;"></i> ${m.user_name || '-'}</p>
                 </div>
             </div>
         `;
