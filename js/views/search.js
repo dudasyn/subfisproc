@@ -3,9 +3,12 @@ const searchView = {
         container.innerHTML = `
             <div class="view-section">
                 <div class="card mb-1">
-                    <div class="card-header border-bottom">
-                        <h3>Listar Processos</h3>
-                        <p class="text-secondary">Filtre processos por número ou por situação nos setores.</p>
+                    <div class="card-header border-bottom flex-between">
+                        <div>
+                            <h3>Listar Processos</h3>
+                            <p class="text-secondary">Filtre processos por número ou por situação nos setores.</p>
+                        </div>
+                        <span style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.5;">v1.5 - Edição Ativa</span>
                     </div>
                     <div class="card-body">
                         <div class="grid-form" style="gap:1rem; align-items: end;">
@@ -459,7 +462,13 @@ const searchView = {
                         observations: process.observations || ''
                     };
 
-                    if (user.role === 'Admin' || user.role === 'Gestor' || user.role === 'Secretaria' || user.role === 'Assistente Operacional') {
+                    const userRole = (user.role || '').trim().toUpperCase();
+                    const allowedRoles = ['ADMIN', 'GESTOR', 'SECRETARIA', 'ASSISTENTE OPERACIONAL'];
+                    
+                    console.log('DEBUG: Seu cargo atual é:', userRole);
+                    console.log('DEBUG: Permissão de edição:', allowedRoles.includes(userRole));
+
+                    if (allowedRoles.includes(userRole)) {
                         btnEditProc.style.display = 'block';
                     }
                     if (user.role === 'Admin' || user.role === 'Gestor') {
