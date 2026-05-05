@@ -437,13 +437,9 @@ const configView = {
                     <td>${u.department || '-'}</td>
                     <td><span class="badge badge-neutral">${u.sector_name || 'N/A'}</span></td>
                     <td>
-                        ${u.sector_name === 'SUBFIS' 
-                            ? '<span class="badge badge-primary">Órgão Central</span>' 
-                            : (u.is_internal == 1 
-                                ? '<span class="badge badge-success" style="background:#d1fae5; color:#065f46;">Setor Interno</span>' 
-                                : '<span class="badge badge-neutral">Externo</span>'
-                              )
-                        }
+                        <span class="badge ${u.role === 'Admin' ? 'badge-primary' : (u.role === 'Gestor' ? 'badge-success' : 'badge-neutral')}">
+                            ${u.role}
+                        </span>
                     </td>
                     <td class="text-center" style="display: flex; justify-content: center; gap: 5px;">
                         <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#f1f5f9; color:#475569;" title="Editar" onclick="configView.showEditUserModal(${JSON.stringify(u).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>

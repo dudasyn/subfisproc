@@ -60,11 +60,11 @@ class AppManager {
         this.container.appendChild(tpl);
         
         // Update UI with user info
-        document.getElementById('ui-user-name').textContent = this.user.name;
-        document.getElementById('ui-user-role').textContent = this.user.role;
-        
+        const isStaff = this.user.role === 'Admin' || this.user.role === 'Gestor';
         const dashNav = document.querySelector('.nav-item[data-view="dashboard"]');
-        if (dashNav) dashNav.style.display = 'flex';
+        if (dashNav) {
+            dashNav.style.display = isStaff ? 'flex' : 'none';
+        }
         
         // Update Date Display
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };

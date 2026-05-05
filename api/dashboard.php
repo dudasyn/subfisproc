@@ -1,6 +1,6 @@
 <?php
 require 'config.php';
-checkAuth();
+checkAuth(['Admin', 'Gestor']);
 
 header('Content-Type: application/json');
 

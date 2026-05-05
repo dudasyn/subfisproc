@@ -1,5 +1,19 @@
 const dashboardView = {
     async render(container, user) {
+        if (user.role !== 'Admin' && user.role !== 'Gestor') {
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-body text-center p-4">
+                        <i class="fa-solid fa-lock fa-3x mb-1" style="color:var(--text-secondary)"></i>
+                        <h3 class="text-secondary">Acesso Restrito</h3>
+                        <p>O Dashboard é reservado apenas para Administradores e Gestores.</p>
+                        <button class="btn-primary mt-1" onclick="location.hash='#search'">Ir para Listagem</button>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
         container.innerHTML = `
             <div class="view-section flex-center" style="height: 300px;">
                 <i class="fa-solid fa-spinner fa-spin fa-3x" style="color:var(--primary)"></i>
