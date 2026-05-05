@@ -238,6 +238,27 @@ const searchView = {
                     font-size: 0.8rem;
                     font-weight: 600;
                 }
+                .badge-action {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.3rem;
+                    padding: 0.25rem 0.6rem;
+                    border-radius: 4px;
+                    font-size: 0.7rem;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    cursor: pointer;
+                    transition: var(--transition);
+                    background: var(--bg-secondary);
+                    color: var(--text-secondary);
+                    border: 1px solid var(--border-color);
+                }
+                .badge-action:hover {
+                    background: var(--primary-color);
+                    color: white;
+                    border-color: var(--primary-color);
+                }
+                .badge-action i { font-size: 0.75rem; }
             </style>
         `;
 
@@ -284,18 +305,35 @@ const searchView = {
                         <div class="recent-info">
                             <h5>${m.process_number} ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="font-size:0.8rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="font-size:0.8rem; color:var(--primary-color);"></i>' : '')}</h5>
                             <p>${m.subject}</p>
-                            ${m.parent_id ? `<small style="color:var(--text-secondary); font-size:0.7rem;">Apenso ao ${m.parent_process_number}</small>` : (m.attachments_count > 0 ? `<small style="color:var(--primary-color); font-size:0.7rem;">Possui ${m.attachments_count} apenso(s)</small>` : '')}
+                            <div style="display:flex; gap:0.5rem; margin-top:0.3rem;">
+                                <span class="badge-action btn-detail" data-number="${m.process_number}"><i class="fa-solid fa-eye"></i> Detalhar</span>
+                                <span class="badge-action btn-move-fast" data-number="${m.process_number}"><i class="fa-solid fa-share-from-square"></i> Tramitar</span>
+                            </div>
                         </div>
                         <div class="recent-status" style="min-width: 180px;">
                             <span class="badge-${m.action.toLowerCase()}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : m.action}</span>
                             <p style="font-size: 0.75rem; margin-top: 6px; font-weight: 500; color: var(--text-primary);">${window.app.formatDate(m.movement_date)}</p>
-                            <p style="font-size: 0.7rem; color: var(--primary-color); margin-top: 2px; font-weight: 600;">
-                                <i class="fa-solid fa-user-pen" style="font-size:0.65rem; margin-right: 3px;"></i> Por: ${m.user_name || '-'}
-                            </p>
                         </div>
                     </div>
                 `).join('');
 
+                document.querySelectorAll('.btn-detail').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const num = btn.dataset.number;
+                        inputSearch.value = num;
+                        loadProcessDetails(num);
+                    });
+                });
+
+                document.querySelectorAll('.btn-move-fast').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        window.location.hash = `#movements/${btn.dataset.number}`;
+                    });
+                });
+
+                // Maintain click on the item itself as "Detail"
                 document.querySelectorAll('.recent-item').forEach(item => {
                     item.addEventListener('click', () => {
                         inputSearch.value = item.dataset.number;
@@ -312,14 +350,14 @@ const searchView = {
                 <div class="recent-info">
                     <h5>${m.process_number} ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="font-size:0.8rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="font-size:0.8rem; color:var(--primary-color);"></i>' : '')}</h5>
                     <p>${m.subject || 'Sem assunto'}</p>
-                    ${m.parent_id ? `<small style="color:var(--text-secondary); font-size:0.7rem;">Apenso ao ${m.parent_process_number}</small>` : (m.attachments_count > 0 ? `<small style="color:var(--primary-color); font-size:0.7rem;">Possui ${m.attachments_count} apenso(s)</small>` : '')}
+                    <div style="display:flex; gap:0.5rem; margin-top:0.3rem;">
+                        <span class="badge-action btn-detail" data-number="${m.process_number}"><i class="fa-solid fa-eye"></i> Detalhar</span>
+                        <span class="badge-action btn-move-fast" data-number="${m.process_number}"><i class="fa-solid fa-share-from-square"></i> Tramitar</span>
+                    </div>
                 </div>
                 <div class="recent-status" style="min-width: 180px;">
                     <span class="badge-${(m.action || 'NOVO').toLowerCase()}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : (m.action || 'NOVO')}</span>
                     <p style="font-size: 0.75rem; margin-top: 6px; font-weight: 500; color: var(--text-primary);">${window.app.formatDate(m.movement_date)}</p>
-                    <p style="font-size: 0.7rem; color: var(--primary-color); margin-top: 2px; font-weight: 600;">
-                        <i class="fa-solid fa-user-pen" style="font-size:0.65rem; margin-right: 3px;"></i> Por: ${m.user_name || '-'}
-                    </p>
                 </div>
             </div>
         `;
@@ -346,6 +384,20 @@ const searchView = {
                 if (processes && processes.length > 0) {
                     searchList.innerHTML = processes.map(renderProcessItem).join('');
                     
+                    searchList.querySelectorAll('.btn-detail').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            loadProcessDetails(btn.dataset.number);
+                        });
+                    });
+
+                    searchList.querySelectorAll('.btn-move-fast').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            window.location.hash = `#movements/${btn.dataset.number}`;
+                        });
+                    });
+
                     document.querySelectorAll('.search-result-item').forEach(item => {
                         item.addEventListener('click', () => {
                             inputSearch.value = item.dataset.number;

@@ -1,6 +1,6 @@
 const movementsView = {
     responsibles: [],
-    async render(container, user) {
+    async render(container, user, viewParts) {
         container.innerHTML = `
             <div class="view-section">
                 <div class="card">
@@ -345,6 +345,13 @@ const movementsView = {
                 btn.disabled = false;
             }
         });
+        // Auto-fill if process number is in URL (e.g. #movements/009/A/2026)
+        const preload = viewParts.slice(1).join('/');
+        if (preload) {
+            processInput.value = preload;
+            // Trigger blur logic manually
+            processInput.dispatchEvent(new Event('blur'));
+        }
     }
 };
 
