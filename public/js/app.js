@@ -95,7 +95,7 @@ class AppManager {
         overlay.style.zIndex = '9999';
         overlay.innerHTML = `
             <div class="modal-content" style="max-width: 400px; text-align: center;">
-                <div class="logo-icon" style="background: var(--warning); margin-bottom:1rem;"><i class="fa-solid fa-key"></i></div>
+                <img src="https://portalcontribuinte.duquedecaxias.rj.gov.br/img/logonova.png" alt="PMDC Logo" style="height: 50px; margin-bottom:1.5rem;">
                 <h3 class="mb-1">Primeiro Acesso</h3>
                 <p class="text-secondary mb-2">Por segurança, você deve alterar sua senha inicial agora.</p>
                 <form id="form-force-pass">

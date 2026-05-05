@@ -23,6 +23,7 @@ use App\Controllers\AuthController;
 use App\Controllers\UserController;
 use App\Controllers\SectorController;
 use App\Controllers\DashboardController;
+use App\Controllers\ImportController;
 
 $router = new Router();
 
@@ -45,6 +46,22 @@ $router->put('/api/users', [UserController::class, 'update']);
 $router->delete('/api/users', [UserController::class, 'destroy']);
 $router->post('/api/users/reset-password', [UserController::class, 'resetPassword']);
 $router->post('/api/users/change-password', [UserController::class, 'changePassword']);
+
+// ========================
+// Rotas de Importação
+// ========================
+$router->get('/api/import/history', [ImportController::class, 'history']);
+$router->post('/api/import/validate', [ImportController::class, 'validate']);
+$router->post('/api/import/execute', [ImportController::class, 'execute']);
+$router->delete('/api/import/batch', [ImportController::class, 'undo']);
+$router->post('/api/import/restore', [ImportController::class, 'restore']);
+$router->get('/api/import/snapshots', [ImportController::class, 'snapshots']);
+$router->post('/api/import/snapshot', [ImportController::class, 'createSnapshot']);
+$router->get('/api/import/backup', [ImportController::class, 'downloadBackup']);
+$router->post('/api/import/upload-sql', [ImportController::class, 'uploadSql']);
+$router->get('/api/import/download-snapshot', [ImportController::class, 'downloadSnapshot']);
+$router->get('/api/import/logs', [ImportController::class, 'logs']);
+$router->delete('/api/import/wipe', [ImportController::class, 'wipe']);
 
 // Em breve adicionaremos as rotas para processos e movimentos...
 

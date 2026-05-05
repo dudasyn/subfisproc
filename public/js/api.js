@@ -78,10 +78,23 @@ const Api = {
         sectorStats: (start, end) => Api.request(`reports.php?type=sector_stats&start=${start}&end=${end}`, 'GET'),
     },
     import: {
-        upload: (data, batchId) => Api.request(`import.php${batchId ? '?batch_id=' + batchId : ''}`, 'POST', data),
-        undo: (batchId) => Api.request(`import.php?batch=${batchId}`, 'DELETE'),
-        wipe: () => Api.request('import.php?action=wipe', 'DELETE'),
-        history: () => Api.request('import.php?action=history', 'GET')
+        upload: (data, batchId) => Api.request(`import/execute${batchId ? '?batch_id=' + batchId : ''}`, 'POST', data),
+        undo: (batchId) => Api.request(`import/batch?batch=${batchId}`, 'DELETE'),
+        wipe: () => Api.request('import/wipe', 'DELETE'),
+        history: () => Api.request('import/history', 'GET'),
+        snapshots: () => Api.request('import/snapshots', 'GET'),
+        createSnapshot: () => Api.request('import/snapshot', 'POST'),
+        restore: (batchId) => Api.request('import/restore', 'POST', { batch_id: batchId }),
+        downloadBackupUrl: () => Api.baseUrl + 'import/backup',
+        downloadSnapshotUrl: (file) => Api.baseUrl + 'import/download-snapshot?file=' + encodeURIComponent(file),
+        uploadSql: (file) => {
+            const formData = new FormData();
+            formData.append('sql_file', file);
+            return fetch(Api.baseUrl + 'import/upload-sql', {
+                method: 'POST',
+                body: formData
+            }).then(r => r.json());
+        }
     },
     movements: {
         listAll: () => Api.request('movements.php', 'GET'),

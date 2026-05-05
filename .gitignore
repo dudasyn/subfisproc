@@ -2,7 +2,6 @@
 .DS_Store
 /brain/
 /node_modules/
-*.log
 seed.php
 debug_db.php
 gen_hash.php
@@ -10,4 +9,12 @@ migrate_*.php
 test_password.php
 update_db_pass.php
 verify_fix.php
-*.sql
+
+# Snapshots e logs gerados (exceto .gitkeep e migrations)
+data/snapshots/*.sql
+data/logs/*.log
+!data/snapshots/.gitkeep
+!data/logs/.gitkeep
+
+# SQL dumps no root (não as migrations)
+/*.sql

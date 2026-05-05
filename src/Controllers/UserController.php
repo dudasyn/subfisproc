@@ -5,19 +5,33 @@ namespace App\Controllers;
 use App\Models\User;
 use App\Utils\Response;
 
+/**
+ * Controlador de Usuários (CRUD).
+ * Gerencia a listagem, criação, edição e desativação de usuários, 
+ * além de gerenciar a política de senhas.
+ */
 class UserController {
+    /** @var User Instância do model de usuário */
     private $userModel;
 
     public function __construct() {
         $this->userModel = new User();
     }
 
+    /**
+     * Lista todos os usuários ativos do sistema.
+     * Requer autenticação simples.
+     */
     public function index() {
         AuthController::checkAuth();
         $users = $this->userModel->getAllActive();
         Response::json($users);
     }
 
+    /**
+     * Cadastra um novo usuário no sistema.
+     * Requer nível de acesso Admin ou Gestor.
+     */
     public function store() {
         AuthController::checkAuth(['Admin', 'Gestor']);
         $data = json_decode(file_get_contents('php://input'), true);
@@ -34,8 +48,10 @@ class UserController {
             Response::error('CPF e Nome são obrigatórios', 400);
         }
 
+        // Se e-mail não for informado, gera um padrão baseado no CPF
         if (empty($email)) $email = $cpf . '@subfis.gov';
 
+        // Lógica de senha padrão: últimos 6 dígitos do CPF (exclusivo para novos cadastros)
         if (empty($password)) {
             $cleanCpf = preg_replace('/\D/', '', $cpf);
             $password = substr($cleanCpf, -6);
@@ -55,6 +71,7 @@ class UserController {
             ]);
             Response::json(['success' => true, 'id' => $id]);
         } catch (\PDOException $e) {
+            // Erro 23000 indica violação de restrição UNIQUE (CPF ou E-mail duplicado)
             if ($e->getCode() == 23000) {
                 Response::error('CPF ou E-mail já cadastrados', 400);
             }
@@ -62,6 +79,9 @@ class UserController {
         }
     }
 
+    /**
+     * Atualiza os dados de um usuário existente.
+     */
     public function update() {
         AuthController::checkAuth(['Admin', 'Gestor']);
         $data = json_decode(file_get_contents('php://input'), true);
@@ -79,6 +99,7 @@ class UserController {
             Response::error('ID, CPF, Nome e E-mail são obrigatórios', 400);
         }
 
+        // Só gera novo hash se uma nova senha for fornecida no formulário
         if (!empty($password)) {
             $data['password'] = password_hash($password, PASSWORD_DEFAULT);
         }
@@ -102,17 +123,26 @@ class UserController {
         }
     }
 
+    /**
+     * Desativa logicamente um usuário (Soft Delete).
+     */
     public function destroy() {
         AuthController::checkAuth(['Admin', 'Gestor']);
         $id = $_GET['id'] ?? 0;
         
         if (!$id) Response::error('ID é obrigatório', 400);
+        
+        // Impede que um administrador desative sua própria conta (Auto-bloqueio)
         if ($id == $_SESSION['user_id']) Response::error('Você não pode desativar a si mesmo', 400);
 
         $this->userModel->softDelete($id);
         Response::json(['success' => true]);
     }
 
+    /**
+     * Reseta a senha de um usuário para o padrão (últimos 6 do CPF).
+     * Força a troca de senha no próximo login.
+     */
     public function resetPassword() {
         AuthController::checkAuth(['Admin', 'Gestor']);
         $data = json_decode(file_get_contents('php://input'), true);
@@ -127,10 +157,15 @@ class UserController {
         $defaultPassword = substr($cleanCpf, -6);
         $hashed = password_hash($defaultPassword, PASSWORD_DEFAULT);
 
+        // O parâmetro 1 ativa a flag 'force_password_change' no banco
         $this->userModel->updatePassword($userId, $hashed, 1);
         Response::json(['success' => true]);
     }
 
+    /**
+     * Permite que o próprio usuário logado altere sua senha.
+     * Remove a obrigatoriedade de troca de senha se estiver ativa.
+     */
     public function changePassword() {
         AuthController::checkAuth();
         $data = json_decode(file_get_contents('php://input'), true);
@@ -142,10 +177,14 @@ class UserController {
 
         $user = $this->userModel->findById($_SESSION['user_id']);
 
+        // Verifica a senha antiga antes de permitir a alteração
         if ($user && password_verify($oldPass, $user['password'])) {
             $hashed = password_hash($newPass, PASSWORD_DEFAULT);
+            
+            // Parâmetro 0 desativa a flag de troca obrigatória
             $this->userModel->updatePassword($_SESSION['user_id'], $hashed, 0);
             $_SESSION['force_password_change'] = false;
+            
             Response::json(['success' => true]);
         } else {
             Response::error('Senha atual incorreta', 401);

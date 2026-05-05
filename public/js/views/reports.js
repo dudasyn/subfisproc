@@ -222,7 +222,13 @@ const reportsView = {
                 <div style="padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
                     <div>
                         <h3 id="drawer-title" style="margin:0;">Processos do Auditor</h3>
-                        <p id="drawer-subtitle" style="margin:0.2rem 0 0; font-size:0.85rem; color:var(--text-secondary);"></p>
+                        <div style="display:flex; align-items:center; gap:0.8rem; margin-top:0.3rem;">
+                            <p id="drawer-subtitle" style="margin:0; font-size:0.85rem; color:var(--text-secondary);"></p>
+                            <div id="drawer-export-btns" style="display:none; gap:0.5rem;">
+                                <button class="btn-secondary" style="padding:0.2rem 0.5rem; font-size:0.75rem; width:auto;" onclick="reportsView.exportXLSX('table-aud-drawer', 'Processos_Auditor')"><i class="fa-solid fa-file-excel"></i></button>
+                                <button class="btn-secondary" style="padding:0.2rem 0.5rem; font-size:0.75rem; width:auto;" onclick="reportsView.exportPDF('table-aud-drawer', 'Relatório de Processos por Auditor')"><i class="fa-solid fa-file-pdf"></i></button>
+                            </div>
+                        </div>
                     </div>
                     <button onclick="reportsView.closeDrawer()" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:var(--text-secondary);padding:0.3rem;">
                         <i class="fa-solid fa-xmark"></i>
@@ -486,6 +492,7 @@ const reportsView = {
         title.textContent = name;
         subtitle.textContent = 'Carregando processos...';
         body.innerHTML = '<div class="text-center p-4"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+        document.getElementById('drawer-export-btns').style.display = 'none';
         drawer.style.right = '0';
         backdrop.style.display = 'block';
 
@@ -499,36 +506,40 @@ const reportsView = {
             }
 
             body.innerHTML = `
-                <div style="display:flex; flex-direction:column; gap:0;">
-                    ${data.map(p => `
-                        <div style="
-                            padding: 0.85rem 0;
-                            border-bottom: 1px solid #f1f5f9;
-                            display:flex; align-items:center; justify-content:space-between; gap:0.5rem;
-                        ">
-                            <div style="flex:1; min-width:0;">
-                                <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.2rem;">
-                                    <strong
-                                        style="color:#2563eb; cursor:pointer; font-size:0.9rem;"
-                                        onclick="reportsView.showProcessModal('${p.process_number}')"
-                                        title="Ver histórico deste processo"
-                                    >${p.process_number}</strong>
-                                    <span class="badge ${p.idle_days >= 30 ? 'badge-danger' : p.idle_days >= 15 ? 'badge-warning' : 'badge-secondary'}" style="font-size:0.72rem; padding:0.15rem 0.45rem;">${p.idle_days}d parado</span>
-                                </div>
-                                <div style="font-size:0.78rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                    ${p.subject}
-                                </div>
-                                <div style="font-size:0.75rem; color:#94a3b8; margin-top:0.15rem;">
-                                    <i class="fa-solid fa-building" style="margin-right:3px;"></i>${p.current_sector}
-                                    &nbsp;&bull;&nbsp;
-                                    <i class="fa-solid fa-calendar" style="margin-right:3px;"></i>${window.app.formatDate(p.last_movement)}
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-chevron-right" style="color:#cbd5e1; font-size:0.75rem; flex-shrink:0;"></i>
-                        </div>
-                    `).join('')}
+                <div class="table-responsive">
+                    <table class="data-table" id="table-aud-drawer">
+                        <thead>
+                            <tr>
+                                <th>Processo</th>
+                                <th>Assunto</th>
+                                <th>Dias</th>
+                                <th>Setor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.map(p => `
+                                <tr>
+                                    <td>
+                                        <strong
+                                            style="color:var(--primary); cursor:pointer;"
+                                            onclick="reportsView.showProcessModal('${p.process_number}')"
+                                            title="Ver histórico"
+                                        >${p.process_number}</strong>
+                                    </td>
+                                    <td style="font-size:0.8rem;">${p.subject}</td>
+                                    <td>
+                                        <span class="badge ${p.idle_days >= 30 ? 'badge-danger' : p.idle_days >= 15 ? 'badge-warning' : 'badge-secondary'}" style="font-size:0.7rem;">
+                                            ${p.idle_days}d
+                                        </span>
+                                    </td>
+                                    <td style="font-size:0.75rem; color:var(--text-secondary);">${p.current_sector}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
                 </div>
             `;
+            document.getElementById('drawer-export-btns').style.display = 'flex';
         } catch (e) {
             body.innerHTML = `<div class="text-center p-4 text-danger">Erro ao carregar processos.</div>`;
         }
@@ -676,7 +687,7 @@ const reportsView = {
             html: `#${tableId}`,
             startY: startY,
             theme: 'grid',
-            headStyles: { fillColor: [37, 99, 235], textColor: 255 },
+            headStyles: { fillColor: [0, 114, 188], textColor: 255 },
             styles: { fontSize: 9 }
         });
         

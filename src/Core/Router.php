@@ -62,26 +62,34 @@ class Router {
     /**
      * Executa a busca pela rota correspondente à requisição atual.
      * Intercepta o método HTTP e a URI enviada pelo servidor.
+     * Suporta parâmetros dinâmicos no formato {param} (ex: /api/import/batch/{id}).
      */
     public function run() {
         $method = $_SERVER['REQUEST_METHOD'];
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
         foreach ($this->routes as $route) {
-            // Verifica se o método e o caminho coincidem exatamente
-            if ($route['method'] === $method && $route['path'] === $uri) {
+            // Converte placeholders {param} em grupos de captura regex
+            $pattern = preg_replace('/\{(\w+)\}/', '([^/]+)', $route['path']);
+            $pattern = "#^{$pattern}$#";
+
+            if ($route['method'] === $method && preg_match($pattern, $uri, $matches)) {
+                // Remove o match completo, mantém apenas os parâmetros capturados
+                array_shift($matches);
+
                 // Caso o callback seja o padrão [ControllerClass::class, 'method']
                 if (is_array($route['callback'])) {
                     $controllerName = $route['callback'][0];
                     $action = $route['callback'][1];
                     
                     // Instancia o Controller dinamicamente e executa a Action
+                    // Parâmetros capturados são passados como argumentos ao método
                     $controller = new $controllerName();
-                    return $controller->$action();
+                    return call_user_func_array([$controller, $action], $matches);
                 }
                 
-                // Suporte para funções anônimas (closures)
-                return call_user_func($route['callback']);
+                // Suporte para funções anônimas (closures) com parâmetros
+                return call_user_func_array($route['callback'], $matches);
             }
         }
 

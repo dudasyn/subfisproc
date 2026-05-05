@@ -133,10 +133,39 @@ const configView = {
                         </div>
                     </div>
 
+                    <div class="card mb-1">
+                        <div class="card-header border-bottom flex-center" style="justify-content: space-between;">
+                            <div>
+                                <h3>Snapshots e Backups de Segurança</h3>
+                                <p>Pontos de restauração automáticos gerados antes de cada importação.</p>
+                            </div>
+                            <button class="btn-primary" id="btn-create-snapshot" style="width:auto; padding:0.6rem 1.2rem;">
+                                <i class="fa-solid fa-camera"></i> Criar Snapshot Agora
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Versão / Snapshot</th>
+                                            <th>Data de Criação</th>
+                                            <th>Tamanho</th>
+                                            <th class="text-center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-snapshots">
+                                        <tr><td colspan="4" class="text-center">Carregando snapshots...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-header border-bottom flex-center" style="justify-content: space-between;">
                             <div>
-                                <h3>Histórico de Importações</h3>
+                                <h3>Histórico de Importações (Lotes Excel)</h3>
                                 <p>Desfaça importações em lote se necessário.</p>
                             </div>
                             <button class="btn-secondary" id="btn-wipe-database" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; width:auto; padding:0.6rem 1.2rem;">
@@ -193,9 +222,11 @@ const configView = {
                 this.loadSectors(), 
                 this.loadUsers(), 
                 this.loadResponsibles(),
-                this.loadImportHistory()
+                this.loadImportHistory(),
+                this.loadSnapshots()
             ]);
             this.initImportLogic();
+            document.getElementById('btn-create-snapshot').onclick = () => this.createSnapshot();
         } else {
             await Promise.all([this.loadSectors(), this.loadResponsibles()]);
         }
@@ -1143,11 +1174,80 @@ const configView = {
             this.importData = null;
 
             // Refresh all data
-            await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles(), this.loadImportHistory()]);
+            await Promise.all([
+                this.loadSectors(), 
+                this.loadUsers(), 
+                this.loadResponsibles(), 
+                this.loadImportHistory(),
+                this.loadSnapshots()
+            ]);
         } catch(e) {
             window.app.toast(e.message, 'error');
             btn.innerHTML = originalHtml;
             btn.disabled = false;
+        }
+    },
+
+    async loadSnapshots() {
+        const tbody = document.getElementById('tbody-snapshots');
+        try {
+            const snapshots = await Api.import.snapshots();
+            if (snapshots.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhum snapshot encontrado</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = snapshots.map(s => `
+                <tr>
+                    <td>
+                        <div style="font-weight:600; color:var(--primary);">${s.label || s.filename}</div>
+                        <div style="font-size:0.75rem; color:var(--text-secondary);">${s.filename}</div>
+                    </td>
+                    <td>${window.app.formatDate(s.created_at)}</td>
+                    <td>${s.size_fmt}</td>
+                    <td class="text-center">
+                        <button class="btn-icon" onclick="configView.restoreSnapshot('${s.batch_id}')" title="Restaurar este ponto" style="background:#0072bc; color:white;">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Restaurar
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Erro ao carregar snapshots: ${e.message}</td></tr>`;
+        }
+    },
+
+    async createSnapshot() {
+        const btn = document.getElementById('btn-create-snapshot');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Criando...';
+
+        try {
+            await Api.import.createSnapshot();
+            window.app.toast('Snapshot de segurança criado com sucesso!');
+            await this.loadSnapshots();
+        } catch (e) {
+            window.app.toast(e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    },
+
+    async restoreSnapshot(batchId) {
+        if (!confirm('ATENÇÃO: Restaurar um snapshot irá substituir TODOS os dados atuais do sistema pelo estado salvo no snapshot. Deseja prosseguir?')) return;
+
+        window.app.toast('Iniciando restauração... Por favor aguarde.', 'info');
+        
+        try {
+            const result = await Api.import.restore(batchId);
+            window.app.toast(result.message || 'Banco restaurado com sucesso!');
+            
+            // Refresh application
+            setTimeout(() => window.location.reload(), 1500);
+        } catch (e) {
+            window.app.toast(e.message, 'error');
         }
     }
 };
