@@ -202,8 +202,8 @@ const movementsView = {
             const processNumber = processInput.value.trim();
             const warningEl = document.getElementById('mov-processo-warning');
             
-            // Regex to match DDD/NNNN.../AAAA (3 digits, 3-10 digits, 4 digits separated by '/')
-            if (processNumber && !/^\d{3}\/\d{3,10}\/\d{4}$/.test(processNumber)) {
+            // Regex to match XXX/XXXX.../XXXX (Letters or digits)
+            if (processNumber && !/^[A-Z0-9]{1,10}\/[A-Z0-9]{1,10}\/[A-Z0-9]{1,10}$/i.test(processNumber)) {
                 warningEl.style.display = 'block';
             } else {
                 warningEl.style.display = 'none';
@@ -216,19 +216,43 @@ const movementsView = {
             if (!processNumber) return;
 
             const attachmentsAlert = document.getElementById('mov-attachments-alert');
+            const btnSave = document.getElementById('btn-save-mov');
 
             // Limpa dados prévios antes de buscar
             attachmentsAlert.style.display = 'none';
+            attachmentsAlert.className = 'mt-1';
+            attachmentsAlert.style.background = '#fff7ed';
+            attachmentsAlert.style.borderColor = '#ffedd5';
+            attachmentsAlert.style.color = '#9a3412';
+            
             assuntoInput.value = '';
             requerenteInput.value = '';
             docInput.value = '';
             obsInput.value = '';
             responsavelSelect.value = '';
+            btnSave.disabled = false;
 
             try {
                 const data = await Api.movements.getByNumber(processNumber);
                 if (data && data.exists) {
                     const process = data.process;
+                    
+                    // BLOCK: Process is an attachment
+                    if (process.parent_id) {
+                        attachmentsAlert.style.display = 'block';
+                        attachmentsAlert.style.background = '#fef2f2';
+                        attachmentsAlert.style.borderColor = '#fecaca';
+                        attachmentsAlert.style.color = '#991b1b';
+                        attachmentsAlert.innerHTML = `
+                            <i class="fa-solid fa-ban" style="color:#ef4444;"></i> 
+                            <strong>Bloqueado:</strong> Este processo está APENSADO ao processo <strong>${process.parent_process_number}</strong>. 
+                            Para tramitá-lo, você deve realizar a movimentação do processo principal.
+                        `;
+                        btnSave.disabled = true;
+                        window.app.toast('Tramitação individual bloqueada para apensos.', 'error');
+                        return;
+                    }
+
                     assuntoInput.value = process.subject || '';
                     requerenteInput.value = process.requester || '';
                     docInput.value = process.document_number || '';
@@ -239,9 +263,15 @@ const movementsView = {
                         responsavelSelect.value = process.last_responsible_id;
                     }
 
-                    // Show joint movement alert
+                    // WARNING: Process has attachments
                     if (process.attachments_count > 0) {
                         attachmentsAlert.style.display = 'block';
+                        attachmentsAlert.innerHTML = `
+                            <i class="fa-solid fa-triangle-exclamation" style="color:#f97316;"></i> 
+                            <strong>Atenção:</strong> Este processo possui <strong>${process.attachments_count} apenso(s)</strong> vinculados: 
+                            <div style="margin-top:5px; font-weight:600; color:var(--primary-color);">${process.attached_processes.join(', ')}</div>
+                            Ao registrar esta ação, todos os apensos serão movimentados automaticamente para o mesmo destino.
+                        `;
                     }
 
                     // Lock fields if process exists
@@ -249,10 +279,9 @@ const movementsView = {
                     requerenteInput.disabled = true;
                     docInput.disabled = true;
 
-                    // Lógica especial de ENRIQUECIMENTO:
-                    // Se o processo veio de importação (nome genérico), mostra aviso mas NÃO puxa automático agora
+                    // Lógica especial de ENRIQUECIMENTO
                     if (process.requester === 'Importação de Dados' || process.requester === 'Processo Importado') {
-                        window.app.toast('Processo com dados genéricos. Se desejar, use o botão ao lado de Dados do Processo.', 'info');
+                        window.app.toast('Processo com dados genéricos. Use "Puxar do Portal" se necessário.', 'info');
                     } else {
                         window.app.toast('Dados do processo carregados!', 'success');
                     }
@@ -269,7 +298,7 @@ const movementsView = {
                     requerenteInput.disabled = false;
                     docInput.disabled = false;
                     updateActionAutomatically();
-                    window.app.toast('Novo processo identificado. Preencha ou use o botão Puxar do Portal.', 'info');
+                    window.app.toast('Novo processo identificado.', 'info');
                 }
             } catch (err) {
                 console.error(err);

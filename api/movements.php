@@ -17,8 +17,8 @@ if ($method === 'GET') {
         $stmt = $pdo->query('
             SELECT m.id, p.process_number, p.subject, m.movement_date, m.action, 
                    p.parent_id,
-                   (SELECT COUNT(*) FROM processes WHERE parent_id = p.id) as attachments_count,
-                   (SELECT process_number FROM processes WHERE id = p.parent_id) as parent_process_number,
+                   (SELECT COUNT(*) FROM processes p_sub WHERE p_sub.parent_id = p.id) as attachments_count,
+                   (SELECT p_p.process_number FROM processes p_p WHERE p_p.id = p.parent_id) as parent_process_number,
                    s.name as destination_sector, u.name as user_name,
                    r.name as responsible_name
             FROM movements m
@@ -50,11 +50,11 @@ if ($method === 'GET') {
     } elseif ($process_number) {
         // Fetch process details and last movement
         $stmt = $pdo->prepare('
-            SELECT id, subject, requester, document_number, observations, parent_id,
-                   (SELECT COUNT(*) FROM processes WHERE parent_id = processes.id) as attachments_count,
-                   (SELECT process_number FROM processes p2 WHERE p2.id = processes.parent_id) as parent_process_number
-            FROM processes 
-            WHERE process_number = ?
+            SELECT p_main.id, p_main.subject, p_main.requester, p_main.document_number, p_main.observations, p_main.parent_id,
+                   (SELECT COUNT(*) FROM processes p_sub WHERE p_sub.parent_id = p_main.id) as attachments_count,
+                   (SELECT p_parent.process_number FROM processes p_parent WHERE p_parent.id = p_main.parent_id) as parent_process_number
+            FROM processes p_main
+            WHERE p_main.process_number = ?
         ');
         $stmt->execute([$process_number]);
         $process = $stmt->fetch();
@@ -75,6 +75,15 @@ if ($method === 'GET') {
             $process['last_action'] = $last_movement ? $last_movement['action'] : null;
             $process['last_responsible_id'] = $last_movement ? $last_movement['responsible_id'] : null;
             $process['last_sector_is_internal'] = $last_movement ? (bool)$last_movement['sector_is_internal'] : true; // Default to true if new
+
+            // Get list of attached processes if it's a parent
+            $process['attached_processes'] = [];
+            if ($process['attachments_count'] > 0) {
+                $stmt = $pdo->prepare('SELECT process_number FROM processes WHERE parent_id = ?');
+                $stmt->execute([$process['id']]);
+                $process['attached_processes'] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            }
+
             jsonResponse(['exists' => true, 'process' => $process]);
         } else {
             jsonResponse(['exists' => false]);
@@ -86,8 +95,8 @@ if ($method === 'GET') {
         
         $params = [];
         $sql = "SELECT DISTINCT p.id, p.process_number, p.subject, p.requester, p.parent_id,
-                (SELECT COUNT(*) FROM processes WHERE parent_id = p.id) as attachments_count,
-                (SELECT process_number FROM processes WHERE id = p.parent_id) as parent_process_number 
+                (SELECT COUNT(*) FROM processes p_sub WHERE p_sub.parent_id = p.id) as attachments_count,
+                (SELECT p_p.process_number FROM processes p_p WHERE p_p.id = p.parent_id) as parent_process_number 
                 FROM processes p ";
         
         if ($only_current && $sector_id) {
@@ -143,8 +152,8 @@ if ($method === 'GET') {
         $stmt = $pdo->query('
             SELECT m.id, p.process_number, p.subject, m.movement_date, m.action, 
                    p.parent_id,
-                   (SELECT COUNT(*) FROM processes WHERE parent_id = p.id) as attachments_count,
-                   (SELECT process_number FROM processes WHERE id = p.parent_id) as parent_process_number,
+                   (SELECT COUNT(*) FROM processes p_sub WHERE p_sub.parent_id = p.id) as attachments_count,
+                   (SELECT p_p.process_number FROM processes p_p WHERE p_p.id = p.parent_id) as parent_process_number,
                    s.name as destination_sector, u.name as user_name,
                    r.name as responsible_name
             FROM movements m

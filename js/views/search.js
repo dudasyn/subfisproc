@@ -408,32 +408,12 @@ const searchView = {
                         childrenDiv.style.display = 'block';
                         btnAttachProc.style.display = 'block';
                         
-                        // Load children details from the API search to get the numbers
-                        const children = await Api.movements.search(process.process_number, null, false);
-                        // Filter to only those that have this as parent
-                        const actualChildren = children.filter(c => c.parent_id == process.id);
-                        
-                        childrenContainer.innerHTML = actualChildren.map(c => `
-                            <div class="attachment-pill">
+                        childrenContainer.innerHTML = process.attached_processes.map(childNumber => `
+                            <div class="attachment-pill" style="cursor:pointer;" onclick="searchView._autoSearch('${childNumber}')">
                                 <i class="fa-solid fa-paperclip"></i>
-                                <span>${c.process_number}</span>
-                                <button class="btn-detach-child" data-id="${c.id}" title="Desapensar">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
+                                <span>${childNumber}</span>
                             </div>
                         `).join('');
-
-                        document.querySelectorAll('.btn-detach-child').forEach(btn => {
-                            btn.addEventListener('click', async (e) => {
-                                e.stopPropagation();
-                                const childId = btn.dataset.id;
-                                if(confirm('Deseja desapensar este processo?')) {
-                                    await Api.processes.detach(childId);
-                                    window.app.toast('Processo desapensado com sucesso!');
-                                    loadProcessDetails(number);
-                                }
-                            });
-                        });
                     } else {
                         attachDiv.style.display = 'none';
                         childrenDiv.style.display = 'none';
