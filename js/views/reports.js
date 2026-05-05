@@ -267,7 +267,8 @@ const reportsView = {
 
         // Load sectors for filter
         Api.sectors.list().then(sectors => {
-            sectorSelect.innerHTML += sectors.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('');
+            const internalSectors = sectors.filter(s => s.is_internal == 1);
+            sectorSelect.innerHTML += internalSectors.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('');
         }).catch(e => console.warn('Erro ao carregar setores no filtro de movimentações', e));
 
         // Set default dates (current month)
@@ -342,7 +343,8 @@ const reportsView = {
         // Load sectors for filter
         try {
             const sectors = await Api.sectors.list();
-            sectorSelect.innerHTML += sectors.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('');
+            const internalSectors = sectors.filter(s => s.is_internal == 1);
+            sectorSelect.innerHTML += internalSectors.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('');
         } catch (e) {
             console.warn('Erro ao carregar setores no filtro', e);
         }
