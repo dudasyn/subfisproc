@@ -80,8 +80,21 @@ const searchView = {
                     </div>
                     <div class="grid-form mb-2">
                         <div class="card col-span-2">
-                            <div class="card-header border-bottom">
+                            <div class="card-header border-bottom flex-between">
                                 <h4>Informações do Processo</h4>
+                                <div id="res-actions" style="display:flex; gap:0.5rem;">
+                                    <button class="btn-secondary" id="btn-edit-proc" style="display:none; padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                        <i class="fa-solid fa-pen-to-square"></i> Editar
+                                    </button>
+                                    <div id="edit-actions" style="display:none; gap:0.5rem;">
+                                        <button class="btn-primary" id="btn-save-proc" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: #10b981; border-color: #10b981;">
+                                            <i class="fa-solid fa-check"></i> Salvar
+                                        </button>
+                                        <button class="btn-secondary" id="btn-cancel-edit" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                            <i class="fa-solid fa-xmark"></i> Cancelar
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="details-grid">
@@ -244,7 +257,15 @@ const searchView = {
         const btnDeleteProc = document.getElementById('btn-delete-proc');
         const btnAttachProc = document.getElementById('btn-attach-proc');
         const btnDetachMain = document.getElementById('btn-detach-main');
+        
+        const btnEditProc = document.getElementById('btn-edit-proc');
+        const btnSaveProc = document.getElementById('btn-save-proc');
+        const btnCancelEdit = document.getElementById('btn-cancel-edit');
+        const editActions = document.getElementById('edit-actions');
+        
         let currentProcessId = null;
+        let isEditing = false;
+        let originalData = {};
 
         // Load Sectors for filter
         const sectors = await Api.sectors.list();
@@ -431,6 +452,16 @@ const searchView = {
                     emptyDiv.style.display = 'none';
 
                     currentProcessId = process.id;
+                    originalData = {
+                        subject: process.subject || '',
+                        requester: process.requester || '',
+                        document_number: process.document_number || '',
+                        observations: process.observations || ''
+                    };
+
+                    if (user.role === 'Admin' || user.role === 'Gestor' || user.role === 'Secretaria') {
+                        btnEditProc.style.display = 'block';
+                    }
                     if (user.role === 'Admin' || user.role === 'Gestor') {
                         btnDeleteProc.style.display = 'block';
                     }
@@ -439,6 +470,70 @@ const searchView = {
                 window.app.toast('Erro ao carregar detalhes', 'error');
             }
         };
+
+        const toggleEditMode = (editing) => {
+            isEditing = editing;
+            const elements = {
+                assunto: document.getElementById('res-assunto'),
+                requerente: document.getElementById('res-requerente'),
+                doc: document.getElementById('res-doc'),
+                obs: document.getElementById('res-obs')
+            };
+
+            if (editing) {
+                elements.assunto.innerHTML = `<input type="text" id="edit-assunto" class="form-control-sm" style="width:100%" value="${originalData.subject}">`;
+                elements.requerente.innerHTML = `<input type="text" id="edit-requerente" class="form-control-sm" style="width:100%" value="${originalData.requester}">`;
+                elements.doc.innerHTML = `<input type="text" id="edit-doc" class="form-control-sm" style="width:100%" value="${originalData.document_number}">`;
+                elements.obs.innerHTML = `<textarea id="edit-obs" class="form-control-sm" style="width:100%; min-height:80px;">${originalData.observations}</textarea>`;
+                
+                btnEditProc.style.display = 'none';
+                editActions.style.display = 'flex';
+                btnDeleteProc.style.display = 'none';
+                btnAttachProc.style.display = 'none';
+            } else {
+                elements.assunto.textContent = originalData.subject || 'Processo Importado';
+                elements.requerente.textContent = originalData.requester || 'Importação de Dados';
+                elements.doc.textContent = originalData.document_number || 'Não informado';
+                elements.obs.textContent = originalData.observations || 'Sem observações';
+                
+                btnEditProc.style.display = 'block';
+                editActions.style.display = 'none';
+                if (user.role === 'Admin' || user.role === 'Gestor') {
+                    btnDeleteProc.style.display = 'block';
+                }
+                btnAttachProc.style.display = 'block';
+            }
+        };
+
+        btnEditProc.addEventListener('click', () => toggleEditMode(true));
+        btnCancelEdit.addEventListener('click', () => toggleEditMode(false));
+
+        btnSaveProc.addEventListener('click', async () => {
+            const updatedData = {
+                id: currentProcessId,
+                subject: document.getElementById('edit-assunto').value.trim(),
+                requester: document.getElementById('edit-requerente').value.trim(),
+                document_number: document.getElementById('edit-doc').value.trim(),
+                observations: document.getElementById('edit-obs').value.trim()
+            };
+
+            try {
+                btnSaveProc.disabled = true;
+                btnSaveProc.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                
+                await Api.processes.update(updatedData);
+                window.app.toast('Informações atualizadas com sucesso!');
+                
+                // Update original data and exit edit mode
+                originalData = { ...updatedData };
+                toggleEditMode(false);
+            } catch (err) {
+                window.app.toast(err.message, 'error');
+            } finally {
+                btnSaveProc.disabled = false;
+                btnSaveProc.innerHTML = '<i class="fa-solid fa-check"></i> Salvar';
+            }
+        });
 
         const resetView = () => {
             inputSearch.value = '';

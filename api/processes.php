@@ -1,12 +1,12 @@
 <?php
 require 'config.php';
-checkAuth(['Admin', 'Gestor']); // Only higher roles can delete
 
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'DELETE') {
+    checkAuth(['Admin', 'Gestor']); // Only higher roles can delete
     $id = $_GET['id'] ?? 0;
     
     if (!$id) {
@@ -26,7 +26,8 @@ if ($method === 'DELETE') {
         jsonResponse(['error' => 'Erro ao excluir processo: ' . $e->getMessage()], 500);
     }
 } elseif ($method === 'POST') {
-    // Attach or detach
+    checkAuth(['Admin', 'Gestor', 'Secretaria']); // These roles can update/attach/detach
+    
     $data = json_decode(file_get_contents('php://input'), true);
     $action = $data['action'] ?? '';
     
@@ -72,6 +73,25 @@ if ($method === 'DELETE') {
         $stmt->execute([$child_id]);
         
         jsonResponse(['success' => true]);
+    } elseif ($action === 'update') {
+        $id = $data['id'] ?? null;
+        $subject = trim($data['subject'] ?? '');
+        $requester = trim($data['requester'] ?? '');
+        $document_number = trim($data['document_number'] ?? '');
+        $observations = trim($data['observations'] ?? '');
+
+        if (!$id) {
+            jsonResponse(['error' => 'ID do processo é obrigatório'], 400);
+        }
+
+        try {
+            $stmt = $pdo->prepare('UPDATE processes SET subject = ?, requester = ?, document_number = ?, observations = ? WHERE id = ?');
+            $stmt->execute([$subject, $requester, $document_number, $observations, $id]);
+            
+            jsonResponse(['success' => true]);
+        } catch (PDOException $e) {
+            jsonResponse(['error' => 'Erro ao atualizar processo: ' . $e->getMessage()], 500);
+        }
     } else {
         jsonResponse(['error' => 'Ação inválida'], 400);
     }
