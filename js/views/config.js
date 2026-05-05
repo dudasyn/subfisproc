@@ -2,7 +2,7 @@
 const configView = {
     async render(container, user, params) {
         const isAdmin = user.role === 'Admin' || user.role === 'Gestor';
-        
+
         container.innerHTML = `
             <div class="view-section">
                 <div class="tabs-header">
@@ -168,13 +168,13 @@ const configView = {
         `;
 
         this.attachTabEvents();
-        
+
         // Add listeners
         document.getElementById('btn-add-sector').onclick = () => this.showSectorModal();
         document.getElementById('btn-delete-all-sectors').onclick = () => this.deleteAllSectors();
         document.getElementById('btn-add-responsible').onclick = () => this.showResponsibleModal();
         document.getElementById('btn-clear-all-responsible-sectors').onclick = () => this.clearAllResponsibleSectors();
-        
+
         if (isAdmin) {
             document.getElementById('btn-add-user').onclick = () => this.showUserModal();
             document.getElementById('btn-wipe-database').onclick = () => this.wipeDatabase();
@@ -190,8 +190,8 @@ const configView = {
 
             // Fetch Data
             await Promise.all([
-                this.loadSectors(), 
-                this.loadUsers(), 
+                this.loadSectors(),
+                this.loadUsers(),
                 this.loadResponsibles(),
                 this.loadImportHistory()
             ]);
@@ -206,7 +206,7 @@ const configView = {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
+
                 e.target.closest('.tab-btn').classList.add('active');
                 document.getElementById('tab-' + e.target.closest('.tab-btn').dataset.tab).classList.add('active');
             });
@@ -220,7 +220,7 @@ const configView = {
             this.sectors = await Api.sectors.list(this.showInactive);
             const tbody = document.getElementById('tbody-sectors');
             const tbodyInactive = document.getElementById('tbody-inactive-sectors');
-            
+
             if (this.sectors.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="3" class="text-center">Nenhum setor cadastrado</td></tr>`;
                 return;
@@ -229,21 +229,21 @@ const configView = {
             const buildRow = (s, level = 0) => {
                 const indent = '&nbsp;'.repeat(level * 4);
                 const hasChildren = this.sectors.some(child => child.parent_id === s.id && child.active === 1);
-                const toggleIcon = hasChildren 
-                    ? `<i class="fa-solid fa-chevron-right toggle-children" data-id="${s.id}" style="cursor:pointer; width: 1.5rem; text-align:center; color: var(--primary-color);"></i> ` 
+                const toggleIcon = hasChildren
+                    ? `<i class="fa-solid fa-chevron-right toggle-children" data-id="${s.id}" style="cursor:pointer; width: 1.5rem; text-align:center; color: var(--primary-color);"></i> `
                     : `<span style="display:inline-block; width: 1.5rem;"></span>`;
-                
-                const isSubfis = s.name === 'SUBFIS' 
-                    ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Órgão Central">Órgão Central</span>' 
-                    : (s.is_internal == 1 
-                        ? '<span class="badge badge-success" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem; background:#d1fae5; color:#065f46;" title="Setor Interno">Setor Interno</span>' 
+
+                const isSubfis = s.name === 'SUBFIS'
+                    ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Órgão Central">Órgão Central</span>'
+                    : (s.is_internal == 1
+                        ? '<span class="badge badge-success" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem; background:#d1fae5; color:#065f46;" title="Setor Interno">Setor Interno</span>'
                         : '<span class="badge badge-neutral" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Setor Externo">Externo</span>');
-                
+
                 const displayName = s.alias ? `<b>${s.alias}</b> <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">(${s.name})</span>` : `<b>${s.name}</b>`;
-                
+
                 const isHidden = s.parent_id ? 'display: none;' : '';
                 const opacity = s.active === '0' || s.active === 0 ? 'opacity: 0.6; background: #f8fafc;' : '';
-                
+
                 return `
                     <tr class="sector-row ${s.active == 0 ? 'inactive-sector' : ''}" data-id="${s.id}" data-parent="${s.parent_id || ''}" style="${isHidden} ${opacity}">
                         <td style="padding-left: ${level * 1.5}rem;">
@@ -337,7 +337,7 @@ const configView = {
                 return;
             }
             tbody.innerHTML = this.responsibles_list.map(r => {
-                const sectorBadges = r.sector_name 
+                const sectorBadges = r.sector_name
                     ? r.sector_name.split(', ').map(s => `<span class="badge badge-neutral" style="margin-right:2px;">${s}</span>`).join('')
                     : '<span class="badge badge-neutral" style="color:var(--text-secondary)">Sem setor</span>';
                 return `
@@ -359,7 +359,7 @@ const configView = {
 
     async clearAllResponsibleSectors() {
         if (!confirm('ATENÇÃO: Isso irá remover TODOS os vínculos de setores de TODOS os responsáveis (Auditores). Esta ação não pode ser desfeita. Deseja continuar?')) return;
-        
+
         try {
             const res = await fetch('api/responsibles.php', {
                 method: 'POST',
@@ -368,7 +368,7 @@ const configView = {
             });
             const data = await res.json();
             if (data.error) throw new Error(data.error);
-            
+
             window.app.toast('Vínculos de setores removidos com sucesso!');
             this.loadResponsibles();
         } catch (e) {
@@ -410,7 +410,7 @@ const configView = {
 
                 window.app.toast('Auditores mesclados com sucesso!');
                 this.loadResponsibles();
-            } catch(e) {
+            } catch (e) {
                 window.app.toast(e.message, 'error');
                 throw e;
             }
@@ -421,7 +421,7 @@ const configView = {
         try {
             const users = await Api.users.list();
             const tbody = document.getElementById('tbody-users');
-            
+
             if (users.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center">Nenhum colaborador cadastrado</td></tr>`;
                 return;
@@ -479,10 +479,10 @@ const configView = {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
             const originalHtml = btn.innerHTML;
-            
+
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            
+
             try {
                 await onSave();
                 document.getElementById('custom-modal').remove();
@@ -528,9 +528,9 @@ const configView = {
             const name = document.getElementById('resp-name').value;
             const sector_ids = selectedSectors.map(s => s.id);
             if (id) {
-                await fetch('api/responsibles.php', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, name, sector_ids }) }).then(r => r.json());
+                await fetch('api/responsibles.php', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, name, sector_ids }) }).then(r => r.json());
             } else {
-                await fetch('api/responsibles.php', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name, sector_ids }) }).then(r => r.json());
+                await fetch('api/responsibles.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, sector_ids }) }).then(r => r.json());
             }
             window.app.toast('Responsável salvo!');
             this.loadResponsibles();
@@ -618,7 +618,7 @@ const configView = {
                 const alias = document.getElementById('sec-alias').value;
                 const is_internal = document.getElementById('sec-internal').checked ? 1 : 0;
                 const parent_id = document.getElementById('sec-parent').value || null;
-                
+
                 if (id) {
                     await fetch('api/sectors.php', {
                         method: 'PUT',
@@ -632,10 +632,10 @@ const configView = {
                         body: JSON.stringify({ name, alias, is_internal, parent_id })
                     });
                 }
-                
+
                 window.app.toast('Setor salvo!');
                 this.loadSectors();
-            } catch(e) {
+            } catch (e) {
                 window.app.toast(e.message, 'error');
             }
         });
@@ -677,7 +677,7 @@ const configView = {
                 this.loadSectors();
                 this.loadResponsibles();
                 if (this.loadUsers) this.loadUsers();
-            } catch(e) {
+            } catch (e) {
                 window.app.toast(e.message, 'error');
                 throw e;
             }
@@ -745,7 +745,7 @@ const configView = {
                 });
                 window.app.toast('Colaborador adicionado!');
                 this.loadUsers();
-            } catch(e) {
+            } catch (e) {
                 window.app.toast(e.message, 'error');
             }
         });
@@ -820,7 +820,7 @@ const configView = {
             await Api.responsibles.delete(id);
             window.app.toast('Responsável removido!');
             this.loadResponsibles();
-        } catch(e) { window.app.toast(e.message, 'error'); }
+        } catch (e) { window.app.toast(e.message, 'error'); }
     },
 
     async deleteSector(id) {
@@ -829,7 +829,7 @@ const configView = {
             await Api.sectors.delete(id);
             window.app.toast('Setor excluído!');
             this.loadSectors();
-        } catch(e) { window.app.toast(e.message, 'error'); }
+        } catch (e) { window.app.toast(e.message, 'error'); }
     },
 
     async deleteAllSectors() {
@@ -838,7 +838,7 @@ const configView = {
             await Api.sectors.delete('all');
             window.app.toast('Todos os setores foram excluídos!');
             this.loadSectors();
-        } catch(e) { window.app.toast(e.message, 'error'); }
+        } catch (e) { window.app.toast(e.message, 'error'); }
     },
 
     async deleteUser(id) {
@@ -847,7 +847,7 @@ const configView = {
             await Api.users.delete(id);
             window.app.toast('Colaborador desativado!');
             this.loadUsers();
-        } catch(e) { window.app.toast(e.message, 'error'); }
+        } catch (e) { window.app.toast(e.message, 'error'); }
     },
 
     async resetUserPassword(id, name) {
@@ -855,7 +855,7 @@ const configView = {
         try {
             await Api.users.resetPassword(id);
             window.app.toast('Senha resetada com sucesso!');
-        } catch(e) { window.app.toast(e.message, 'error'); }
+        } catch (e) { window.app.toast(e.message, 'error'); }
     },
 
     async loadImportHistory() {
@@ -863,7 +863,7 @@ const configView = {
             const history = await Api.import.history();
             const tbody = document.getElementById('tbody-import-history');
             if (!tbody) return;
-            
+
             if (history.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhuma importação encontrada.</td></tr>';
                 return;
@@ -881,7 +881,7 @@ const configView = {
                     </td>
                 </tr>
             `).join('');
-        } catch(e) {
+        } catch (e) {
             console.error('Erro ao carregar historico', e);
             const tbody = document.getElementById('tbody-import-history');
             if (tbody) {
@@ -892,29 +892,29 @@ const configView = {
 
     async deleteImportBatch(id) {
         if (!confirm('ATENÇÃO: Deseja realmente DESFAZER esta importação? Isso removerá todos os processos, movimentações, responsáveis e setores que foram criados EXCLUSIVAMENTE por este lote. Esta ação não pode ser desfeita.')) return;
-        
+
         try {
             await Api.import.undo(id);
             window.app.toast('Importação desfeita com sucesso!');
             await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles(), this.loadImportHistory()]);
-        } catch(e) { window.app.toast(e.message, 'error'); }
+        } catch (e) { window.app.toast(e.message, 'error'); }
     },
 
     async wipeDatabase() {
         if (!confirm('!!! ATENÇÃO TOTAL !!!\n\nEsta ação irá APAGAR PERMANENTEMENTE:\n- Todas as movimentações\n- Todos os processos\n- Todos os Auditores (Responsáveis)\n- Todos os setores inativos e órfãos\n\nOs Colaboradores (usuários) serão mantidos. Deseja realmente ZERAR o sistema para começar uma importação limpa?')) return;
-        
+
         if (!confirm('Confirmação final: Você tem certeza ABSOLUTA? Esta ação não tem volta.')) return;
 
         try {
             const res = await Api.import.wipe();
             window.app.toast('Sistema resetado com sucesso!');
             await Promise.all([
-                this.loadSectors(), 
-                this.loadUsers(), 
-                this.loadResponsibles(), 
+                this.loadSectors(),
+                this.loadUsers(),
+                this.loadResponsibles(),
                 this.loadImportHistory()
             ]);
-        } catch(e) {
+        } catch (e) {
             window.app.toast(e.message, 'error');
         }
     },
@@ -938,7 +938,7 @@ const configView = {
             const workbook = XLSX.read(data, { type: 'binary' });
             const sheetName = workbook.SheetNames[0];
             const sheet = workbook.Sheets[sheetName];
-            
+
             // Pass defval: "" so xlsx doesn't omit keys when cells (like SETOR) are empty in the first row
             const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
@@ -993,7 +993,7 @@ const configView = {
             }).filter(r => r.process_number);
 
             this.renderImportPreview(mapping, this.importData.slice(0, 5));
-            
+
             // Debug missing columns (destination_sector is optional, backend defaults to SUBFIS)
             let missing = [];
             const requiredFields = ['process_number', 'movement_date', 'action', 'responsible', 'subject'];
@@ -1028,7 +1028,7 @@ const configView = {
             const parts = val.split(/[\/\-]/).map(p => p.trim());
             if (parts.length === 3) {
                 if (parts[0].length === 4) return val.trim(); // YYYY-MM-DD
-                
+
                 let day, month;
                 if (isUSFormat) {
                     month = parts[0].padStart(2, '0');
@@ -1037,9 +1037,9 @@ const configView = {
                     day = parts[0].padStart(2, '0');
                     month = parts[1].padStart(2, '0');
                 }
-                
+
                 let year = parts[2];
-                
+
                 // Fix for 2 digit or malformed years (e.g. 24 -> 2024, 024 -> 2024)
                 if (year.length === 2) {
                     year = parseInt(year) > 50 ? `19${year}` : `20${year}`;
@@ -1048,9 +1048,9 @@ const configView = {
                 } else if (year.length > 4) {
                     year = year.substring(0, 4);
                 }
-                
+
                 if (!day || !month || !year || day === '00' || month === '00') return null;
-                
+
                 return `${year}-${month}-${day}`; // YYYY-MM-DD
             }
         }
@@ -1064,7 +1064,7 @@ const configView = {
 
         const cols = ['process_number', 'movement_date', 'action', 'responsible', 'subject', 'destination_sector'];
         headerRow.innerHTML = cols.map(c => `<th>${c.toUpperCase()}</th>`).join('');
-        
+
         bodyRows.innerHTML = rows.map(row => {
             const cells = cols.map(k => {
                 if (k === 'process_number') {
@@ -1086,14 +1086,14 @@ const configView = {
         let str = String(val).replace(/ap\./ig, ' AP ').replace(/ap([0-9\s])/ig, ' AP $1');
         // If they miss spacing
         str = str.replace(/ \/\s/g, '/');
-        
+
         const parts = str.split(/ AP /i).map(s => s.trim()).filter(Boolean);
-        
+
         const formatProcess = (pStr) => {
             if (!pStr) return '';
             // Remove everything except numbers and slashes
             let clean = pStr.replace(/[^\d/]/g, '').trim();
-            
+
             // SECURITY: If it has too many slashes or is too long, it's garbage
             const slashCount = (clean.match(/\//g) || []).length;
             if (slashCount > 4 || clean.length > 30) {
@@ -1119,16 +1119,16 @@ const configView = {
         };
 
         if (parts.length === 0) return { main: '', attached: [] };
-        
+
         const mainProcess = formatProcess(parts[0]);
         const attachedList = parts.slice(1).map(p => formatProcess(p)).filter(Boolean);
-        
+
         return { main: mainProcess, attached: attachedList };
     },
 
     async processImport() {
         if (!this.importData || this.importData.length === 0) return;
-        
+
         const btn = document.getElementById('btn-process-import');
         const originalHtml = btn.innerHTML;
         const total = this.importData.length;
@@ -1146,7 +1146,7 @@ const configView = {
             }
 
             window.app.toast(`Importação de ${total} registros concluída!`);
-            
+
             // Reset UI
             document.getElementById('input-import-excel').value = '';
             document.getElementById('import-preview').style.display = 'none';
@@ -1156,7 +1156,7 @@ const configView = {
 
             // Refresh all data
             await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles(), this.loadImportHistory()]);
-        } catch(e) {
+        } catch (e) {
             window.app.toast(e.message, 'error');
             btn.innerHTML = originalHtml;
             btn.disabled = false;
