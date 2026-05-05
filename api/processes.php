@@ -26,7 +26,7 @@ if ($method === 'DELETE') {
         jsonResponse(['error' => 'Erro ao excluir processo: ' . $e->getMessage()], 500);
     }
 } elseif ($method === 'POST') {
-    checkAuth(['Admin', 'Gestor', 'Secretaria']); // These roles can update/attach/detach
+    checkAuth(['Admin', 'Gestor', 'Secretaria', 'Assistente Operacional']); // These roles can update/attach/detach
     
     $data = json_decode(file_get_contents('php://input'), true);
     $action = $data['action'] ?? '';

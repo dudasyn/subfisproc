@@ -459,7 +459,7 @@ const searchView = {
                         observations: process.observations || ''
                     };
 
-                    if (user.role === 'Admin' || user.role === 'Gestor' || user.role === 'Secretaria') {
+                    if (user.role === 'Admin' || user.role === 'Gestor' || user.role === 'Secretaria' || user.role === 'Assistente Operacional') {
                         btnEditProc.style.display = 'block';
                     }
                     if (user.role === 'Admin' || user.role === 'Gestor') {
