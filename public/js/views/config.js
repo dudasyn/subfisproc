@@ -3,6 +3,166 @@ const configView = {
     async render(container, user, params) {
         const isAdmin = user.role === 'Admin' || user.role === 'Gestor';
         
+        // Injetar estilos customizados para a aba de importação premium e logs
+        if (!document.getElementById('import-premium-styles')) {
+            const style = document.createElement('style');
+            style.id = 'import-premium-styles';
+            style.innerHTML = `
+                .import-dropzone {
+                    border: 2px dashed rgba(37, 99, 235, 0.25);
+                    background: #f8fafc;
+                    border-radius: 12px;
+                    padding: 2rem;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.2s ease-in-out;
+                    margin-bottom: 1.5rem;
+                }
+                .import-dropzone:hover {
+                    border-color: var(--primary);
+                    background: rgba(37, 99, 235, 0.03);
+                    transform: translateY(-2px);
+                }
+                .import-dropzone i {
+                    color: var(--primary);
+                    font-size: 2.5rem;
+                    margin-bottom: 0.75rem;
+                    display: block;
+                }
+                .import-dropzone h4 {
+                    font-weight: 700;
+                    margin: 0;
+                    font-size: 1.1rem;
+                }
+                .import-dropzone p {
+                    color: var(--text-secondary);
+                    font-size: 0.85rem;
+                    margin-top: 0.35rem;
+                }
+                .version-tag-wrapper {
+                    background: #ffffff;
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    padding: 1.25rem;
+                    margin-bottom: 1.5rem;
+                    box-shadow: var(--shadow-sm);
+                }
+                .version-tag-input {
+                    width: 100%;
+                    padding: 0.75rem 1rem;
+                    border: 1px solid var(--border-color);
+                    border-radius: 6px;
+                    font-family: inherit;
+                    font-size: 0.9rem;
+                    transition: all 0.2s ease;
+                    background: #f8fafc;
+                    margin-top: 0.5rem;
+                }
+                .version-tag-input:focus {
+                    background: #ffffff;
+                    border-color: var(--primary);
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+                }
+                .badge-custom {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    padding: 0.3rem 0.7rem;
+                    border-radius: 50px;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                }
+                .badge-success-glow {
+                    background: rgba(16, 185, 129, 0.08);
+                    color: #059669;
+                    box-shadow: 0 1px 2px rgba(16, 185, 129, 0.05);
+                }
+                .badge-warning-glow {
+                    background: rgba(245, 158, 11, 0.08);
+                    color: #d97706;
+                }
+                .btn-action-round {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    border: 1px solid transparent;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+                .btn-action-round:hover {
+                    transform: scale(1.08) translateY(-1px);
+                    box-shadow: var(--shadow-sm);
+                }
+                .badge-item {
+                    background: rgba(241, 245, 249, 0.8);
+                    color: #334155;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    padding: 0.25rem 0.55rem;
+                    border-radius: 6px;
+                    border: 1px solid #e2e8f0;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+                .logs-terminal-container {
+                    background: #0f172a;
+                    color: #cbd5e1;
+                    font-family: 'Fira Code', 'Courier New', Courier, monospace;
+                    font-size: 0.8rem;
+                    padding: 1.25rem;
+                    border-radius: 8px;
+                    max-height: 450px;
+                    overflow-y: auto;
+                    border: 1px solid #1e293b;
+                    box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+                }
+                .log-line {
+                    line-height: 1.6;
+                    margin-bottom: 0.4rem;
+                    display: flex;
+                    gap: 0.6rem;
+                    align-items: flex-start;
+                    border-bottom: 1px solid rgba(30, 41, 59, 0.4);
+                    padding-bottom: 0.25rem;
+                }
+                .log-line:last-child {
+                    border-bottom: none;
+                    padding-bottom: 0;
+                }
+                .log-time { color: #64748b; font-weight: 500; font-size: 0.75rem; }
+                .log-lvl-info { color: #34d399; font-weight: 700; font-size: 0.75rem; }
+                .log-lvl-warning { color: #fbbf24; font-weight: 700; font-size: 0.75rem; }
+                .log-lvl-error { color: #f87171; font-weight: 700; font-size: 0.75rem; }
+                .log-phase { color: #38bdf8; font-weight: 600; font-size: 0.75rem; }
+                .log-text { color: #f1f5f9; word-break: break-all; }
+                .version-row {
+                    transition: all 0.2s ease;
+                }
+                .version-row:hover {
+                    background: rgba(248, 250, 252, 0.85) !important;
+                }
+                #loading-overlay-screen {
+                    animation: fadeIn 0.2s ease-out;
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @media (max-width: 1024px) {
+                    .import-columns-grid {
+                        grid-template-columns: 1fr !important;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         container.innerHTML = `
             <div class="view-section">
                 <div class="tabs-header">
@@ -101,90 +261,146 @@ const configView = {
                 <!-- IMPORTACAO TAB -->
                 ${isAdmin ? `
                 <div class="tab-content" id="tab-importacao">
-                    <div class="card mb-1">
-                        <div class="card-header border-bottom">
-                            <h3>Importar Planilha (Excel)</h3>
-                            <p>Envie sua planilha de controle para migrar os dados para o sistema.</p>
-                        </div>
-                        <div class="card-body">
-                            <div class="import-actions flex-center" style="gap:1rem; flex-wrap: wrap;">
-                                <div class="file-input-wrapper">
-                                    <input type="file" id="input-import-excel" accept=".xlsx, .xls" style="display:none;">
-                                    <button class="btn-secondary" onclick="document.getElementById('input-import-excel').click()">
-                                        <i class="fa-solid fa-file-excel"></i> Selecionar Arquivo
-                                    </button>
+                    
+                    <!-- Side-by-Side Dual Column Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;" class="import-columns-grid">
+                        
+                        <!-- CARD 1: Spreadsheet Import & Template Download -->
+                        <div class="card mb-0" style="display: flex; flex-direction: column;">
+                            <div class="card-header border-bottom" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                                <div>
+                                    <h3 style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-file-excel" style="color: #10b981;"></i> Importar Planilha (Excel/CSV)</h3>
+                                    <p>Envie sua planilha de controle para migrar os dados para o sistema de forma integrada e segura.</p>
                                 </div>
-                                <button class="btn-primary" id="btn-process-import" disabled>
-                                    <i class="fa-solid fa-upload"></i> Processar e Importar
+                                <button class="btn-primary" id="btn-download-template" style="background: #10b981; border-color: #059669; width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; white-space: nowrap;" title="Baixar modelo excel estruturado">
+                                    <i class="fa-solid fa-download"></i> Modelo de Dados
                                 </button>
                             </div>
-                            <div id="import-preview" class="mt-2" style="display:none;">
-                                <div class="alert alert-info">
-                                    <i class="fa-solid fa-info-circle"></i> 
-                                    <span id="import-info-text">Detectamos X registros para importação.</span>
-                                </div>
-                                <div class="table-responsive mt-1">
-                                    <table class="data-table">
-                                        <thead><tr id="preview-header"></tr></thead>
-                                        <tbody id="preview-body"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                            <div class="card-body" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <!-- Drag & Drop Dropzone area -->
+                                    <div class="import-dropzone" onclick="document.getElementById('input-import-excel').click()">
+                                        <i class="fa-solid fa-cloud-arrow-up" style="color: #10b981;"></i>
+                                        <h4>Arraste ou Selecione sua Planilha de Controle</h4>
+                                        <p>Formatos suportados: planilhas Excel (.xlsx, .xls)</p>
+                                    </div>
 
-                    <div class="card mb-1">
-                        <div class="card-header border-bottom flex-center" style="justify-content: space-between;">
-                            <div>
-                                <h3>Snapshots e Backups de Segurança</h3>
-                                <p>Pontos de restauração automáticos gerados antes de cada importação.</p>
+                                    <input type="file" id="input-import-excel" accept=".xlsx, .xls" style="display:none;">
+
+                                    <!-- Version Label (gorgeous style) -->
+                                    <div class="version-tag-wrapper" id="version-tag-container" style="display: none;">
+                                        <label class="custom-input-label" for="input-version-label"><i class="fa-solid fa-tag"></i> Nome / Marcador de Versão (Opcional)</label>
+                                        <input type="text" id="input-version-label" class="version-tag-input" placeholder="Ex: v2.1 - Importação consolidada do encerramento de Abril">
+                                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; margin-bottom: 0;"><i class="fa-solid fa-circle-info"></i> Rotular com o nome do arquivo ajuda a rastrear no histórico de snapshots.</p>
+                                    </div>
+                                </div>
+
+                                <div class="import-actions flex-center" style="gap:1rem; flex-wrap: wrap; justify-content: flex-start; display: none; margin-top: 1.5rem;" id="import-actions-bar">
+                                    <button class="btn-primary" id="btn-process-import" style="width: auto; padding: 0.75rem 1.5rem;" disabled>
+                                        <i class="fa-solid fa-upload"></i> Processar e Importar
+                                    </button>
+                                    <button class="btn-secondary" id="btn-cancel-import" style="width: auto; padding: 0.75rem 1.5rem;">
+                                        <i class="fa-solid fa-xmark"></i> Cancelar
+                                    </button>
+                                </div>
+
+                                <div id="import-preview" class="mt-2" style="display:none;">
+                                    <div id="import-validation-summary"></div>
+                                    <div class="table-responsive mt-1" style="max-height: 250px; border: 1px solid var(--border-color); border-radius: 6px;">
+                                        <table class="data-table">
+                                            <thead><tr id="preview-header"></tr></thead>
+                                            <tbody id="preview-body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
-                            <button class="btn-primary" id="btn-create-snapshot" style="width:auto; padding:0.6rem 1.2rem;">
-                                <i class="fa-solid fa-camera"></i> Criar Snapshot Agora
-                            </button>
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Versão / Snapshot</th>
-                                            <th>Data de Criação</th>
-                                            <th>Tamanho</th>
-                                            <th class="text-center">Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tbody-snapshots">
-                                        <tr><td colspan="4" class="text-center">Carregando snapshots...</td></tr>
-                                    </tbody>
-                                </table>
+
+                        <!-- CARD 2: Legacy Database Import (.SQL) -->
+                        <div class="card mb-0" style="display: flex; flex-direction: column;">
+                            <div class="card-header border-bottom" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                                <div>
+                                    <h3 style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-database" style="color: #4f46e5;"></i> Importar Base Legada (.sql)</h3>
+                                    <p>Restaure um arquivo de dump MySQL/MariaDB (.sql) para restabelecer versões antigas ou sincronizar.</p>
+                                </div>
+                            </div>
+                            <div class="card-body" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 1.25rem;">
+                                
+                                <!-- Server Local SQL Quick Actions -->
+                                <div style="background: rgba(79, 70, 229, 0.04); border: 1px dashed rgba(79, 70, 229, 0.2); padding: 1rem; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-server" style="color: #4f46e5; font-size: 1.1rem;"></i>
+                                        <div>
+                                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-primary);">Banco de Dados Legado no Servidor</div>
+                                            <div style="font-size: 0.75rem; color: var(--text-secondary); word-break: break-all;">Caminho: /database/migrations/u489835785_subfisprocdb.sql</div>
+                                        </div>
+                                    </div>
+                                    <button class="btn-primary" id="btn-restore-server-legacy" style="background: #4f46e5; border-color: #4338ca; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; padding: 0.65rem 1rem;">
+                                        <i class="fa-solid fa-arrows-spin"></i> Restaurar Base Legada Local
+                                    </button>
+                                </div>
+
+                                <!-- Drag & Drop SQL Dropzone area -->
+                                <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+                                    <div class="import-dropzone" id="sql-dropzone" onclick="document.getElementById('input-import-sql').click()" style="padding: 1.25rem 1rem; border-color: rgba(79, 70, 229, 0.3);">
+                                        <i class="fa-solid fa-file-code" style="color: #4f46e5; font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                                        <h4 style="font-size: 0.95rem;">Arraste ou Selecione outro Arquivo .sql</h4>
+                                        <p style="font-size: 0.75rem;">Carregar e restaurar um dump externo</p>
+                                    </div>
+                                    <input type="file" id="input-import-sql" accept=".sql" style="display:none;">
+                                </div>
+
+                                <!-- SQL Version Label & Action Bar -->
+                                <div id="sql-actions-container" style="display: none; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                                    <div class="version-tag-wrapper" style="margin-bottom: 0.75rem;">
+                                        <label class="custom-input-label" for="input-sql-version-label" style="font-size: 0.8rem;"><i class="fa-solid fa-tag"></i> Marcador de Versão para este Dump</label>
+                                        <input type="text" id="input-sql-version-label" class="version-tag-input" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" placeholder="Ex: Dump Legado Subfisproc antigo">
+                                    </div>
+                                    <div class="import-actions flex-center" style="gap:0.75rem; justify-content: flex-start; display: flex;">
+                                        <button class="btn-primary" id="btn-process-sql-import" style="width: auto; padding: 0.55rem 1.25rem; font-size: 0.85rem; background: #4f46e5; border-color: #4338ca;">
+                                            <i class="fa-solid fa-upload"></i> Enviar e Restaurar
+                                        </button>
+                                        <button class="btn-secondary" id="btn-cancel-sql-import" style="width: auto; padding: 0.55rem 1.25rem; font-size: 0.85rem;">
+                                            <i class="fa-solid fa-xmark"></i> Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
+
                     </div>
 
                     <div class="card">
                         <div class="card-header border-bottom flex-center" style="justify-content: space-between;">
                             <div>
-                                <h3>Histórico de Importações (Lotes Excel)</h3>
-                                <p>Desfaça importações em lote se necessário.</p>
+                                <h3>Histórico de Versões e Backups (Snapshots)</h3>
+                                <p>Gerencie o histórico de importações completas, analise logs ou reverta dados com segurança.</p>
                             </div>
-                            <button class="btn-secondary" id="btn-wipe-database" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; width:auto; padding:0.6rem 1.2rem;">
-                                <i class="fa-solid fa-radiation"></i> Zerar Sistema (DANGER)
-                            </button>
+                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                <button class="btn-primary" id="btn-create-snapshot" style="background:#4f46e5; border-color:#4338ca; width:auto; padding:0.6rem 1.2rem; font-weight: 600;">
+                                    <i class="fa-solid fa-shield-halved"></i> Criar Snapshot de Segurança
+                                </button>
+                                <button class="btn-secondary" id="btn-wipe-database" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; width:auto; padding:0.6rem 1.2rem; font-weight: 600;">
+                                    <i class="fa-solid fa-radiation"></i> Zerar Sistema (DANGER)
+                                </button>
+                            </div>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="data-table">
                                     <thead>
                                         <tr>
-                                            <th>ID Lote</th>
-                                            <th>Data</th>
-                                            <th>Registros</th>
+                                            <th>Identificador / Marcador</th>
+                                            <th>Data / Autor</th>
+                                            <th>Status</th>
+                                            <th>Snapshot de Segurança</th>
+                                            <th>Registros Adicionados</th>
                                             <th class="text-center">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbody-import-history">
-                                        <tr><td colspan="4" class="text-center">Carregando...</td></tr>
+                                        <tr><td colspan="6" class="text-center">Carregando...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -207,6 +423,7 @@ const configView = {
         if (isAdmin) {
             document.getElementById('btn-add-user').onclick = () => this.showUserModal();
             document.getElementById('btn-wipe-database').onclick = () => this.wipeDatabase();
+            document.getElementById('btn-create-snapshot').onclick = () => this.createManualSnapshot();
 
             // Toggle Inativos
             document.getElementById('btn-show-inactive-sectors').onclick = () => {
@@ -222,11 +439,9 @@ const configView = {
                 this.loadSectors(), 
                 this.loadUsers(), 
                 this.loadResponsibles(),
-                this.loadImportHistory(),
-                this.loadSnapshots()
+                this.loadImportHistory()
             ]);
             this.initImportLogic();
-            document.getElementById('btn-create-snapshot').onclick = () => this.createSnapshot();
         } else {
             await Promise.all([this.loadSectors(), this.loadResponsibles()]);
         }
@@ -883,50 +1098,179 @@ const configView = {
             const tbody = document.getElementById('tbody-import-history');
             if (!tbody) return;
             
-            if (history.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhuma importação encontrada.</td></tr>';
+            if (!history || history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2.5rem; color: var(--text-secondary);"><i class="fa-solid fa-clock-rotate-left fa-3x" style="display:block; margin: 0 auto 1rem auto; opacity: 0.4; color: var(--primary);"></i> Nenhuma importação ou versão de backup registrada ainda.</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = history.map(h => `
-                <tr>
-                    <td><code>${h.id}</code></td>
-                    <td>${new Date(h.date).toLocaleString('pt-BR')}</td>
-                    <td>${h.movements_count} mov. / ${h.processes_count} proc.</td>
-                    <td class="text-center">
-                        <button class="btn-icon text-danger" title="Desfazer Importação" onclick="configView.deleteImportBatch('${h.id}')">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = history.map(h => {
+                // Status mapping with beautiful glowing badges
+                let statusBadge = '';
+                switch (h.status) {
+                    case 'completed':
+                        statusBadge = '<span class="badge-custom badge-success-glow" style="font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-circle-check"></i> Ativo</span>';
+                        break;
+                    case 'rolled_back':
+                        statusBadge = '<span class="badge-custom" style="background: rgba(148, 163, 184, 0.12); color: #475569; font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-rotate-left"></i> Desfeito</span>';
+                        break;
+                    case 'failed':
+                        statusBadge = '<span class="badge-custom" style="background: rgba(239, 68, 68, 0.1); color: #b91c1c; font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-circle-xmark"></i> Falhou</span>';
+                        break;
+                    case 'running':
+                        statusBadge = '<span class="badge-custom" style="background: rgba(245, 158, 11, 0.1); color: #d97706; font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-spinner fa-spin"></i> Executando</span>';
+                        break;
+                    case 'pending':
+                    default:
+                        statusBadge = '<span class="badge-custom" style="background: rgba(100, 116, 139, 0.1); color: #475569; font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-clock"></i> Pendente</span>';
+                }
+
+                // Snapshots backup state
+                const hasSnapshot = !!h.snapshot_file;
+                const snapshotBadge = hasSnapshot 
+                    ? `<span class="badge-custom badge-success-glow" style="font-size: 0.75rem; font-weight: 600;"><i class="fa-solid fa-shield-halved"></i> snap_${h.batch_id.slice(-6)}.sql</span>`
+                    : '<span style="font-size: 0.8rem; color: var(--text-secondary); font-style: italic;"><i class="fa-solid fa-ban"></i> Não disponível</span>';
+
+                // Rich Stats formatting
+                let statsHtml = '';
+                if (h.status === 'completed' && h.stats) {
+                    const s = h.stats;
+                    statsHtml = `
+                        <div class="flex-center" style="gap: 0.4rem; justify-content: flex-start; flex-wrap: wrap;">
+                            <span class="badge-item" title="Movimentações"><i class="fa-solid fa-arrow-right-arrow-left"></i> ${s.movements_created || 0} movs</span>
+                            <span class="badge-item" title="Processos"><i class="fa-solid fa-file-invoice"></i> ${s.processes_created || 0} procs</span>
+                            ${s.sectors_created ? `<span class="badge-item" title="Setores"><i class="fa-solid fa-sitemap"></i> ${s.sectors_created} set</span>` : ''}
+                            ${s.responsibles_created ? `<span class="badge-item" title="Auditores"><i class="fa-solid fa-user-tie"></i> ${s.responsibles_created} aud</span>` : ''}
+                        </div>
+                    `;
+                } else if (h.status === 'rolled_back' && h.stats) {
+                    statsHtml = `<span style="font-size: 0.8rem; color: var(--text-secondary); font-weight:500;"><i class="fa-solid fa-trash-can"></i> Removidos: ${h.stats.movements || 0} movs, ${h.stats.processes || 0} procs</span>`;
+                } else if (h.status === 'failed' && h.error_message) {
+                    statsHtml = `<span style="font-size: 0.8rem; color: var(--danger); display: inline-block; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight:500;" title="${h.error_message}"><i class="fa-solid fa-triangle-exclamation"></i> ${h.error_message}</span>`;
+                } else {
+                    statsHtml = '<span style="color: var(--text-secondary); font-size: 0.85rem;">-</span>';
+                }
+
+                // Warnings and errors indicator
+                const warningsAndErrors = [];
+                if (h.error_count > 0) {
+                    warningsAndErrors.push(`<span style="color: var(--danger); font-weight: bold; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-exclamation"></i> ${h.error_count} erros</span>`);
+                }
+                if (h.warning_count > 0) {
+                    warningsAndErrors.push(`<span style="color: var(--warning); font-weight: bold; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-triangle-exclamation"></i> ${h.warning_count} avisos</span>`);
+                }
+                const warningsHtml = warningsAndErrors.length > 0 
+                    ? `<div style="margin-top: 0.4rem; display: flex; gap: 0.6rem; align-items: center;">${warningsAndErrors.join('')}</div>`
+                    : '';
+
+                // Actions Buttons
+                let actionsHtml = '';
+                const formatLabel = h.version_label.replace(/'/g, "\\'");
+                if (h.status === 'completed') {
+                    actionsHtml = `
+                        <div style="display: flex; gap: 0.4rem; justify-content: center;">
+                            <button class="btn-action-round view-logs-btn" style="color: var(--primary); background: rgba(37,99,235,0.06); border-color: rgba(37,99,235,0.12);" title="Ver Console de Logs" onclick="configView.showImportLogsModal('${h.batch_id}', '${formatLabel}')">
+                                <i class="fa-solid fa-terminal"></i>
+                            </button>
+                            ${hasSnapshot ? `
+                            <button class="btn-action-round restore-btn" style="color: #4f46e5; background: rgba(79,70,229,0.06); border-color: rgba(79,70,229,0.12);" title="Restaurar este Snapshot de Segurança" onclick="configView.restoreSnapshot('${h.batch_id}', '${formatLabel}')">
+                                <i class="fa-solid fa-history"></i>
+                            </button>
+                            ` : ''}
+                            <button class="btn-action-round delete-btn" style="color: var(--danger); background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.12);" title="Desfazer Lote (Remover Registros)" onclick="configView.deleteImportBatch('${h.batch_id}')">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    actionsHtml = `
+                        <div style="display: flex; gap: 0.4rem; justify-content: center;">
+                            <button class="btn-action-round view-logs-btn" style="color: var(--primary); background: rgba(37,99,235,0.06); border-color: rgba(37,99,235,0.12);" title="Ver Console de Logs" onclick="configView.showImportLogsModal('${h.batch_id}', '${formatLabel}')">
+                                <i class="fa-solid fa-terminal"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <tr class="version-row">
+                        <td style="padding: 1.1rem 1rem; vertical-align: middle;">
+                            <div style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">${h.version_label}</div>
+                            <div style="font-family: monospace; font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">ID Lote: ${h.batch_id}</div>
+                        </td>
+                        <td style="padding: 1.1rem 1rem; vertical-align: middle; font-size: 0.85rem;">
+                            <div style="font-weight: 600; color: var(--text-primary);">${new Date(h.started_at).toLocaleString('pt-BR')}</div>
+                            <div style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.2rem;"><i class="fa-regular fa-user"></i> ${h.user_name || 'Usuário'}</div>
+                        </td>
+                        <td style="padding: 1.1rem 1rem; vertical-align: middle;">
+                            ${statusBadge}
+                        </td>
+                        <td style="padding: 1.1rem 1rem; vertical-align: middle;">
+                            ${snapshotBadge}
+                        </td>
+                        <td style="padding: 1.1rem 1rem; vertical-align: middle;">
+                            ${statsHtml}
+                            ${warningsHtml}
+                        </td>
+                        <td style="padding: 1.1rem 1rem; vertical-align: middle;" class="text-center">
+                            ${actionsHtml}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         } catch(e) {
             console.error('Erro ao carregar historico', e);
             const tbody = document.getElementById('tbody-import-history');
             if (tbody) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger" style="color:var(--danger)">Erro ao carregar histórico: ${e.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger" style="color:var(--danger); padding: 2rem;">Erro ao carregar histórico: ${e.message}</td></tr>`;
             }
         }
     },
 
     async deleteImportBatch(id) {
-        if (!confirm('ATENÇÃO: Deseja realmente DESFAZER esta importação? Isso removerá todos os processos, movimentações, responsáveis e setores que foram criados EXCLUSIVAMENTE por este lote. Esta ação não pode ser desfeita.')) return;
+        if (!confirm('ATENÇÃO EXTREMA !!!\n\nDeseja realmente DESFAZER este lote de importação?\n\nIsso irá:\n1. Remover todos os processos, movimentações, responsáveis e setores que foram criados EXCLUSIVAMENTE por este lote.\n2. Preservar registros associados a outros lotes ou inseridos manualmente.\n\nEsta operação é definitiva e transacional. Deseja prosseguir?')) return;
         
+        // Show spinner overlay
+        const modal = document.createElement('div');
+        modal.id = 'loading-overlay-screen';
+        modal.style = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; z-index:9999; backdrop-filter:blur(5px);';
+        modal.innerHTML = `
+            <i class="fa-solid fa-rotate-left fa-spin fa-4x" style="color:#f87171; margin-bottom:1.5rem;"></i>
+            <h2 style="font-weight:700; margin:0; font-size:1.5rem;">Desfazendo Importações...</h2>
+            <p style="color:#94a3b8; font-size:1rem; margin:0.5rem 0 0 0; text-align:center; max-width:400px; padding:0 1rem;">Processando a remoção transacional de registros do lote no banco de dados. Aguarde...</p>
+        `;
+        document.body.appendChild(modal);
+
         try {
             await Api.import.undo(id);
-            window.app.toast('Importação desfeita com sucesso!');
+            document.body.removeChild(modal);
+            window.app.toast('Lote de importação desfeito com sucesso!');
             await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles(), this.loadImportHistory()]);
-        } catch(e) { window.app.toast(e.message, 'error'); }
+        } catch(e) {
+            document.body.removeChild(modal);
+            window.app.toast(e.message, 'error');
+        }
     },
 
     async wipeDatabase() {
-        if (!confirm('!!! ATENÇÃO TOTAL !!!\n\nEsta ação irá APAGAR PERMANENTEMENTE:\n- Todas as movimentações\n- Todos os processos\n- Todos os Auditores (Responsáveis)\n- Todos os setores inativos e órfãos\n\nOs Colaboradores (usuários) serão mantidos. Deseja realmente ZERAR o sistema para começar uma importação limpa?')) return;
+        if (!confirm('!!! ALERTA NUCLEAR DE SEGURANÇA !!!\n\nEsta ação irá APAGAR PERMANENTEMENTE:\n- Todas as movimentações registradas\n- Todos os processos cadastrados\n- Todos os Auditores e Responsáveis\n- Todos os setores criados (exceto os que possuem colaboradores vinculados)\n\nEsta ação é irreversível (embora um snapshot seja gerado automaticamente antes do reset).\n\nDeseja realmente zerar a base de dados inteira?')) return;
         
-        if (!confirm('Confirmação final: Você tem certeza ABSOLUTA? Esta ação não tem volta.')) return;
+        if (!confirm('CONFIRMAÇÃO FINAL: Você tem certeza ABSOLUTA de que deseja resetar o sistema inteiro?')) return;
+
+        // Show nuclear spinner overlay
+        const modal = document.createElement('div');
+        modal.id = 'loading-overlay-screen';
+        modal.style = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; z-index:9999; backdrop-filter:blur(5px);';
+        modal.innerHTML = `
+            <i class="fa-solid fa-radiation fa-spin fa-4x" style="color:#ef4444; margin-bottom:1.5rem;"></i>
+            <h2 style="font-weight:700; margin:0; font-size:1.5rem;">Limpando Todo o Sistema...</h2>
+            <p style="color:#94a3b8; font-size:1rem; margin:0.5rem 0 0 0; text-align:center; max-width:400px; padding:0 1rem;">Criando snapshot de segurança e efetuando a limpeza total da base de dados. Não feche o navegador.</p>
+        `;
+        document.body.appendChild(modal);
 
         try {
-            const res = await Api.import.wipe();
-            window.app.toast('Sistema resetado com sucesso!');
+            await Api.import.wipe();
+            document.body.removeChild(modal);
+            window.app.toast('Base de dados limpa com sucesso!');
             await Promise.all([
                 this.loadSectors(), 
                 this.loadUsers(), 
@@ -934,17 +1278,167 @@ const configView = {
                 this.loadImportHistory()
             ]);
         } catch(e) {
+            document.body.removeChild(modal);
             window.app.toast(e.message, 'error');
+        }
+    },
+
+    async createManualSnapshot() {
+        // Show spinner overlay
+        const modal = document.createElement('div');
+        modal.id = 'loading-overlay-screen';
+        modal.style = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; z-index:9999; backdrop-filter:blur(5px);';
+        modal.innerHTML = `
+            <i class="fa-solid fa-shield-halved fa-spin fa-4x" style="color:#6366f1; margin-bottom:1.5rem;"></i>
+            <h2 style="font-weight:700; margin:0; font-size:1.5rem;">Gerando Snapshot de Segurança...</h2>
+            <p style="color:#94a3b8; font-size:1rem; margin:0.5rem 0 0 0; text-align:center; max-width:400px; padding:0 1rem;">Efetuando backup completo de todas as tabelas transacionais em arquivo SQL. Aguarde...</p>
+        `;
+        document.body.appendChild(modal);
+
+        try {
+            const res = await Api.import.createSnapshot();
+            document.body.removeChild(modal);
+            window.app.toast('Snapshot de segurança criado com sucesso!');
+            await this.loadImportHistory();
+        } catch(e) {
+            document.body.removeChild(modal);
+            window.app.toast('Erro ao criar snapshot: ' + e.message, 'error');
+        }
+    },
+
+    async restoreSnapshot(batchId, label) {
+        if (!confirm(`!!! ATENÇÃO CRÍTICA !!!\n\nVocê está prestes a RESTAURAR a base de dados inteira para o estado estável da versão:\n"${label}".\n\nIsso irá:\n1. Criar um snapshot de segurança do estado ATUAL do sistema.\n2. Sobrescrever todo o banco atual de processos e movimentos com o backup correspondente.\n\nEsta ação é segura, mas afetará todos os dados de processos ativos e movimentações. Deseja prosseguir?`)) return;
+        
+        if (!confirm('Confirmação Final: Tem certeza absoluta?')) return;
+
+        // Show spinner overlay
+        const modal = document.createElement('div');
+        modal.id = 'loading-overlay-screen';
+        modal.style = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; z-index:9999; backdrop-filter:blur(5px);';
+        modal.innerHTML = `
+            <i class="fa-solid fa-database fa-spin fa-4x" style="color:#38bdf8; margin-bottom:1.5rem;"></i>
+            <h2 style="font-weight:700; margin:0; font-size:1.5rem;">Restaurando Base de Dados...</h2>
+            <p style="color:#94a3b8; font-size:1rem; margin:0.5rem 0 0 0; text-align:center; max-width:400px; padding:0 1rem;">Efetuando a substituição da base ativa pelo snapshot estável. Por favor, aguarde e não mude de tela...</p>
+        `;
+        document.body.appendChild(modal);
+
+        try {
+            await Api.import.restore(batchId);
+            document.body.removeChild(modal);
+            window.app.toast('Base de dados restaurada com sucesso para o snapshot selecionado!');
+            await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles(), this.loadImportHistory()]);
+        } catch(e) {
+            document.body.removeChild(modal);
+            window.app.toast('Falha ao restaurar: ' + e.message, 'error');
+        }
+    },
+
+    async showImportLogsModal(batchId, label) {
+        try {
+            window.app.toast('Carregando logs do lote...');
+            const data = await Api.import.logs(batchId);
+            
+            const logsHtml = data.logs && data.logs.length > 0 ? data.logs.map(log => {
+                const timeStr = new Date(log.created_at).toLocaleTimeString('pt-BR');
+                const lvlClass = `log-lvl-${log.log_level.toLowerCase()}`;
+                const rowIndicator = log.row_number ? `<span style="color:#a78bfa; font-weight:700;">[Linha ${log.row_number}]</span>` : '';
+                return `
+                    <div class="log-line">
+                        <span class="log-time">[${timeStr}]</span>
+                        <span class="${lvlClass}">[${log.log_level}]</span>
+                        <span class="log-phase">[${log.phase.toUpperCase()}]</span>
+                        <span class="log-text">${rowIndicator} ${log.message}</span>
+                    </div>
+                `;
+            }).join('') : '<div style="color:#64748b; text-align:center; padding:2rem; font-style:italic;">Nenhum log de execução encontrado para este lote.</div>';
+
+            const sum = data.summary || { info: 0, warning: 0, error: 0 };
+            
+            const root = document.getElementById('modal-root');
+            root.innerHTML = `
+                <div class="modal-overlay" id="custom-modal" style="z-index: 1000;">
+                    <div class="modal-content" style="max-width: 900px; width: 95%;">
+                        <div class="modal-header" style="padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                            <div>
+                                <h3 style="margin:0; font-size:1.25rem;"><i class="fa-solid fa-terminal" style="color:var(--primary)"></i> Console de Execução: ${label}</h3>
+                                <div style="display:flex; gap:10px; margin-top:0.4rem; font-size:0.8rem; color:var(--text-secondary);">
+                                    <span>Lote: <code>${batchId}</code></span>
+                                </div>
+                            </div>
+                            <button class="modal-close" onclick="document.getElementById('custom-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div style="padding:1.5rem 0 0 0;">
+                            <!-- Summary Bar -->
+                            <div style="display:flex; gap:10px; margin-bottom:1rem; flex-wrap:wrap;">
+                                <span class="badge-custom badge-success-glow" style="font-size:0.8rem;"><i class="fa-solid fa-circle-info"></i> ${sum.info || 0} Infos</span>
+                                <span class="badge-custom badge-warning-glow" style="font-size:0.8rem;"><i class="fa-solid fa-triangle-exclamation"></i> ${sum.warning || 0} Avisos</span>
+                                <span class="badge-custom" style="background: rgba(239, 68, 68, 0.1); color: #b91c1c; font-size:0.8rem;"><i class="fa-solid fa-circle-xmark"></i> ${sum.error || 0} Erros</span>
+                            </div>
+                            
+                            <!-- Terminal -->
+                            <div class="logs-terminal-container">
+                                ${logsHtml}
+                            </div>
+                        </div>
+                        <div class="flex-end" style="gap:10px; margin-top:1.5rem; border-top:1px solid var(--border-color); padding-top:1rem;">
+                            <button class="btn-primary" style="width:auto; padding: 0.6rem 1.2rem;" onclick="document.getElementById('custom-modal').remove()"><i class="fa-solid fa-circle-check"></i> Fechar Console</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch (e) {
+            window.app.toast('Falha ao buscar logs: ' + e.message, 'error');
         }
     },
 
     initImportLogic() {
         const input = document.getElementById('input-import-excel');
         const btn = document.getElementById('btn-process-import');
+        const cancelBtn = document.getElementById('btn-cancel-import');
+        const downloadBtn = document.getElementById('btn-download-template');
+        
         if (!input) return;
 
         input.onchange = (e) => this.handleFileSelect(e);
         btn.onclick = () => this.processImport();
+        
+        if (cancelBtn) {
+            cancelBtn.onclick = () => {
+                input.value = '';
+                document.getElementById('import-preview').style.display = 'none';
+                document.getElementById('version-tag-container').style.display = 'none';
+                document.getElementById('import-actions-bar').style.display = 'none';
+                this.importData = null;
+                window.app.toast('Importação cancelada.');
+            };
+        }
+
+        // Template Download Event
+        if (downloadBtn) {
+            downloadBtn.onclick = () => this.downloadTemplate();
+        }
+
+        // SQL Import Elements
+        const sqlInput = document.getElementById('input-import-sql');
+        const sqlProcessBtn = document.getElementById('btn-process-sql-import');
+        const sqlCancelBtn = document.getElementById('btn-cancel-sql-import');
+        const restoreServerLegacyBtn = document.getElementById('btn-restore-server-legacy');
+
+        if (sqlInput) {
+            sqlInput.onchange = (e) => this.handleSqlFileSelect(e);
+        }
+
+        if (sqlProcessBtn) {
+            sqlProcessBtn.onclick = () => this.processSqlImport();
+        }
+
+        if (sqlCancelBtn) {
+            sqlCancelBtn.onclick = () => this.cancelSqlImport();
+        }
+
+        if (restoreServerLegacyBtn) {
+            restoreServerLegacyBtn.onclick = () => this.restoreServerLegacySql();
+        }
     },
 
     handleFileSelect(e) {
@@ -952,7 +1446,7 @@ const configView = {
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (evt) => {
+        reader.onload = async (evt) => {
             const data = evt.target.result;
             const workbook = XLSX.read(data, { type: 'binary' });
             const sheetName = workbook.SheetNames[0];
@@ -1013,24 +1507,79 @@ const configView = {
 
             this.renderImportPreview(mapping, this.importData.slice(0, 5));
             
-            // Debug missing columns (destination_sector is optional, backend defaults to SUBFIS)
+            // Debug missing columns
             let missing = [];
             const requiredFields = ['process_number', 'movement_date', 'action', 'responsible', 'subject'];
             for (let k of requiredFields) {
                 if (!mapping[k]) missing.push(k);
             }
 
-            let msg = `Detectamos ${this.importData.length} registros para importação.<br><br><b>Cabeçalhos Lidos da Planilha:</b> ${headers.join(', ')}<br>`;
-            if (missing.length > 0) {
-                msg += `<b style="color:var(--danger)">Campos essenciais não encontrados:</b> ${missing.join(', ')} (verifique os nomes no Excel)`;
-            }
-            if (!mapping.destination_sector) {
-                msg += `<br><span class="text-secondary"><i class="fa-solid fa-circle-info"></i> Coluna SETOR ausente. Todos os registros serão direcionados para SUBFIS por padrão.</span>`;
-            }
-
-            document.getElementById('import-info-text').innerHTML = msg;
+            // Exibir loading enquanto faz a validação rigorosa no backend
+            const summaryDiv = document.getElementById('import-validation-summary');
+            summaryDiv.innerHTML = `
+                <div class="alert alert-info" style="border-left: 4px solid var(--primary); background: rgba(37,99,235,0.03); color: var(--text-primary);">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Efetuando validação rigorosa da planilha com o servidor...
+                </div>
+            `;
             document.getElementById('import-preview').style.display = 'block';
-            document.getElementById('btn-process-import').disabled = missing.length > 0;
+            document.getElementById('version-tag-container').style.display = 'block';
+            document.getElementById('import-actions-bar').style.display = 'flex';
+            
+            const processBtn = document.getElementById('btn-process-import');
+            processBtn.disabled = true;
+
+            try {
+                // Chamar o novo validador transacional MVC no backend!
+                const validationReport = await Api.import.validate(this.importData);
+                
+                let msg = `<h4 style="margin: 0 0 0.5rem 0; font-weight: 700; color: var(--text-primary); font-size:1.05rem;"><i class="fa-solid fa-list-check"></i> Relatório de Integridade da Planilha</h4>`;
+                msg += `Detectamos <b>${this.importData.length} registros</b> qualificados para importação no arquivo.<br><br>`;
+                msg += `<b>Mapeamento de Cabeçalhos:</b> ${headers.map(h => `<code>${h}</code>`).join(', ')}<br>`;
+
+                if (missing.length > 0) {
+                    msg += `<div style="color:var(--danger); margin-top:0.6rem; font-weight:600;"><i class="fa-solid fa-circle-xmark"></i> Erro Crítico: Colunas obrigatórias não identificadas: ${missing.join(', ')}</div>`;
+                    summaryDiv.innerHTML = `<div class="alert alert-danger" style="background:rgba(239,68,68,0.03); border-left:4px solid var(--danger); color:var(--text-primary);">${msg}</div>`;
+                    processBtn.disabled = true;
+                    return;
+                }
+
+                const totalErrors = validationReport.errors ? validationReport.errors.length : 0;
+                const totalWarnings = validationReport.warnings ? validationReport.warnings.length : 0;
+
+                if (totalErrors > 0) {
+                    msg += `<div style="color: #b91c1c; margin-top: 0.8rem; font-weight: 700;"><i class="fa-solid fa-circle-exclamation"></i> Encontramos ${totalErrors} erros graves na planilha:</div>`;
+                    msg += `<ul style="margin: 0.4rem 0 0 1rem; padding: 0; font-size: 0.85rem; max-height: 150px; overflow-y:auto; color: #b91c1c;">`;
+                    validationReport.errors.slice(0, 15).forEach(e => {
+                        msg += `<li>Linha ${e.row}: Campo <code>${e.field}</code> - ${e.message}</li>`;
+                    });
+                    if (totalErrors > 15) msg += `<li>... e mais ${totalErrors - 15} erros.</li>`;
+                    msg += `</ul><div style="font-weight:600; margin-top:0.5rem; color:#b91c1c;">A importação está bloqueada até que esses erros sejam corrigidos na planilha Excel.</div>`;
+                    
+                    summaryDiv.innerHTML = `<div class="alert alert-danger" style="background:rgba(239,68,68,0.03); border-left:4px solid var(--danger); color:var(--text-primary);">${msg}</div>`;
+                    processBtn.disabled = true;
+                } else if (totalWarnings > 0) {
+                    msg += `<div style="color: #d97706; margin-top: 0.8rem; font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> Encontramos ${totalWarnings} inconsistências (Avisos resolvidos automaticamente):</div>`;
+                    msg += `<ul style="margin: 0.4rem 0 0 1rem; padding: 0; font-size: 0.85rem; max-height: 120px; overflow-y:auto; color: #b91c1c;">`;
+                    validationReport.warnings.slice(0, 10).forEach(w => {
+                        msg += `<li>Linha ${w.row}: ${w.message}</li>`;
+                    });
+                    if (totalWarnings > 10) msg += `<li>... e mais ${totalWarnings - 10} avisos.</li>`;
+                    msg += `</ul><div style="font-weight:600; margin-top:0.5rem; color: #059669;"><i class="fa-solid fa-circle-check"></i> Tudo pronto! As inconsistências serão tratadas de forma segura (por exemplo, aplicando valores padrões). O lote pode ser importado agora.</div>`;
+
+                    summaryDiv.innerHTML = `<div class="alert alert-warning" style="background:rgba(245,158,11,0.03); border-left:4px solid var(--warning); color:var(--text-primary);">${msg}</div>`;
+                    processBtn.disabled = false;
+                } else {
+                    msg += `<div style="color: #059669; margin-top: 0.8rem; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Validação impecável! Nenhum erro ou aviso encontrado. A estrutura do arquivo está 100% íntegra e em conformidade.</div>`;
+                    summaryDiv.innerHTML = `<div class="alert alert-info" style="background:rgba(16,185,129,0.03); border-left:4px solid #10b981; color:var(--text-primary);">${msg}</div>`;
+                    processBtn.disabled = false;
+                }
+            } catch (err) {
+                summaryDiv.innerHTML = `
+                    <div class="alert alert-danger" style="background:rgba(239,68,68,0.03); border-left:4px solid var(--danger); color:var(--text-primary);">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Erro ao validar planilha no servidor: ${err.message}
+                    </div>
+                `;
+            }
         };
         reader.readAsBinaryString(file);
     },
@@ -1149,105 +1698,214 @@ const configView = {
         if (!this.importData || this.importData.length === 0) return;
         
         const btn = document.getElementById('btn-process-import');
-        const originalHtml = btn.innerHTML;
-        const total = this.importData.length;
-        btn.disabled = true;
+        const labelInput = document.getElementById('input-version-label');
+        const label = labelInput ? labelInput.value.trim() : '';
 
+        const total = this.importData.length;
         const batchId = 'imp_' + Date.now();
-        const chunkSize = 2000;
+
+        // Show elegant secure importing overlay screen
+        const modal = document.createElement('div');
+        modal.id = 'loading-overlay-screen';
+        modal.style = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; z-index:9999; backdrop-filter:blur(5px);';
+        modal.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin fa-4x" style="color:#10b981; margin-bottom:1.5rem;"></i>
+            <h2 style="font-weight:700; margin:0; font-size:1.5rem;">Importando Lote Transacional...</h2>
+            <p style="color:#94a3b8; font-size:1rem; margin:0.5rem 0 0 0; text-align:center; max-width:420px; padding:0 1rem;">Efetuando snapshot de segurança preventivo e gravando os ${total} registros de forma íntegra. Por favor, aguarde...</p>
+        `;
+        document.body.appendChild(modal);
 
         try {
-            for (let i = 0; i < total; i += chunkSize) {
-                const chunk = this.importData.slice(i, i + chunkSize);
-                const current = Math.min(i + chunkSize, total);
-                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando lote ${current} de ${total}...`;
-                await Api.import.upload(chunk, batchId);
-            }
-
-            window.app.toast(`Importação de ${total} registros concluída!`);
+            // Executa a importação completa de uma única vez no novo MVC backend transacional!
+            const res = await Api.import.execute(this.importData, batchId, label);
             
-            // Reset UI
+            document.body.removeChild(modal);
+            window.app.toast(`Importação de ${total} registros e snapshot concluídos com absoluto sucesso!`);
+            
+            // Reset UI elements
             document.getElementById('input-import-excel').value = '';
             document.getElementById('import-preview').style.display = 'none';
-            btn.innerHTML = originalHtml;
-            btn.disabled = true;
+            document.getElementById('version-tag-container').style.display = 'none';
+            document.getElementById('import-actions-bar').style.display = 'none';
+            if (labelInput) labelInput.value = '';
             this.importData = null;
 
-            // Refresh all data
-            await Promise.all([
-                this.loadSectors(), 
-                this.loadUsers(), 
-                this.loadResponsibles(), 
-                this.loadImportHistory(),
-                this.loadSnapshots()
-            ]);
+            // Refresh all data caches & UI history lists
+            await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles(), this.loadImportHistory()]);
         } catch(e) {
-            window.app.toast(e.message, 'error');
-            btn.innerHTML = originalHtml;
-            btn.disabled = false;
+            if (document.getElementById('loading-overlay-screen')) {
+                document.body.removeChild(modal);
+            }
+            window.app.toast('Falha catastrófica na importação: ' + e.message, 'error');
         }
     },
 
-    async loadSnapshots() {
-        const tbody = document.getElementById('tbody-snapshots');
+    downloadTemplate() {
+        const templateData = [
+            {
+                'Número do Processo': '001/000123/2026',
+                'Data da Movimentação': '05/05/2026',
+                'Tipo de Ação': 'ENTRADA',
+                'Responsável': 'Carlos Alberto Souza',
+                'Assunto': 'Apuração de Infração Fiscal de ISS',
+                'Setor Destino': 'FISCALIZAÇÃO'
+            },
+            {
+                'Número do Processo': '002/000456/2026 AP 002/000457/2026',
+                'Data da Movimentação': '05/05/2026',
+                'Tipo de Ação': 'ENTRADA',
+                'Responsável': 'Ana Beatriz Cavalcanti',
+                'Assunto': 'Recurso Voluntário Contra Auto de Infração',
+                'Setor Destino': 'SUBFIS'
+            },
+            {
+                'Número do Processo': '003/000789/2025',
+                'Data da Movimentação': '04/05/2026',
+                'Tipo de Ação': 'SAIDA',
+                'Responsável': 'Carlos Alberto Souza',
+                'Assunto': 'Solicitação de Isenção de IPTU',
+                'Setor Destino': 'GABINETE'
+            }
+        ];
+
         try {
-            const snapshots = await Api.import.snapshots();
-            if (snapshots.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhum snapshot encontrado</td></tr>';
-                return;
+            if (typeof XLSX === 'undefined') {
+                throw new Error('Biblioteca XLSX (SheetJS) não está carregada.');
+            }
+            const ws = XLSX.utils.json_to_sheet(templateData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Modelo de Dados');
+            
+            // Auto-fit column widths
+            const maxLen = {};
+            templateData.forEach(row => {
+                Object.keys(row).forEach(key => {
+                    const cellLen = String(row[key]).length;
+                    const headerLen = key.length;
+                    maxLen[key] = Math.max(maxLen[key] || 0, cellLen, headerLen);
+                });
+            });
+            ws['!cols'] = Object.keys(maxLen).map(key => ({ wch: maxLen[key] + 3 }));
+
+            XLSX.writeFile(wb, 'Modelo_Controle_SUBFIS.xlsx');
+            window.app.toast('Modelo de planilha baixado com sucesso!');
+        } catch (e) {
+            window.app.toast('Erro ao baixar modelo de dados: ' + e.message, 'error');
+        }
+    },
+
+    handleSqlFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!file.name.endsWith('.sql')) {
+            window.app.toast('Por favor, selecione um arquivo válido com extensão .sql', 'error');
+            e.target.value = '';
+            return;
+        }
+
+        this.selectedSqlFile = file;
+
+        const actionsContainer = document.getElementById('sql-actions-container');
+        if (actionsContainer) {
+            actionsContainer.style.display = 'block';
+        }
+        const labelInput = document.getElementById('input-sql-version-label');
+        if (labelInput) {
+            labelInput.value = file.name.replace(/\.sql$/i, '');
+        }
+        window.app.toast('Arquivo SQL carregado com sucesso!');
+    },
+
+    cancelSqlImport() {
+        const sqlInput = document.getElementById('input-import-sql');
+        if (sqlInput) sqlInput.value = '';
+        
+        const actionsContainer = document.getElementById('sql-actions-container');
+        if (actionsContainer) actionsContainer.style.display = 'none';
+
+        this.selectedSqlFile = null;
+        window.app.toast('Envio de arquivo SQL cancelado.');
+    },
+
+    async processSqlImport() {
+        if (!this.selectedSqlFile) return;
+
+        const labelInput = document.getElementById('input-sql-version-label');
+        const label = labelInput ? labelInput.value.trim() : '';
+
+        const formData = new FormData();
+        formData.append('sql_file', this.selectedSqlFile);
+        formData.append('label', label);
+
+        const modal = document.createElement('div');
+        modal.id = 'loading-overlay-screen';
+        modal.style = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; z-index:9999; backdrop-filter:blur(5px);';
+        modal.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin fa-4x" style="color:#4f46e5; margin-bottom:1.5rem;"></i>
+            <h2 style="font-weight:700; margin:0; font-size:1.5rem;">Importando Base Legada (.sql)...</h2>
+            <p style="color:#94a3b8; font-size:1rem; margin:0.5rem 0 0 0; text-align:center; max-width:420px; padding:0 1rem;">O sistema está criando um snapshot preventivo e restaurando o dump SQL. Por favor, aguarde...</p>
+        `;
+        document.body.appendChild(modal);
+
+        try {
+            const response = await fetch('api/import/legacy-sql', {
+                method: 'POST',
+                body: formData
+            });
+
+            const res = await response.json();
+            document.body.removeChild(modal);
+
+            if (!response.ok || res.status === 'error') {
+                throw new Error(res.message || 'Erro desconhecido');
             }
 
-            tbody.innerHTML = snapshots.map(s => `
-                <tr>
-                    <td>
-                        <div style="font-weight:600; color:var(--primary);">${s.label || s.filename}</div>
-                        <div style="font-size:0.75rem; color:var(--text-secondary);">${s.filename}</div>
-                    </td>
-                    <td>${window.app.formatDate(s.created_at)}</td>
-                    <td>${s.size_fmt}</td>
-                    <td class="text-center">
-                        <button class="btn-icon" onclick="configView.restoreSnapshot('${s.batch_id}')" title="Restaurar este ponto" style="background:#0072bc; color:white;">
-                            <i class="fa-solid fa-clock-rotate-left"></i> Restaurar
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Erro ao carregar snapshots: ${e.message}</td></tr>`;
-        }
-    },
-
-    async createSnapshot() {
-        const btn = document.getElementById('btn-create-snapshot');
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Criando...';
-
-        try {
-            await Api.import.createSnapshot();
-            window.app.toast('Snapshot de segurança criado com sucesso!');
-            await this.loadSnapshots();
-        } catch (e) {
-            window.app.toast(e.message, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        }
-    },
-
-    async restoreSnapshot(batchId) {
-        if (!confirm('ATENÇÃO: Restaurar um snapshot irá substituir TODOS os dados atuais do sistema pelo estado salvo no snapshot. Deseja prosseguir?')) return;
-
-        window.app.toast('Iniciando restauração... Por favor aguarde.', 'info');
-        
-        try {
-            const result = await Api.import.restore(batchId);
-            window.app.toast(result.message || 'Banco restaurado com sucesso!');
+            window.app.toast(`Base legada importada e restaurada com sucesso! Lote: ${res.batch_id}`);
             
-            // Refresh application
-            setTimeout(() => window.location.reload(), 1500);
+            const sqlInput = document.getElementById('input-import-sql');
+            if (sqlInput) sqlInput.value = '';
+            
+            const actionsContainer = document.getElementById('sql-actions-container');
+            if (actionsContainer) actionsContainer.style.display = 'none';
+            
+            this.selectedSqlFile = null;
+
+            await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles(), this.loadImportHistory()]);
         } catch (e) {
-            window.app.toast(e.message, 'error');
+            if (document.getElementById('loading-overlay-screen')) {
+                document.body.removeChild(modal);
+            }
+            window.app.toast('Falha ao restaurar dump SQL: ' + e.message, 'error');
+        }
+    },
+
+    async restoreServerLegacySql() {
+        if (!confirm('!!! RESTAURAÇÃO DE BASE LEGADA !!!\n\nVocê está prestes a restaurar a base de dados legado a partir do arquivo salvo no servidor:\n"/home/ebastos/subfisproc/database/migrations/u489835785_subfisprocdb.sql".\n\nIsso irá:\n1. Gerar automaticamente um snapshot de segurança com o estado atual da base.\n2. Sobrescrever todo o banco de processos, movimentos, setores e auditores com a estrutura e registros da base legado.\n\nDeseja realmente prosseguir?')) return;
+
+        if (!confirm('Confirmação Final: Tem certeza absoluta?')) return;
+
+        const modal = document.createElement('div');
+        modal.id = 'loading-overlay-screen';
+        modal.style = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; z-index:9999; backdrop-filter:blur(5px);';
+        modal.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin fa-4x" style="color:#4f46e5; margin-bottom:1.5rem;"></i>
+            <h2 style="font-weight:700; margin:0; font-size:1.5rem;">Restaurando Base Legada...</h2>
+            <p style="color:#94a3b8; font-size:1rem; margin:0.5rem 0 0 0; text-align:center; max-width:420px; padding:0 1rem;">O servidor está efetuando snapshot de segurança preventivo e executando o dump local. Por favor, aguarde...</p>
+        `;
+        document.body.appendChild(modal);
+
+        try {
+            const res = await Api.import.restoreFile('/home/ebastos/subfisproc/database/migrations/u489835785_subfisprocdb.sql');
+            document.body.removeChild(modal);
+
+            window.app.toast('Base legada restaurada do servidor com sucesso!');
+            await Promise.all([this.loadSectors(), this.loadUsers(), this.loadResponsibles(), this.loadImportHistory()]);
+        } catch (e) {
+            if (document.getElementById('loading-overlay-screen')) {
+                document.body.removeChild(modal);
+            }
+            window.app.toast('Falha ao restaurar base legada local do servidor: ' + e.message, 'error');
         }
     }
 };

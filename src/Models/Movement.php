@@ -48,6 +48,35 @@ class Movement {
         // Total de processos
         $stats['total_processes'] = (int)$this->db->query('SELECT COUNT(*) FROM processes')->fetchColumn();
 
+        // Total de auditores/responsáveis ativos
+        $stats['total_responsibles'] = (int)$this->db->query('SELECT COUNT(*) FROM responsibles WHERE active = 1')->fetchColumn();
+
+        // Total de setores ativos
+        $stats['total_sectors'] = (int)$this->db->query('SELECT COUNT(*) FROM sectors WHERE active = 1')->fetchColumn();
+
+        // Última importação concluída
+        $lastImportSql = "
+            SELECT version_label, completed_at, stats_json 
+            FROM import_versions 
+            WHERE status = 'completed' 
+            ORDER BY completed_at DESC 
+            LIMIT 1";
+        try {
+            $lastImportStmt = $this->db->query($lastImportSql);
+            $lastImport = $lastImportStmt->fetch(PDO::FETCH_ASSOC);
+            if ($lastImport) {
+                $stats['last_import'] = [
+                    'label' => $lastImport['version_label'],
+                    'completed_at' => $lastImport['completed_at'],
+                    'stats' => json_decode($lastImport['stats_json'] ?? '{}', true)
+                ];
+            } else {
+                $stats['last_import'] = null;
+            }
+        } catch (\Exception $e) {
+            $stats['last_import'] = null;
+        }
+
         // Atividade recente (últimos 7 movimentos)
         $recentSql = '
             SELECT m.id, p.process_number, m.action, m.movement_date, 

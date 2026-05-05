@@ -7,13 +7,14 @@
     <!-- Google Fonts: Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Libraries for Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- CSS Design System -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
@@ -26,11 +27,14 @@
     <!-- TEMPLATE: LOGIN -->
     <template id="tpl-login">
         <div class="login-wrapper">
-            <div class="login-glass-card">
-                <div class="login-header">
-                    <img src="https://portalcontribuinte.duquedecaxias.rj.gov.br/img/logonova.png" alt="PMDC Logo" class="login-logo">
-                    <h2>SUBFIS Gestão</h2>
-                    <p>Faça login para continuar</p>
+            <div class="login-glass-card" style="padding: 3rem; overflow: hidden; width: 100%; max-width: 440px;">
+                <!-- Premium Header Band in Official Municipal Blue containing the Logonova image -->
+                <div class="login-header-premium" style="background: linear-gradient(135deg, #0072bc, #004aad); margin: -3rem -3rem 2rem -3rem; padding: 2.5rem 2rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <div style="width: 210px; height: auto; margin: 0 auto 0.75rem auto;">
+                        <img src="img/logonova.png" alt="Prefeitura de Duque de Caxias" style="width: 100%; height: auto; display: block;">
+                    </div>
+                    <h2 style="font-size: 1.5rem; font-weight: 800; color: #ffffff; margin: 0.5rem 0 0 0; letter-spacing: 0.5px;">SGS - SUBFIS</h2>
+                    <p style="color: rgba(255,255,255,0.85); font-size: 0.85rem; margin-top: 0.25rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Gestão de Tramitações</p>
                 </div>
                 <form id="login-form">
                     <div class="input-group">
@@ -59,10 +63,16 @@
         <div class="app-layout">
             <!-- Sidebar -->
             <aside class="sidebar">
-                <div class="sidebar-header">
-                    <img src="https://portalcontribuinte.duquedecaxias.rj.gov.br/img/logonova.png" alt="PMDC Logo" class="sidebar-logo">
+                <div class="sidebar-header" style="display: flex; align-items: center; justify-content: center; padding: 1.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.06); flex-direction: column; gap: 0.75rem;">
+                    <!-- Beautiful Official Municipal Logo Image -->
+                    <div style="width: 190px; height: auto;">
+                        <img src="img/logonova.png" alt="Prefeitura de Duque de Caxias" style="width: 100%; height: auto; display: block;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                        <span style="font-size: 1rem; font-weight: 800; color: #ffffff; letter-spacing: 0.5px;">SGS - SUBFIS</span>
+                    </div>
                 </div>
-                <nav class="sidebar-nav">
+                <nav class="sidebar-nav" style="margin-top: 1rem;">
                     <a href="#dashboard" class="nav-item active" data-view="dashboard">
                         <i class="fa-solid fa-chart-pie"></i>
                         <span>Dashboard</span>
@@ -108,6 +118,34 @@
                     <!-- Views will be injected here -->
                 </div>
             </main>
+            
+            <!-- GLOBAL COMPONENT: Auditor Drawer -->
+            <div id="auditor-drawer" style="
+                position: fixed; top: 0; right: -540px; width: 540px; height: 100vh;
+                background-color: #ffffff;
+                box-shadow: -6px 0 32px rgba(0,0,0,0.18);
+                z-index: 9999; display: flex; flex-direction: column;
+                transition: right 0.35s cubic-bezier(.4,0,.2,1);
+                border-left: 1px solid var(--border-color);
+            ">
+                <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: #ffffff; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+                    <div>
+                        <h3 id="drawer-title" style="margin:0; font-size: 1.2rem; font-weight: 750; color: var(--accent); display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-user-tie" style="color: var(--primary);"></i> Processos do Auditor
+                        </h3>
+                        <p id="drawer-subtitle" style="margin:0.25rem 0 0; font-size:0.85rem; color:var(--text-secondary); font-weight: 500;"></p>
+                    </div>
+                    <button onclick="window.app.closeAuditorDrawer()" style="background:rgba(0,0,0,0.03); border:none; cursor:pointer; font-size:1.1rem; color:var(--text-secondary); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition: var(--transition);">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div id="drawer-body" style="flex:1; overflow-y:auto; padding: 1.5rem; background: #fafbfc;">
+                    <div class="text-center p-4"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                </div>
+            </div>
+            <div id="drawer-backdrop" onclick="window.app.closeAuditorDrawer()" style="
+                display:none; position:fixed; inset:0; background:rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index:9998;
+            "></div>
         </div>
     </template>
 

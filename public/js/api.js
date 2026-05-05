@@ -78,23 +78,23 @@ const Api = {
         sectorStats: (start, end) => Api.request(`reports.php?type=sector_stats&start=${start}&end=${end}`, 'GET'),
     },
     import: {
-        upload: (data, batchId) => Api.request(`import/execute${batchId ? '?batch_id=' + batchId : ''}`, 'POST', data),
+        validate: (data) => Api.request('import/validate', 'POST', data),
+        execute: (data, batchId, label = '') => {
+            let url = 'import/execute';
+            const params = [];
+            if (batchId) params.push(`batch_id=${batchId}`);
+            if (label) params.push(`label=${encodeURIComponent(label)}`);
+            if (params.length > 0) url += `?${params.join('&')}`;
+            return Api.request(url, 'POST', data);
+        },
         undo: (batchId) => Api.request(`import/batch?batch=${batchId}`, 'DELETE'),
-        wipe: () => Api.request('import/wipe', 'DELETE'),
-        history: () => Api.request('import/history', 'GET'),
-        snapshots: () => Api.request('import/snapshots', 'GET'),
-        createSnapshot: () => Api.request('import/snapshot', 'POST'),
         restore: (batchId) => Api.request('import/restore', 'POST', { batch_id: batchId }),
-        downloadBackupUrl: () => Api.baseUrl + 'import/backup',
-        downloadSnapshotUrl: (file) => Api.baseUrl + 'import/download-snapshot?file=' + encodeURIComponent(file),
-        uploadSql: (file) => {
-            const formData = new FormData();
-            formData.append('sql_file', file);
-            return fetch(Api.baseUrl + 'import/upload-sql', {
-                method: 'POST',
-                body: formData
-            }).then(r => r.json());
-        }
+        restoreFile: (file) => Api.request('import/restore', 'POST', { snapshot_file: file }),
+        snapshots: () => Api.request('import/snapshots', 'GET'),
+        logs: (batchId, level = '') => Api.request(`import/logs?batch=${batchId}${level ? '&level=' + level : ''}`, 'GET'),
+        wipe: () => Api.request('import/wipe', 'DELETE'),
+        createSnapshot: () => Api.request('import/snapshot', 'POST'),
+        history: () => Api.request('import/history', 'GET')
     },
     movements: {
         listAll: () => Api.request('movements.php', 'GET'),
@@ -110,7 +110,7 @@ const Api = {
         register: (data) => Api.request('movements.php', 'POST', data)
     },
     dashboard: {
-        getStats: () => Api.request('dashboard.php', 'GET')
+        getStats: () => Api.request('dashboard', 'GET')
     },
     
     // Novo motorzinho Web Scraper

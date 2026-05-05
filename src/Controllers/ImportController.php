@@ -114,10 +114,13 @@ class ImportController {
             $userId = $_SESSION['user_id'];
             $versionNumber = $this->versionModel->count() + 1;
 
+            $customLabel = isset($_GET['label']) ? trim($_GET['label']) : '';
+            $versionLabel = !empty($customLabel) ? $customLabel : "v{$versionNumber} - Importação " . date('d/m/Y H:i');
+
             // 1. Criar registro de versão
             $this->versionModel->create([
                 'batch_id' => $batchId,
-                'version_label' => "v{$versionNumber} - Importação " . date('d/m/Y H:i'),
+                'version_label' => $versionLabel,
                 'user_id' => $userId
             ]);
 
@@ -251,138 +254,58 @@ class ImportController {
 
     /**
      * POST /api/import/snapshot
-     * Cria um snapshot manual do estado atual do banco.
+     * Cria um snapshot de segurança manual da base de dados.
      */
-    public function createSnapshot() {
+    public function createManual() {
         try {
             $this->requireAuth();
-            $this->requireRole(['Admin', 'Gestor']);
+            $this->requireRole(['Admin']);
 
             $batchId = 'man_' . uniqid();
+            $userId = $_SESSION['user_id'];
+            $versionNumber = $this->versionModel->count() + 1;
+
             $this->versionModel->create([
                 'batch_id' => $batchId,
-                'version_label' => 'Snapshot Manual ' . date('d/m/Y H:i'),
-                'user_id' => $_SESSION['user_id']
+                'version_label' => "Backup Manual v{$versionNumber}",
+                'user_id' => $userId
             ]);
 
-            $path = $this->snapshotService->createSnapshot($batchId);
-            $this->versionModel->updateSnapshotFile($batchId, $path);
-            $this->versionModel->updateStatus($batchId, 'completed');
+            $this->logger->info($batchId, 'snapshot', 'Backup manual iniciado pelo usuário');
+            
+            $snapshotPath = $this->snapshotService->createSnapshot($batchId);
+            $this->versionModel->updateSnapshotFile($batchId, $snapshotPath);
+            $this->versionModel->updateStatus($batchId, 'completed', [
+                'type' => 'manual',
+                'message' => 'Backup manual concluído com sucesso'
+            ]);
+
+            // Rotacionar snapshots antigos
+            $this->snapshotService->rotateSnapshots(10);
 
             return Response::json([
                 'success' => true,
                 'message' => 'Snapshot criado com sucesso!',
-                'file' => basename($path)
+                'batch_id' => $batchId,
+                'file' => basename($snapshotPath)
             ]);
         } catch (\Exception $e) {
-            return Response::json(['error' => $e->getMessage()], 500);
+            if (isset($batchId)) {
+                $this->versionModel->updateStatus($batchId, 'failed', null, $e->getMessage());
+            }
+            return Response::json(['error' => 'Falha ao criar snapshot: ' . $e->getMessage()], 500);
         }
     }
 
     /**
      * GET /api/import/snapshots
-     * Lista todos os snapshots disponíveis com metadados e labels amigáveis.
+     * Lista todos os snapshots disponíveis com metadados.
      */
     public function snapshots() {
         try {
             $this->requireAuth();
             $snapshots = $this->snapshotService->listSnapshots();
-            
-            // Enriquecer com labels do banco de dados
-            foreach ($snapshots as &$snap) {
-                if ($snap['batch_id']) {
-                    $version = $this->versionModel->getByBatchId($snap['batch_id']);
-                    $snap['label'] = $version['version_label'] ?? ($snap['batch_id'] === 'LEGADO' ? 'Base de Dados Original (Legado)' : null);
-                }
-            }
-            
             return Response::json($snapshots);
-        } catch (\Exception $e) {
-            return Response::json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * GET /api/import/backup
-     * Gera um snapshot imediato e faz o download do arquivo SQL.
-     */
-    public function downloadBackup() {
-        try {
-            $this->requireAuth();
-            $batchId = 'bkp_' . date('His');
-            $path = $this->snapshotService->createSnapshot($batchId);
-            
-            header('Content-Type: application/sql');
-            header('Content-Disposition: attachment; filename="' . basename($path) . '"');
-            header('Content-Length: ' . filesize($path));
-            readfile($path);
-            exit;
-        } catch (\Exception $e) {
-            return Response::json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * POST /api/import/upload-sql
-     * Recebe um arquivo .sql via upload e salva no diretório de snapshots.
-     */
-    public function uploadSql() {
-        try {
-            $this->requireAuth();
-            $this->requireRole(['Admin']);
-
-            if (!isset($_FILES['sql_file'])) {
-                return Response::json(['error' => 'Nenhum arquivo enviado'], 400);
-            }
-
-            $file = $_FILES['sql_file'];
-            if ($file['error'] !== UPLOAD_ERR_OK) {
-                return Response::json(['error' => 'Erro no upload: ' . $file['error']], 400);
-            }
-
-            $filename = 'snap_' . date('Ymd_His') . '_UPL_' . basename($file['name']);
-            // Remove espaços e caracteres especiais do nome original para segurança
-            $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
-            
-            $targetPath = __DIR__ . '/../../data/snapshots/' . $filename;
-            
-            if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                return Response::json([
-                    'success' => true,
-                    'message' => 'Arquivo SQL enviado com sucesso e está pronto para restauração.',
-                    'filename' => $filename
-                ]);
-            } else {
-                return Response::json(['error' => 'Falha ao mover arquivo para o destino'], 500);
-            }
-        } catch (\Exception $e) {
-            return Response::json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * GET /api/import/download-snapshot
-     * Faz o download de um snapshot específico da pasta data/snapshots.
-     */
-    public function downloadSnapshot() {
-        try {
-            $this->requireAuth();
-            $filename = $_GET['file'] ?? '';
-            if (empty($filename)) return Response::json(['error' => 'Arquivo não informado'], 400);
-
-            // Segurança: impede path traversal
-            $filename = basename($filename);
-            $path = __DIR__ . '/../../data/snapshots/' . $filename;
-
-            if (!file_exists($path)) {
-                return Response::json(['error' => 'Arquivo não encontrado'], 404);
-            }
-
-            header('Content-Type: application/sql');
-            header('Content-Disposition: attachment; filename="' . $filename . '"');
-            header('Content-Length: ' . filesize($path));
-            readfile($path);
-            exit;
         } catch (\Exception $e) {
             return Response::json(['error' => $e->getMessage()], 500);
         }
@@ -471,6 +394,83 @@ class ImportController {
                 $this->versionModel->updateStatus($wipeBatchId, 'failed', null, $e->getMessage());
             }
             return Response::json(['error' => 'Falha ao resetar sistema: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/import/legacy-sql
+     * Importação exclusiva para .sql de bases legadas.
+     */
+    public function importLegacySql() {
+        try {
+            $this->requireAuth();
+            $this->requireRole(['Admin']);
+
+            if (!isset($_FILES['sql_file']) || $_FILES['sql_file']['error'] !== UPLOAD_ERR_OK) {
+                return Response::json(['error' => 'Arquivo .sql não enviado ou erro no envio'], 400);
+            }
+
+            $file = $_FILES['sql_file'];
+            $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            if ($extension !== 'sql') {
+                return Response::json(['error' => 'Apenas arquivos .sql são permitidos'], 400);
+            }
+
+            // Define o batch ID e o local final do arquivo de snapshot
+            $batchId = 'leg_' . uniqid();
+            $timestamp = date('Ymd_His');
+            $filename = "snap_{$timestamp}_{$batchId}.sql";
+            $snapshotDir = __DIR__ . '/../../data/snapshots';
+            
+            if (!is_dir($snapshotDir)) {
+                mkdir($snapshotDir, 0755, true);
+            }
+            $destPath = $snapshotDir . '/' . $filename;
+
+            // Move o arquivo enviado para a pasta de snapshots
+            if (!move_uploaded_file($file['tmp_name'], $destPath)) {
+                return Response::json(['error' => 'Falha ao salvar arquivo no servidor'], 500);
+            }
+
+            $userId = $_SESSION['user_id'];
+            $versionLabel = "Importação de Base Legada (.sql): " . basename($file['name']);
+
+            // 1. Criar registro de versão
+            $this->versionModel->create([
+                'batch_id' => $batchId,
+                'version_label' => $versionLabel,
+                'user_id' => $userId
+            ]);
+
+            $this->versionModel->updateStatus($batchId, 'running');
+
+            $this->logger->info($batchId, 'restore', "Iniciando importação de base de dados legada .sql: " . $file['name']);
+
+            // 2. Criar snapshot do estado atual ANTES de restaurar a base legada
+            try {
+                $preRestoreSnapshot = $this->snapshotService->createSnapshot($batchId);
+                $this->versionModel->updateSnapshotFile($batchId, $preRestoreSnapshot);
+            } catch (\Exception $e) {
+                $this->logger->warning($batchId, 'restore', 'Snapshot pré-importação legada falhou: ' . $e->getMessage());
+            }
+
+            // 3. Executar restauração usando o arquivo enviado
+            $this->snapshotService->restoreSnapshot($destPath, $batchId);
+            $this->versionModel->updateStatus($batchId, 'completed');
+
+            $this->logger->info($batchId, 'restore', "Base legada importada com sucesso a partir de " . $file['name']);
+
+            return Response::json([
+                'success' => true,
+                'message' => 'Base legada importada com sucesso!',
+                'batch_id' => $batchId
+            ]);
+
+        } catch (\Exception $e) {
+            if (isset($batchId)) {
+                $this->versionModel->updateStatus($batchId, 'failed', null, $e->getMessage());
+            }
+            return Response::json(['error' => 'Falha ao importar base legada: ' . $e->getMessage()], 500);
         }
     }
 
