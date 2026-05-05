@@ -494,7 +494,7 @@ class ImportController {
      * @param array $allowedRoles  Lista de roles permitidas.
      */
     private function requireRole(array $allowedRoles): void {
-        if (!isset($_SESSION['user_role']) || !in_array($_SESSION['user_role'], $allowedRoles)) {
+        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], $allowedRoles)) {
             Response::json(['error' => 'Permissão insuficiente'], 403);
             exit;
         }

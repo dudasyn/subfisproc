@@ -226,6 +226,7 @@ class AppManager {
     async showAuditorDrawer(responsibleId, name) {
         const drawer = document.getElementById('auditor-drawer');
         const backdrop = document.getElementById('drawer-backdrop');
+        const exportActions = document.getElementById('drawer-export-actions');
         if (!drawer || !backdrop) return;
         
         const title = document.getElementById('drawer-title');
@@ -234,6 +235,8 @@ class AppManager {
 
         title.innerHTML = `<i class="fa-solid fa-user-tie" style="color: var(--primary);"></i> ${name}`;
         subtitle.textContent = 'Carregando processos...';
+        if (exportActions) exportActions.style.display = 'none'; // reset visibility
+
         body.innerHTML = `
             <div style="text-align:center; padding:3rem 0; color:var(--text-secondary);">
                 <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--primary); margin-bottom:1rem; display:block;"></i>
@@ -249,6 +252,7 @@ class AppManager {
             subtitle.textContent = `${data.length} processo(s) em carga`;
 
             if (data.length === 0) {
+                if (exportActions) exportActions.style.display = 'none';
                 body.innerHTML = `
                     <div style="text-align:center; padding:4rem 1.5rem; color:var(--text-secondary);">
                         <i class="fa-solid fa-folder-open fa-3x" style="color:var(--border-color); margin-bottom:1.25rem; display:block;"></i>
@@ -258,6 +262,11 @@ class AppManager {
                 `;
                 return;
             }
+
+            // Save for exports
+            this.currentDrawerData = data;
+            this.currentDrawerAuditorName = name;
+            if (exportActions) exportActions.style.display = 'flex';
 
             body.innerHTML = `
                 <div style="display:flex; flex-direction:column; gap:0.75rem;">
@@ -297,6 +306,7 @@ class AppManager {
                 </div>
             `;
         } catch (e) {
+            if (exportActions) exportActions.style.display = 'none';
             body.innerHTML = `
                 <div style="text-align:center; padding:3rem 1.5rem; color:var(--danger);">
                     <i class="fa-solid fa-triangle-exclamation fa-3x" style="margin-bottom:1rem;"></i>
@@ -312,6 +322,68 @@ class AppManager {
         const backdrop = document.getElementById('drawer-backdrop');
         if (drawer) drawer.style.right = '-540px';
         if (backdrop) backdrop.style.display = 'none';
+    }
+
+    exportDrawerXLSX() {
+        if (!this.currentDrawerData || this.currentDrawerData.length === 0) return;
+        const tempTable = document.createElement('table');
+        tempTable.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Número do Processo</th>
+                    <th>Assunto</th>
+                    <th>Setor Atual</th>
+                    <th>Última Movimentação</th>
+                    <th>Dias Parado</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${this.currentDrawerData.map(p => `
+                    <tr>
+                        <td>${p.process_number}</td>
+                        <td>${p.subject || 'Sem assunto'}</td>
+                        <td>${p.current_sector}</td>
+                        <td>${this.formatDate(p.last_movement)}</td>
+                        <td>${p.idle_days} dias</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
+        const wb = XLSX.utils.table_to_book(tempTable);
+        XLSX.writeFile(wb, `Processos_${this.currentDrawerAuditorName.replace(/ /g, '_')}.xlsx`);
+    }
+
+    exportDrawerPDF() {
+        if (!this.currentDrawerData || this.currentDrawerData.length === 0) return;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(16);
+        doc.text(`Processos em Carga - ${this.currentDrawerAuditorName}`, 14, 20);
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 27);
+        doc.text(`Total: ${this.currentDrawerData.length} processo(s)`, 14, 33);
+        
+        const headers = [['Número do Processo', 'Assunto', 'Setor Atual', 'Última Mov.', 'Dias Parado']];
+        const rows = this.currentDrawerData.map(p => [
+            p.process_number,
+            p.subject || 'Sem assunto',
+            p.current_sector,
+            this.formatDate(p.last_movement),
+            `${p.idle_days} dias`
+        ]);
+        
+        doc.autoTable({
+            head: headers,
+            body: rows,
+            startY: 40,
+            theme: 'grid',
+            headStyles: { fillColor: [0, 114, 188], textColor: 255 },
+            styles: { fontSize: 9 }
+        });
+        
+        doc.save(`Processos_${this.currentDrawerAuditorName.replace(/ /g, '_')}.pdf`);
     }
 
     async showProcessModal(processNumber) {

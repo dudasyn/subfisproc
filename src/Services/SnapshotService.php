@@ -75,7 +75,7 @@ class SnapshotService {
         // --routines=false: não inclui stored procedures
         // --triggers=false: não inclui triggers
         $cmd = sprintf(
-            'mysqldump --host=%s --user=%s --password=%s --single-transaction --no-tablespaces --routines=false --triggers=false %s %s > %s 2>&1',
+            'mysqldump --skip-ssl --host=%s --user=%s --password=%s --single-transaction --no-tablespaces --routines=false --triggers=false %s %s > %s 2>&1',
             escapeshellarg($dbHost),
             escapeshellarg($dbUser),
             escapeshellarg($dbPass),
@@ -150,7 +150,7 @@ class SnapshotService {
             $dbName = getenv('DB_NAME') ?: 'subfisproc';
 
             $cmd = sprintf(
-                'mysql --host=%s --user=%s --password=%s %s < %s 2>&1',
+                'mysql --skip-ssl --host=%s --user=%s --password=%s %s < %s 2>&1',
                 escapeshellarg($dbHost),
                 escapeshellarg($dbUser),
                 escapeshellarg($dbPass),
