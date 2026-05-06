@@ -21,7 +21,7 @@ if ($method === 'POST') {
         jsonResponse(['error' => 'CPF/E-mail e senha são obrigatórios'], 400);
     }
 
-    $stmt = $pdo->prepare('SELECT id, name, role, department, sector_id, password, force_password_change FROM users WHERE (email = ? OR cpf = ?) AND active = 1');
+    $stmt = $pdo->prepare('SELECT u.id, u.name, u.role, u.department, u.sector_id, u.password, u.force_password_change, s.name as sector_name FROM users u LEFT JOIN sectors s ON u.sector_id = s.id WHERE (u.email = ? OR u.cpf = ?) AND u.active = 1');
     $stmt->execute([$username, $username]);
     $user = $stmt->fetch();
 
@@ -31,6 +31,7 @@ if ($method === 'POST') {
         $_SESSION['role'] = $user['role'];
         $_SESSION['department'] = $user['department'];
         $_SESSION['sector_id'] = $user['sector_id'];
+        $_SESSION['sector_name'] = $user['sector_name'];
         $_SESSION['force_password_change'] = (bool)$user['force_password_change'];
 
         jsonResponse([
@@ -41,6 +42,7 @@ if ($method === 'POST') {
                 'role' => $user['role'],
                 'department' => $user['department'],
                 'sector_id' => $user['sector_id'],
+                'sector_name' => $user['sector_name'],
                 'force_password_change' => (bool)$user['force_password_change']
             ]
         ]);
@@ -58,6 +60,7 @@ if ($method === 'POST') {
                 'role' => $_SESSION['role'],
                 'department' => $_SESSION['department'] ?? '',
                 'sector_id' => $_SESSION['sector_id'],
+                'sector_name' => $_SESSION['sector_name'] ?? null,
                 'force_password_change' => $_SESSION['force_password_change'] ?? false
             ]
         ]);

@@ -468,20 +468,25 @@ const searchView = {
         const loadSectorProcesses = async () => {
             try {
                 const sectorId = user.sector_id;
-                if (!sectorId) {
+                const isAdmin = user.role === 'Admin';
+                if (!sectorId && !isAdmin) {
                     recentList.innerHTML = '<div class="p-4 text-center text-secondary">Usuário não possui setor associado.</div>';
                     return;
                 }
 
                 const titleEl = document.getElementById('recent-section-title');
                 if (titleEl) {
-                    titleEl.innerHTML = `<i class="fa-solid fa-building" style="color:var(--primary-color); margin-right: 0.35rem;"></i> Processos Atualmente no Seu Setor (${user.sector_name || 'Setor Atual'})`;
+                    if (isAdmin && !sectorId) {
+                        titleEl.innerHTML = `<i class="fa-solid fa-globe" style="color:var(--primary-color); margin-right: 0.35rem;"></i> Todos os Processos Ativos (Superadmin)`;
+                    } else {
+                        titleEl.innerHTML = `<i class="fa-solid fa-building" style="color:var(--primary-color); margin-right: 0.35rem;"></i> Processos Atualmente no Seu Setor (${user.sector_name || 'Setor Atual'})`;
+                    }
                 }
 
-                recentList.innerHTML = '<div class="p-3 text-center text-secondary"><i class="fa-solid fa-spinner fa-spin"></i> Carregando processos do seu setor...</div>';
+                recentList.innerHTML = '<div class="p-3 text-center text-secondary"><i class="fa-solid fa-spinner fa-spin"></i> Carregando processos...</div>';
 
-                // Traz todos os processos no setor atual para podermos paginar client-side
-                const list = await Api.movements.search('', sectorId, true, '', 1, 1000);
+                // Traz todos os processos no setor atual para podermos paginar client-side (ou todos se for admin sem setor)
+                const list = await Api.movements.search('', sectorId || '', true, '', 1, 1000);
                 
                 // Garantir ordenação do trâmite mais recente para o mais antigo
                 list.sort((a, b) => {
@@ -686,8 +691,8 @@ const searchView = {
                     const lastSectorId = process.last_destination_sector_id;
                     const lastAction = process.last_action;
 
-                    // Pode movimentar se não tiver histórico (novo processo) OU se estiver sob custódia do seu setor e a ação for ENTRADA
-                    const canTramitar = (!lastSectorId || (lastSectorId == userSectorId && lastAction === 'ENTRADA'));
+                    // Pode movimentar se for Admin/Superadmin, ou se não tiver histórico (novo processo) OU se estiver sob custódia do seu setor e a ação for ENTRADA
+                    const canTramitar = (user.role === 'Admin' || !lastSectorId || (lastSectorId == userSectorId && lastAction === 'ENTRADA'));
                     const alertBanner = document.getElementById('posse-alert-banner');
 
                     if (!canTramitar) {

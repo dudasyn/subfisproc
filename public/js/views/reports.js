@@ -1,20 +1,115 @@
 const reportsView = {
-    async render(container, user) {
+    async render(container, user, params) {
         if (user.role !== 'Admin' && user.role !== 'Gestor') {
             container.innerHTML = `<div class="card"><div class="card-body text-center"><h3 class="text-secondary">Acesso Negado</h3><p>Apenas Gestores e Administradores têm acesso a esta área.</p></div></div>`;
             return;
         }
 
+        const activeTab = params && params[1] ? params[1].toLowerCase() : null;
+
+        if (!activeTab) {
+            container.innerHTML = `
+                <div class="view-section">
+                    <div style="margin-bottom: 2.25rem;">
+                        <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--accent); margin: 0 0 0.35rem 0;">Relatórios e Estatísticas</h2>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Selecione um dos módulos analíticos abaixo para auditar fluxos, gerar relatórios e exportar dados.</p>
+                    </div>
+                    
+                    <div class="config-grid-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                        
+                        <!-- CARD 1: MOVIMENTACOES -->
+                        <a href="#reports/movimentacoes" class="config-menu-card">
+                            <div class="card h-100" style="transition: all 0.2s ease; cursor: pointer; border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; height: 100%; background: #ffffff;">
+                                <div class="card-body" style="padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(0, 114, 188, 0.08); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                                    </div>
+                                    <div>
+                                        <h3 style="font-size: 1.15rem; font-weight: 750; color: var(--accent); margin: 0 0 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
+                                            Movimentações <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem; opacity: 0; transform: translateX(-5px); transition: all 0.25s ease;"></i>
+                                        </h3>
+                                        <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5; margin: 0;">Filtre entradas, saídas e trâmites por período e setor. Exporte relatórios em formato Excel (XLSX) ou PDF.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <!-- CARD 2: PARADOS -->
+                        <a href="#reports/parados" class="config-menu-card">
+                            <div class="card h-100" style="transition: all 0.2s ease; cursor: pointer; border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; height: 100%; background: #ffffff;">
+                                <div class="card-body" style="padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(239, 68, 68, 0.08); color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                        <i class="fa-solid fa-hourglass-half"></i>
+                                    </div>
+                                    <div>
+                                        <h3 style="font-size: 1.15rem; font-weight: 750; color: var(--accent); margin: 0 0 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
+                                            Processos Parados <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem; opacity: 0; transform: translateX(-5px); transition: all 0.25s ease;"></i>
+                                        </h3>
+                                        <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5; margin: 0;">Identifique processos que estão retidos nos setores por mais dias do que o limite recomendado de fluxo.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <!-- CARD 3: SECTOR STATS -->
+                        <a href="#reports/sector-stats" class="config-menu-card">
+                            <div class="card h-100" style="transition: all 0.2s ease; cursor: pointer; border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; height: 100%; background: #ffffff;">
+                                <div class="card-body" style="padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(245, 158, 11, 0.08); color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                    </div>
+                                    <div>
+                                        <h3 style="font-size: 1.15rem; font-weight: 750; color: var(--accent); margin: 0 0 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
+                                            Totais por Setor <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem; opacity: 0; transform: translateX(-5px); transition: all 0.25s ease;"></i>
+                                        </h3>
+                                        <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5; margin: 0;">Acompanhe o volume quantitativo total de entradas e saídas de trâmites agrupados por setor ativo.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <!-- CARD 4: AUDITORES -->
+                        <a href="#reports/auditores" class="config-menu-card">
+                            <div class="card h-100" style="transition: all 0.2s ease; cursor: pointer; border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; height: 100%; background: #ffffff;">
+                                <div class="card-body" style="padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(99, 102, 241, 0.08); color: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                        <i class="fa-solid fa-user-tie"></i>
+                                    </div>
+                                    <div>
+                                        <h3 style="font-size: 1.15rem; font-weight: 750; color: var(--accent); margin: 0 0 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
+                                            Auditores <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem; opacity: 0; transform: translateX(-5px); transition: all 0.25s ease;"></i>
+                                        </h3>
+                                        <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5; margin: 0;">Monitore em tempo real a carga atual de processos em posse técnica de cada Auditor Fiscal.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        let tabTitle = 'Relatórios';
+        if (activeTab === 'movimentacoes') tabTitle = 'Movimentações';
+        else if (activeTab === 'parados') tabTitle = 'Processos Parados';
+        else if (activeTab === 'sector-stats') tabTitle = 'Estatísticas por Setor';
+        else if (activeTab === 'auditores') tabTitle = 'Carga de Auditores';
+
         container.innerHTML = `
             <div class="view-section">
-                <div class="tabs-header">
-                    <button class="tab-btn active" data-tab="movimentacoes"><i class="fa-solid fa-arrow-right-arrow-left"></i> Entradas / Saídas / Tramit.</button>
-                    <button class="tab-btn" data-tab="parados"><i class="fa-solid fa-hourglass-half"></i> Processos Parados por Setor</button>
-                    <button class="tab-btn" data-tab="sector-stats"><i class="fa-solid fa-chart-pie"></i> Entradas / Saídas por Setor</button>
-                    <button class="tab-btn" data-tab="auditores"><i class="fa-solid fa-user-tie"></i> Auditores (Carga Atual)</button>
+                <!-- BREADCRUMB -->
+                <div class="config-breadcrumb" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 500; margin-bottom: 1.5rem;">
+                    <a href="#reports" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700;">
+                        <i class="fa-solid fa-arrow-left"></i> Voltar para Relatórios
+                    </a>
+                    <span style="color: var(--text-secondary); opacity: 0.5;">/</span>
+                    <span style="color: var(--text-primary); font-weight: 600;">${tabTitle}</span>
                 </div>
 
                 <!-- MOVIMENTACOES TAB -->
+                ${activeTab === 'movimentacoes' ? `
                 <div class="tab-content active" id="tab-movimentacoes">
                     <div class="card mb-1">
                         <div class="card-header border-bottom">
@@ -80,9 +175,11 @@ const reportsView = {
                         </div>
                     </div>
                 </div>
+                ` : ''}
 
                 <!-- PARADOS TAB -->
-                <div class="tab-content" id="tab-parados">
+                ${activeTab === 'parados' ? `
+                <div class="tab-content active" id="tab-parados">
                     <div class="card mb-1">
                         <div class="card-header border-bottom flex-between">
                             <div>
@@ -124,12 +221,11 @@ const reportsView = {
                         </div>
                     </div>
                 </div>
-
-                    </div>
-                </div>
+                ` : ''}
 
                 <!-- SECTOR STATS TAB -->
-                <div class="tab-content" id="tab-sector-stats">
+                ${activeTab === 'sector-stats' ? `
+                <div class="tab-content active" id="tab-sector-stats">
                     <div class="card mb-1">
                         <div class="card-header border-bottom">
                             <h3>Totais por Setor (Entradas e Saídas)</h3>
@@ -174,9 +270,11 @@ const reportsView = {
                         </div>
                     </div>
                 </div>
+                ` : ''}
 
                 <!-- AUDITORES TAB -->
-                <div class="tab-content" id="tab-auditores">
+                ${activeTab === 'auditores' ? `
+                <div class="tab-content active" id="tab-auditores">
                     <div class="card mb-1">
                         <div class="card-header border-bottom flex-between">
                             <div>
@@ -208,14 +306,20 @@ const reportsView = {
                         </div>
                     </div>
                 </div>
+                ` : ''}
             </div>
         `;
 
-        this.attachTabEvents();
-        this.initMovements();
-        this.initStagnant();
-        this.initSectorStats();
-        this.initAuditors();
+        // Fetch Data for active tab only
+        if (activeTab === 'movimentacoes') {
+            this.initMovements();
+        } else if (activeTab === 'parados') {
+            this.initStagnant();
+        } else if (activeTab === 'sector-stats') {
+            this.initSectorStats();
+        } else if (activeTab === 'auditores') {
+            this.initAuditors();
+        }
     },
 
     attachTabEvents() {

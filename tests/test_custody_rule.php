@@ -111,6 +111,28 @@ try {
     assertEqual($hasCustody, false, "Usuário do Setor A NÃO deve ter autorização para movimentar o processo (custódia está no Setor B).");
     assertEqual($errorMessage, "Este processo não está sob posse do seu setor atualmente (está sob custódia de: SETOR DE ARQUIVO TESTE B). Tramitação não autorizada.", "Deve lançar o erro de custódia correspondente.");
 
+    echo "\n--- Cenário 3: Usuário Admin / Superadmin (mesmo com processo no Setor B e sem setor associado) ---\n";
+    
+    // Simular usuário com papel Admin e sem setor associado (sector_id = null)
+    $_SESSION['role'] = 'Admin';
+    $_SESSION['sector_id'] = null;
+
+    $hasCustody = true;
+    $errorMessage = "";
+    // Regra atualizada idêntica à de api/movements.php
+    if ($last_mov && $_SESSION['role'] !== 'Admin' && $_SESSION['sector_id'] !== null) {
+        if ($last_mov['destination_sector_id'] != $_SESSION['sector_id']) {
+            $hasCustody = false;
+            $stmt_sec = $pdo->prepare('SELECT name FROM sectors WHERE id = ?');
+            $stmt_sec->execute([$last_mov['destination_sector_id']]);
+            $sec_name = $stmt_sec->fetchColumn() ?: 'outro setor';
+            $errorMessage = "Este processo não está sob posse do seu setor atualmente (está sob custódia de: {$sec_name}). Tramitação não autorizada.";
+        }
+    }
+
+    assertEqual($hasCustody, true, "Usuário com papel Admin / sem setor deve ter autorização livre (bypass de custódia).");
+    assertEqual($errorMessage, "", "Nenhuma mensagem de erro deve ser gerada para Admin no Cenário 3.");
+
     echo "\n" . ANSI_GREEN . "Todos os testes de validação de custódia foram aprovados com sucesso!" . ANSI_RESET . "\n";
 
     // Sempre realizar o rollback para manter a integridade do banco de dados intacta!

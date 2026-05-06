@@ -221,7 +221,7 @@ if ($method === 'GET') {
             $stmt_check->execute([$process_id]);
             $last_mov = $stmt_check->fetch();
             
-            if ($last_mov) {
+            if ($last_mov && $_SESSION['role'] !== 'Admin' && $_SESSION['sector_id'] !== null) {
                 if ($last_mov['destination_sector_id'] != $_SESSION['sector_id']) {
                     $stmt_sec = $pdo->prepare('SELECT name FROM sectors WHERE id = ?');
                     $stmt_sec->execute([$last_mov['destination_sector_id']]);

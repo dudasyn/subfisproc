@@ -54,6 +54,7 @@ Para manter uma UX limpa, fluida e robusta, evite popups ou modais flutuantes pa
 - **Telas Dedicadas**: Redirecione o usuário usando rotas dinâmicas em hash (ex: `#movements/[NÚMERO_DO_PROCESSO]`).
 - **Retorno Automático**: Após registrar a movimentação com sucesso, o sistema deve redirecionar o usuário de volta para a tela de consulta (`#search/[NÚMERO_DO_PROCESSO]`) para recarregar a timeline atualizada do processo.
 - **Navegação Exclusiva**: O acesso ao formulário de trâmite deve ser feito exclusivamente a partir da verificação de custódia do processo no setor do usuário logado. Não exponha o atalho de movimentações na barra lateral (sidebar).
+- **Barra de Identidade de Setor Ativo**: Sempre insira uma barra de destaque (`.user-sector-identity-bar`) com gradiente azul institucional vibrante no topo das telas de listagem para contextualizar de forma imediata o setor ativo do usuário e as permissões de custódia associadas.
 
 ## 6. Formatador de Ações Dinâmicas e Badges Contextuais
 

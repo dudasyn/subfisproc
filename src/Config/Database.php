@@ -38,6 +38,39 @@ class Database {
                 self::$instance = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
                 self::$instance->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 self::$instance->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
+                // Garante a existência das tabelas de controle de versão e logs de importação
+                self::$instance->exec("
+                    CREATE TABLE IF NOT EXISTS `import_versions` (
+                        `id` INT AUTO_INCREMENT PRIMARY KEY,
+                        `batch_id` VARCHAR(50) UNIQUE NOT NULL,
+                        `version_label` VARCHAR(100) NOT NULL,
+                        `snapshot_file` VARCHAR(255) DEFAULT NULL,
+                        `status` ENUM('pending', 'running', 'completed', 'failed', 'rolled_back') NOT NULL DEFAULT 'pending',
+                        `user_id` INT NOT NULL,
+                        `stats_json` TEXT DEFAULT NULL,
+                        `error_message` TEXT DEFAULT NULL,
+                        `started_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        `completed_at` TIMESTAMP NULL,
+                        FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                ");
+
+                self::$instance->exec("
+                    CREATE TABLE IF NOT EXISTS `import_logs` (
+                        `id` INT AUTO_INCREMENT PRIMARY KEY,
+                        `batch_id` VARCHAR(50) NOT NULL,
+                        `log_level` ENUM('INFO', 'WARNING', 'ERROR') NOT NULL DEFAULT 'INFO',
+                        `phase` ENUM('validation', 'snapshot', 'import', 'rollback', 'restore') NOT NULL,
+                        `message` TEXT NOT NULL,
+                        `context_json` TEXT DEFAULT NULL,
+                        `row_number` INT DEFAULT NULL,
+                        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        INDEX `idx_batch` (`batch_id`),
+                        INDEX `idx_level` (`log_level`),
+                        FOREIGN KEY (`batch_id`) REFERENCES `import_versions`(`batch_id`) ON DELETE CASCADE
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                ");
             } catch (PDOException $e) {
                 // Utiliza o helper de Resposta para encerrar com erro 500 JSON amigável
                 Response::error('Database connection failed: ' . $e->getMessage(), 500);

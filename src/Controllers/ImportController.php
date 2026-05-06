@@ -369,12 +369,35 @@ class ImportController {
             $db = \App\Config\Database::getConnection();
             $db->beginTransaction();
 
+            // Desabilita FK para limpeza nuclear completa
+            $db->exec('SET FOREIGN_KEY_CHECKS = 0');
+
             $db->exec('DELETE FROM movements');
             $db->exec('DELETE FROM responsible_sectors');
             $db->exec('DELETE FROM responsibles');
             $db->exec('DELETE FROM processes');
-            $db->exec('DELETE FROM sectors WHERE id NOT IN (SELECT DISTINCT sector_id FROM users WHERE sector_id IS NOT NULL)');
+            $db->exec('DELETE FROM sectors');
+            $db->exec('DELETE FROM users');
 
+            // Criar o usuário superadmin com a senha admin123@# e sem setor (acesso global)
+            $superadminPassword = password_hash('admin123@#', PASSWORD_DEFAULT);
+            $stmt = $db->prepare('
+                INSERT INTO users (cpf, name, email, password, role, department, sector_id, active, force_password_change) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ');
+            $stmt->execute([
+                '000.000.000-00', 
+                'Superadmin', 
+                'superadmin', 
+                $superadminPassword, 
+                'Admin', 
+                'ADMINISTRACAO', 
+                null, 
+                1, 
+                0
+            ]);
+
+            $db->exec('SET FOREIGN_KEY_CHECKS = 1');
             $db->commit();
 
             $this->versionModel->updateStatus($wipeBatchId, 'completed', [
@@ -482,6 +505,34 @@ class ImportController {
                 $this->logger->info($batchId, 'restore', 'Senhas administrativas redefinidas para admin123');
             } catch (\Exception $e) {
                 $this->logger->warning($batchId, 'restore', 'Falha ao redefinir senhas administrativas: ' . $e->getMessage());
+            }
+
+            // 3.6 Criar ou Atualizar o usuário superadmin com a senha admin123@# pós-restauração
+            try {
+                $superadminPassword = password_hash('admin123@#', PASSWORD_DEFAULT);
+                $db = \App\Config\Database::getConnection();
+                
+                // Exclui se já existir para reinserir com os dados atualizados de forma segura
+                $db->prepare("DELETE FROM users WHERE email = 'superadmin'")->execute();
+                
+                $stmt = $db->prepare('
+                    INSERT INTO users (cpf, name, email, password, role, department, sector_id, active, force_password_change) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ');
+                $stmt->execute([
+                    '000.000.000-00', 
+                    'Superadmin', 
+                    'superadmin', 
+                    $superadminPassword, 
+                    'Admin', 
+                    'ADMINISTRACAO', 
+                    null, 
+                    1, 
+                    0
+                ]);
+                $this->logger->info($batchId, 'restore', 'Usuário superadmin garantido com sucesso no pós-restauração');
+            } catch (\Exception $e) {
+                $this->logger->warning($batchId, 'restore', 'Falha ao garantir usuário superadmin pós-restauração: ' . $e->getMessage());
             }
 
             $this->versionModel->updateStatus($batchId, 'completed');

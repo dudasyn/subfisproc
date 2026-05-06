@@ -163,34 +163,169 @@ const configView = {
             document.head.appendChild(style);
         }
 
+        const activeTab = params && params[1] ? params[1].toLowerCase() : null;
+
+        if (!activeTab) {
+            container.innerHTML = `
+                <div class="view-section">
+                    <div style="margin-bottom: 2.25rem;">
+                        <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--accent); margin: 0 0 0.35rem 0;">Configurações do Sistema</h2>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Selecione uma das categorias administrativas abaixo para gerenciar os parâmetros da plataforma.</p>
+                    </div>
+                    
+                    <div class="config-grid-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                        
+                        <!-- CARD 1: SETORES -->
+                        <a href="#config/setores" class="config-menu-card">
+                            <div class="card h-100" style="transition: all 0.2s ease; cursor: pointer; border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; height: 100%; background: #ffffff;">
+                                <div class="card-body" style="padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(0, 114, 188, 0.08); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                        <i class="fa-solid fa-building"></i>
+                                    </div>
+                                    <div>
+                                        <h3 style="font-size: 1.15rem; font-weight: 750; color: var(--accent); margin: 0 0 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
+                                            Setores <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem; opacity: 0; transform: translateX(-5px); transition: all 0.25s ease;"></i>
+                                        </h3>
+                                        <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5; margin: 0;">Configure os setores ativos/inativos, controle tipos (interno/externo), defina hierarquias e visualize o histórico de trâmites.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <!-- CARD 2: RESPONSAVEIS -->
+                        <a href="#config/responsaveis" class="config-menu-card">
+                            <div class="card h-100" style="transition: all 0.2s ease; cursor: pointer; border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; height: 100%; background: #ffffff;">
+                                <div class="card-body" style="padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(16, 185, 129, 0.08); color: #059669; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                        <i class="fa-solid fa-user-tie"></i>
+                                    </div>
+                                    <div>
+                                        <h3 style="font-size: 1.15rem; font-weight: 750; color: var(--accent); margin: 0 0 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
+                                            Responsáveis <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem; opacity: 0; transform: translateX(-5px); transition: all 0.25s ease;"></i>
+                                        </h3>
+                                        <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5; margin: 0;">Cadastre e gerencie Auditores Fiscais e demais responsáveis de trâmites, vinculando-os aos seus setores de atuação.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <!-- CARD 3: COLABORADORES -->
+                        ${isAdmin ? `
+                        <a href="#config/colaboradores" class="config-menu-card">
+                            <div class="card h-100" style="transition: all 0.2s ease; cursor: pointer; border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; height: 100%; background: #ffffff;">
+                                <div class="card-body" style="padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(245, 158, 11, 0.08); color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                        <i class="fa-solid fa-users"></i>
+                                    </div>
+                                    <div>
+                                        <h3 style="font-size: 1.15rem; font-weight: 750; color: var(--accent); margin: 0 0 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
+                                            Colaboradores <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem; opacity: 0; transform: translateX(-5px); transition: all 0.25s ease;"></i>
+                                        </h3>
+                                        <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5; margin: 0;">Administre permissões de acesso ao sistema, crie novos colaboradores, resete senhas e configure atribuições de perfil.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                        ` : ''}
+
+                        <!-- CARD 4: IMPORTACAO -->
+                        ${isAdmin ? `
+                        <a href="#config/importacao" class="config-menu-card">
+                            <div class="card h-100" style="transition: all 0.2s ease; cursor: pointer; border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; height: 100%; background: #ffffff;">
+                                <div class="card-body" style="padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(99, 102, 241, 0.08); color: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                        <i class="fa-solid fa-file-import"></i>
+                                    </div>
+                                    <div>
+                                        <h3 style="font-size: 1.15rem; font-weight: 750; color: var(--accent); margin: 0 0 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
+                                            Importação e Backups <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem; opacity: 0; transform: translateX(-5px); transition: all 0.25s ease;"></i>
+                                        </h3>
+                                        <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5; margin: 0;">Importe arquivos SQL de produção, configure versões, realize backups preventivos de dados e analise logs detalhados.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                        ` : ''}
+
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        let tabTitle = 'Configuração';
+        if (activeTab === 'setores') tabTitle = 'Setores';
+        else if (activeTab === 'responsaveis') tabTitle = 'Responsáveis';
+        else if (activeTab === 'colaboradores') tabTitle = 'Colaboradores';
+        else if (activeTab === 'importacao') tabTitle = 'Importação e Backups';
+
         container.innerHTML = `
             <div class="view-section">
-                <div class="tabs-header">
-                    <button class="tab-btn active" data-tab="setores"><i class="fa-solid fa-building"></i> Setores</button>
-                    <button class="tab-btn" data-tab="responsaveis"><i class="fa-solid fa-user-tie"></i> Responsáveis</button>
-                    ${isAdmin ? '<button class="tab-btn" data-tab="colaboradores"><i class="fa-solid fa-users"></i> Colaboradores</button>' : ''}
-                    ${isAdmin ? '<button class="tab-btn" data-tab="importacao"><i class="fa-solid fa-file-import"></i> Importação</button>' : ''}
+                <!-- BREADCRUMB -->
+                <div class="config-breadcrumb" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 500; margin-bottom: 1.5rem;">
+                    <a href="#config" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700;">
+                        <i class="fa-solid fa-arrow-left"></i> Voltar para Configurações
+                    </a>
+                    <span style="color: var(--text-secondary); opacity: 0.5;">/</span>
+                    <span style="color: var(--text-primary); font-weight: 600;">${tabTitle}</span>
                 </div>
 
                 <!-- SETORES TAB -->
+                ${activeTab === 'setores' ? `
                 <div class="tab-content active" id="tab-setores">
                     <div class="card mb-1">
-                        <div class="card-header flex-center" style="justify-content: space-between;">
+                        <div class="card-header flex-center" style="justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
                             <div>
                                 <h3>Setores Ativos</h3>
-                                <p>Gerencie os setores de destino dos processos.</p>
+                                <p>Gerencie os setores de destino dos processos de maneira ágil.</p>
                             </div>
-                            <div style="display:flex; gap:0.5rem; align-items:center;">
+                            <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap: wrap;">
                                 <button class="btn-secondary" id="btn-show-inactive-sectors" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-eye"></i> Exibir Inativos c/ Dados</button>
                                 <button class="btn-secondary" id="btn-delete-all-sectors" style="padding:0.6rem 1.2rem; background:#fee2e2; color:#b91c1c; border-color:#fecaca;"><i class="fa-solid fa-trash-can"></i> Excluir Todos</button>
                                 <button class="btn-primary" id="btn-add-sector" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-plus"></i> Novo Setor</button>
                             </div>
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="data-table">
-                                    <thead><tr><th>Nome do Setor</th><th class="text-center">Movimentações</th><th class="text-center">Ações</th></tr></thead>
-                                    <tbody id="tbody-sectors"><tr><td colspan="3" class="text-center">Carregando...</td></tr></tbody>
+                        <div class="card-body p-3">
+                            <!-- Filtros e Busca de Setores -->
+                            <div class="flex-center" style="justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="search-box" style="flex: 1; min-width: 280px; position: relative;">
+                                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                                    <input type="text" id="sector-search-input" class="form-control" placeholder="Buscar por nome ou sigla do setor..." style="width: 100%; padding-left: 2.5rem; height: 42px;">
+                                </div>
+                                <div class="flex-center" style="flex-wrap: wrap; gap: 0.5rem; width: auto;">
+                                    <select id="sector-filter-type" class="form-control" style="width: auto; padding: 0.5rem 1rem; height: 42px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                        <option value="all">Todos os Tipos (Interno/Externo)</option>
+                                        <option value="internal">Somente Internos SMF</option>
+                                        <option value="external">Somente Externos</option>
+                                    </select>
+                                    <select id="sector-filter-level" class="form-control" style="width: auto; padding: 0.5rem 1rem; height: 42px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                        <option value="all">Todos os Níveis (Pai/Filho)</option>
+                                        <option value="parent">Setor Pai (Raiz)</option>
+                                        <option value="child">Setor Filho (Subsetor)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Lista de Setores Ativos -->
+                            <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface);">
+                                <table class="data-table" style="margin-bottom:0; width:100%;">
+                                    <thead>
+                                        <tr>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Nome do Setor / Sigla</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 160px; text-align: center;">Tipo</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 260px; text-align: center;">Hierarquia (Pai/Filho)</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 140px; text-align: center;">Movimentações</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="grid-sectors">
+                                        <tr>
+                                            <td colspan="5" class="text-center p-4 text-secondary">
+                                                <i class="fa-solid fa-circle-notch fa-spin fa-2x mb-1" style="color: var(--primary);"></i>
+                                                <p>Carregando setores ativos...</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
@@ -201,19 +336,35 @@ const configView = {
                             <h3 style="color: var(--text-secondary);">Setores Inativos (com histórico)</h3>
                             <p>Estes setores não aparecem nas buscas, mas possuem registros vinculados. Recomendamos mesclá-los com setores ativos.</p>
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="data-table">
-                                    <thead><tr><th>Nome do Setor</th><th class="text-center">Movimentações</th><th class="text-center">Ações</th></tr></thead>
-                                    <tbody id="tbody-inactive-sectors"></tbody>
+                        <div class="card-body p-3">
+                            <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface);">
+                                <table class="data-table" style="margin-bottom:0; width:100%;">
+                                    <thead>
+                                        <tr>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Nome do Setor / Sigla</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 160px; text-align: center;">Tipo</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 260px; text-align: center;">Hierarquia (Pai/Filho)</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 140px; text-align: center;">Movimentações</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="grid-inactive-sectors">
+                                        <tr>
+                                            <td colspan="5" class="text-center p-4 text-secondary">
+                                                Nenhum sector inativo encontrado.
+                                            </td>
+                                        </tr>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
                 </div>
+                ` : ''}
 
                 <!-- RESPONSAVEIS TAB -->
-                <div class="tab-content" id="tab-responsaveis">
+                ${activeTab === 'responsaveis' ? `
+                <div class="tab-content active" id="tab-responsaveis">
                     <div class="card mb-1">
                         <div class="card-header flex-center" style="justify-content: space-between;">
                             <div>
@@ -235,10 +386,11 @@ const configView = {
                         </div>
                     </div>
                 </div>
+                ` : ''}
 
                 <!-- COLABORADORES TAB -->
-                ${isAdmin ? `
-                <div class="tab-content" id="tab-colaboradores">
+                ${activeTab === 'colaboradores' && isAdmin ? `
+                <div class="tab-content active" id="tab-colaboradores">
                     <div class="card mb-1">
                         <div class="card-header flex-center" style="justify-content: space-between;">
                             <div>
@@ -258,9 +410,10 @@ const configView = {
                     </div>
                 </div>
                 ` : ''}
+
                 <!-- IMPORTACAO TAB -->
-                ${isAdmin ? `
-                <div class="tab-content" id="tab-importacao">
+                ${activeTab === 'importacao' && isAdmin ? `
+                <div class="tab-content active" id="tab-importacao">
                     
                     <!-- Side-by-Side Dual Column Grid -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;" class="import-columns-grid">
@@ -382,7 +535,7 @@ const configView = {
                                     <i class="fa-solid fa-shield-halved"></i> Criar Snapshot de Segurança
                                 </button>
                                 <button class="btn-secondary" id="btn-wipe-database" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; width:auto; padding:0.6rem 1.2rem; font-weight: 600;">
-                                    <i class="fa-solid fa-radiation"></i> Zerar Sistema (DANGER)
+                                    <i class="fa-solid fa-radiation"></i> Zerar Base de Dados (DANGER)
                                 </button>
                             </div>
                         </div>
@@ -412,38 +565,60 @@ const configView = {
             <div id="modal-root"></div>
         `;
 
-        this.attachTabEvents();
-        
-        // Add listeners
-        document.getElementById('btn-add-sector').onclick = () => this.showSectorModal();
-        document.getElementById('btn-delete-all-sectors').onclick = () => this.deleteAllSectors();
-        document.getElementById('btn-add-responsible').onclick = () => this.showResponsibleModal();
-        document.getElementById('btn-clear-all-responsible-sectors').onclick = () => this.clearAllResponsibleSectors();
-        
-        if (isAdmin) {
-            document.getElementById('btn-add-user').onclick = () => this.showUserModal();
-            document.getElementById('btn-wipe-database').onclick = () => this.wipeDatabase();
-            document.getElementById('btn-create-snapshot').onclick = () => this.createManualSnapshot();
+        // Safe attachment of listeners
+        const btnAddSector = document.getElementById('btn-add-sector');
+        if (btnAddSector) btnAddSector.onclick = () => this.showSectorModal();
 
-            // Toggle Inativos
-            document.getElementById('btn-show-inactive-sectors').onclick = () => {
+        const btnDeleteAllSectors = document.getElementById('btn-delete-all-sectors');
+        if (btnDeleteAllSectors) btnDeleteAllSectors.onclick = () => this.deleteAllSectors();
+
+        const btnAddResponsible = document.getElementById('btn-add-responsible');
+        if (btnAddResponsible) btnAddResponsible.onclick = () => this.showResponsibleModal();
+
+        const btnClearAllResponsibleSectors = document.getElementById('btn-clear-all-responsible-sectors');
+        if (btnClearAllResponsibleSectors) btnClearAllResponsibleSectors.onclick = () => this.clearAllResponsibleSectors();
+        
+        // Listeners para Busca e Filtros de Setores Ativos
+        const searchInput = document.getElementById('sector-search-input');
+        const filterType = document.getElementById('sector-filter-type');
+        const filterLevel = document.getElementById('sector-filter-level');
+
+        if (searchInput) searchInput.oninput = () => this.filterAndRenderSectors();
+        if (filterType) filterType.onchange = () => this.filterAndRenderSectors();
+        if (filterLevel) filterLevel.onchange = () => this.filterAndRenderSectors();
+
+        // Toggle Inativos
+        const btnShowInactive = document.getElementById('btn-show-inactive-sectors');
+        if (btnShowInactive) {
+            btnShowInactive.onclick = () => {
                 this.showInactive = !this.showInactive;
-                const btn = document.getElementById('btn-show-inactive-sectors');
-                btn.innerHTML = this.showInactive ? '<i class="fa-solid fa-eye-slash"></i> Ocultar Inativos' : '<i class="fa-solid fa-eye"></i> Exibir Inativos c/ Dados';
+                btnShowInactive.innerHTML = this.showInactive ? '<i class="fa-solid fa-eye-slash"></i> Ocultar Inativos' : '<i class="fa-solid fa-eye"></i> Exibir Inativos c/ Dados';
                 document.getElementById('card-inactive-sectors').style.display = this.showInactive ? 'block' : 'none';
                 this.loadSectors();
             };
+        }
 
-            // Fetch Data
-            await Promise.all([
-                this.loadSectors(), 
-                this.loadUsers(), 
-                this.loadResponsibles(),
-                this.loadImportHistory()
-            ]);
+        if (isAdmin) {
+            const btnAddUser = document.getElementById('btn-add-user');
+            if (btnAddUser) btnAddUser.onclick = () => this.showUserModal();
+
+            const btnWipeDatabase = document.getElementById('btn-wipe-database');
+            if (btnWipeDatabase) btnWipeDatabase.onclick = () => this.wipeDatabase();
+
+            const btnCreateSnapshot = document.getElementById('btn-create-snapshot');
+            if (btnCreateSnapshot) btnCreateSnapshot.onclick = () => this.createManualSnapshot();
+        }
+
+        // Fetch Data for active tab only
+        if (activeTab === 'setores') {
+            await this.loadSectors();
+        } else if (activeTab === 'responsaveis') {
+            await this.loadResponsibles();
+        } else if (activeTab === 'colaboradores' && isAdmin) {
+            await this.loadUsers();
+        } else if (activeTab === 'importacao' && isAdmin) {
+            await this.loadImportHistory();
             this.initImportLogic();
-        } else {
-            await Promise.all([this.loadSectors(), this.loadResponsibles()]);
         }
     },
 
@@ -464,108 +639,186 @@ const configView = {
     async loadSectors() {
         try {
             this.sectors = await Api.sectors.list(this.showInactive);
-            const tbody = document.getElementById('tbody-sectors');
-            const tbodyInactive = document.getElementById('tbody-inactive-sectors');
-            
-            if (this.sectors.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="text-center">Nenhum setor cadastrado</td></tr>`;
-                return;
-            }
+            this.filterAndRenderSectors();
+        } catch (e) {
+            const grid = document.getElementById('grid-sectors');
+            if (grid) grid.innerHTML = `<div style="grid-column: 1 / -1;" class="text-center p-3 text-danger"><i class="fa-solid fa-triangle-exclamation fa-2x mb-1"></i><p>Erro ao carregar setores: ${e.message}</p></div>`;
+        }
+    },
 
-            const buildRow = (s, level = 0) => {
-                const indent = '&nbsp;'.repeat(level * 4);
-                const hasChildren = this.sectors.some(child => child.parent_id === s.id && child.active === 1);
-                const toggleIcon = hasChildren 
-                    ? `<i class="fa-solid fa-chevron-right toggle-children" data-id="${s.id}" style="cursor:pointer; width: 1.5rem; text-align:center; color: var(--primary-color);"></i> ` 
-                    : `<span style="display:inline-block; width: 1.5rem;"></span>`;
-                
-                const isSubfis = s.is_internal ? '<span class="badge badge-primary" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Órgão Central">Órgão Central</span>' : (s.is_internal_hierarchy ? '<span class="badge badge-success" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Parte da hierarquia de um Órgão Central">Setor Interno</span>' : '<span class="badge badge-neutral" style="margin-left:8px; font-size:0.7rem; padding: 0.2rem 0.5rem;" title="Fora da hierarquia interna">Externo</span>');
-                
-                const displayName = s.alias ? `<b>${s.alias}</b> <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">(${s.name})</span>` : `<b>${s.name}</b>`;
-                
-                const isHidden = s.parent_id ? 'display: none;' : '';
-                const opacity = s.active === '0' || s.active === 0 ? 'opacity: 0.6; background: #f8fafc;' : '';
-                
-                return `
-                    <tr class="sector-row ${s.active == 0 ? 'inactive-sector' : ''}" data-id="${s.id}" data-parent="${s.parent_id || ''}" style="${isHidden} ${opacity}">
-                        <td style="padding-left: ${level * 1.5}rem;">
-                            ${toggleIcon}
-                            ${displayName}
-                            ${isSubfis}
-                            ${s.active == 0 ? '<span class="badge badge-danger" style="margin-left:8px; font-size:0.7rem;">Inativo</span>' : ''}
-                        </td>
-                        <td class="text-center">
-                            <span class="badge badge-neutral" style="background:#e2e8f0; color:#475569;">${s.movement_count || 0}</span>
-                        </td>
-                        <td class="text-center">
-                            <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', '${(s.alias || '').replace(/'/g, "\\'")}', ${s.is_internal}, ${s.parent_id || 'null'})"><i class="fa-solid fa-pen"></i> Editar</button>
-                            <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:var(--bg-secondary); color:var(--primary); margin-left:5px;" onclick="configView.showMergeSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}')" title="Mesclar histórico com outro setor"><i class="fa-solid fa-code-merge"></i> Mesclar</button>
-                            ${s.active == 1 ? `<button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c; margin-left:5px;" onclick="configView.deleteSector(${s.id})"><i class="fa-solid fa-trash"></i></button>` : ''}
+    filterAndRenderSectors() {
+        const gridActive = document.getElementById('grid-sectors');
+        const gridInactive = document.getElementById('grid-inactive-sectors');
+        if (!gridActive) return;
+
+        const searchVal = (document.getElementById('sector-search-input')?.value || '').toLowerCase().trim();
+        const typeFilter = document.getElementById('sector-filter-type')?.value || 'all';
+        const levelFilter = document.getElementById('sector-filter-level')?.value || 'all';
+
+        // Helper to get depth of a sector in the general sectors array
+        const getDepth = (sector) => {
+            let depth = 0;
+            let current = sector;
+            while (current && current.parent_id) {
+                const nextParent = this.sectors.find(p => p.id === current.parent_id);
+                if (!nextParent || nextParent.id === current.id) break;
+                depth++;
+                current = nextParent;
+            }
+            return depth;
+        };
+
+        // Helper to build a beautiful modern list row for a sector with depth-based indentation
+        const buildRow = (s) => {
+            const parentSector = s.parent_id ? this.sectors.find(p => p.id === s.parent_id) : null;
+            
+            // badges
+            const isInternal = s.is_internal || s.is_internal_hierarchy;
+            const typeBadgeHtml = isInternal
+                ? `<span class="sector-card-badge sector-card-badge-internal" style="font-size: 0.75rem;"><i class="fa-solid fa-house-laptop"></i> Interno SMF</span>`
+                : `<span class="sector-card-badge sector-card-badge-external" style="font-size: 0.75rem;"><i class="fa-solid fa-building-circle-arrow-right"></i> Externo</span>`;
+
+            const levelBadgeHtml = s.parent_id && parentSector
+                ? `<span class="sector-card-badge sector-card-badge-child" style="font-size: 0.75rem;" title="Subsetor de ${parentSector.name}"><i class="fa-solid fa-diagram-successor"></i> Subsetor de <b>${parentSector.alias || parentSector.name}</b></span>`
+                : `<span class="sector-card-badge sector-card-badge-parent" style="font-size: 0.75rem;" title="Setor Raiz Principal"><i class="fa-solid fa-sitemap"></i> Setor Pai (Raiz)</span>`;
+
+            const displayName = s.alias ? `<b>${s.alias}</b>` : `<b>${s.name}</b>`;
+            const displaySub = s.alias ? s.name : 'Setor de Atuação';
+
+            const rowOpacity = s.active == 0 ? 'opacity: 0.65; background-color: #f8fafc;' : '';
+            const depth = getDepth(s);
+            const indentStyle = depth > 0 ? `padding-left: ${depth * 1.5 + 1}rem;` : 'padding-left: 1rem;';
+
+            return `
+                <tr class="sector-row ${s.active == 0 ? 'inactive-sector' : ''}" data-id="${s.id}" style="${rowOpacity}">
+                    <td style="padding: 1rem; vertical-align: middle; ${indentStyle}">
+                        <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                            ${depth > 0 ? `<span style="color: var(--primary); font-weight: 900; font-size: 1.15rem; line-height: 1.1; margin-left: -1rem; margin-right: 0.25rem;">↳</span>` : ''}
+                            <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                                <span style="font-size: 0.95rem; color: var(--text-primary);">${displayName}</span>
+                                <span style="font-size: 0.78rem; color: var(--text-secondary);">${displaySub}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding: 1rem; text-align: center; vertical-align: middle;">
+                        ${typeBadgeHtml}
+                    </td>
+                    <td style="padding: 1rem; text-align: center; vertical-align: middle;">
+                        ${levelBadgeHtml}
+                    </td>
+                    <td style="padding: 1rem; text-align: center; vertical-align: middle;">
+                        <span class="badge" style="background: #f1f5f9; color: #334155; font-weight: 700; font-size: 0.82rem; padding: 0.3rem 0.6rem; border-radius: var(--radius-md); border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-exchange-alt" style="color: var(--text-secondary);"></i> ${s.movement_count || 0}
+                        </span>
+                    </td>
+                    <td style="padding: 1rem; text-align: center; vertical-align: middle;">
+                        <div style="display: flex; gap: 0.4rem; justify-content: center; align-items: center;">
+                            <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.8rem; border-radius: var(--radius-md);" onclick="configView.showSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', '${(s.alias || '').replace(/'/g, "\\'")}', ${s.is_internal}, ${s.parent_id || 'null'})">
+                                <i class="fa-solid fa-pen"></i> Editar
+                            </button>
+                            <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.8rem; background: var(--bg-secondary); color: var(--primary); border-radius: var(--radius-md);" onclick="configView.showMergeSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}')" title="Mesclar histórico com outro setor">
+                                <i class="fa-solid fa-code-merge"></i> Mesclar
+                            </button>
+                            ${s.active == 1 ? `
+                            <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.8rem; background: #fee2e2; color: #b91c1c; border-color: #fecaca; border-radius: var(--radius-md);" onclick="configView.deleteSector(${s.id})">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        };
+
+        // Separar ativos e inativos
+        const activeSectors = this.sectors.filter(s => s.active == 1);
+        const inactiveSectors = this.sectors.filter(s => s.active == 0);
+
+        // Filter active sectors in memory
+        const filteredActive = activeSectors.filter(s => {
+            const matchesSearch = s.name.toLowerCase().includes(searchVal) || (s.alias && s.alias.toLowerCase().includes(searchVal));
+            if (!matchesSearch) return false;
+
+            const isInternal = s.is_internal || s.is_internal_hierarchy;
+            if (typeFilter === 'internal' && !isInternal) return false;
+            if (typeFilter === 'external' && isInternal) return false;
+
+            const isChild = !!s.parent_id;
+            if (levelFilter === 'parent' && isChild) return false;
+            if (levelFilter === 'child' && !isChild) return false;
+
+            return true;
+        });
+
+        // Filter inactive sectors in memory
+        const filteredInactive = inactiveSectors.filter(s => {
+            const matchesSearch = s.name.toLowerCase().includes(searchVal) || (s.alias && s.alias.toLowerCase().includes(searchVal));
+            return matchesSearch;
+        });
+
+        // Alphabetical & Hierarchical sorting logic
+        const getSortedHierarchicalList = (sectorsList) => {
+            const sorted = [];
+            const visited = new Set();
+
+            const getSortName = (sec) => (sec.alias || sec.name).toLowerCase();
+            const sortAlpha = (a, b) => getSortName(a).localeCompare(getSortName(b));
+
+            const traverse = (sec) => {
+                if (visited.has(sec.id)) return;
+                visited.add(sec.id);
+                sorted.push(sec);
+
+                // Find and recursively sort children of this sector
+                const children = sectorsList.filter(c => c.parent_id === sec.id).sort(sortAlpha);
+                children.forEach(child => traverse(child));
+            };
+
+            // Identify root elements (either no parent, or parent is not present in the filtered list)
+            const sectorIds = new Set(sectorsList.map(item => item.id));
+            const roots = sectorsList.filter(item => !item.parent_id || !sectorIds.has(item.parent_id)).sort(sortAlpha);
+
+            roots.forEach(root => traverse(root));
+
+            // Guard for orphans or circular refs
+            sectorsList.forEach(item => {
+                if (!visited.has(item.id)) {
+                    sorted.push(item);
+                }
+            });
+
+            return sorted;
+        };
+
+        const sortedActive = getSortedHierarchicalList(filteredActive);
+        const sortedInactive = getSortedHierarchicalList(filteredInactive);
+
+        // Render Active
+        if (sortedActive.length === 0) {
+            gridActive.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center p-4 text-secondary">
+                        <i class="fa-solid fa-folder-open fa-2x mb-1" style="opacity: 0.5; display: block; margin: 0 auto 0.5rem;"></i>
+                        Nenhum setor ativo correspondente aos filtros foi encontrado.
+                    </td>
+                </tr>
+            `;
+        } else {
+            gridActive.innerHTML = sortedActive.map(s => buildRow(s)).join('');
+        }
+
+        // Render Inactive
+        if (gridInactive) {
+            if (sortedInactive.length === 0) {
+                gridInactive.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center p-4 text-secondary">
+                            Nenhum setor inativo encontrado.
                         </td>
                     </tr>
                 `;
-            };
-
-            // Separar ativos e inativos
-            const activeSectors = this.sectors.filter(s => s.active == 1);
-            const inactiveSectors = this.sectors.filter(s => s.active == 0);
-
-            // Renderizar Árvore de Ativos
-            const rootSectors = activeSectors.filter(s => !s.parent_id);
-            let htmlActive = '';
-            const renderTree = (parentId, level) => {
-                const children = activeSectors.filter(s => s.parent_id === parentId);
-                children.forEach(c => {
-                    htmlActive += buildRow(c, level);
-                    renderTree(c.id, level + 1);
-                });
-            };
-            rootSectors.forEach(r => {
-                htmlActive += buildRow(r, 0);
-                renderTree(r.id, 1);
-            });
-            tbody.innerHTML = htmlActive || '<tr><td colspan="3" class="text-center">Nenhum setor ativo</td></tr>';
-
-            // Renderizar Inativos (Lista simples)
-            if (tbodyInactive) {
-                tbodyInactive.innerHTML = inactiveSectors.map(s => buildRow(s, 0)).join('') || '<tr><td colspan="3" class="text-center text-secondary">Nenhum setor inativo com dados encontrado</td></tr>';
+            } else {
+                gridInactive.innerHTML = sortedInactive.map(s => buildRow(s)).join('');
             }
-
-            // Lógica de Expandir/Recolher (apenas para ativos)
-            const hideDescendants = (parentId) => {
-                tbody.querySelectorAll(`.sector-row[data-parent="${parentId}"]`).forEach(row => {
-                    row.style.display = 'none';
-                    hideDescendants(row.dataset.id);
-                });
-            };
-
-            const showDirectChildren = (parentId) => {
-                tbody.querySelectorAll(`.sector-row[data-parent="${parentId}"]`).forEach(row => {
-                    row.style.display = '';
-                    const icon = row.querySelector('.toggle-children');
-                    if (icon && icon.classList.contains('fa-chevron-down')) {
-                        showDirectChildren(row.dataset.id);
-                    }
-                });
-            };
-
-            tbody.querySelectorAll('.toggle-children').forEach(icon => {
-                icon.addEventListener('click', () => {
-                    const parentId = icon.dataset.id;
-                    if (icon.classList.contains('fa-chevron-down')) {
-                        icon.classList.remove('fa-chevron-down');
-                        icon.classList.add('fa-chevron-right');
-                        hideDescendants(parentId);
-                    } else {
-                        icon.classList.remove('fa-chevron-right');
-                        icon.classList.add('fa-chevron-down');
-                        showDirectChildren(parentId);
-                    }
-                });
-            });
-        } catch (e) {
-            const tbody = document.getElementById('tbody-sectors');
-            if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">Erro ao carregar setores: ${e.message}</td></tr>`;
         }
     },
 
