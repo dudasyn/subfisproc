@@ -3,6 +3,25 @@ const dashboardView = {
     chartInstance: null,
 
     async render(container, user) {
+        // Restricted access for profiles other than Admin or Gestor
+        if (user.role !== 'Admin' && user.role !== 'Gestor') {
+            container.innerHTML = `
+                <div class="view-section flex-center animate-fade-in" style="min-height: 450px; display: flex; flex-direction: column; gap: 1.5rem; text-align: center; max-width: 500px; margin: 4rem auto; padding: 2.5rem; background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-md);">
+                    <div style="width: 80px; height: 80px; background: rgba(239, 68, 68, 0.08); color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto; border: 1px solid rgba(239, 68, 68, 0.2);">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h2 style="font-weight: 750; color: var(--text-primary); margin: 0; font-size: 1.5rem; letter-spacing: -0.5px;">Acesso Reservado</h2>
+                    <p style="color: var(--text-secondary); line-height: 1.6; margin: 0; font-size: 0.95rem;">
+                        O painel analítico (Dashboard) é de uso exclusivo dos perfis de <strong>Administrador</strong> e <strong>Gestor</strong>. Seu perfil atual de <strong>${user.role}</strong> não possui privilégios de acesso a este recurso.
+                    </p>
+                    <button class="btn-primary" onclick="window.location.hash = '#search'" style="padding: 0.7rem 1.6rem; font-weight: 700; border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem auto 0; transition: all 0.25s ease;">
+                        <i class="fa-solid fa-magnifying-glass"></i> Consultar Processos
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
         // Show high-performance beautiful initial loader
         container.innerHTML = `
             <div class="view-section flex-center" style="height: 400px; display: flex; flex-direction: column; gap: 1rem;">
