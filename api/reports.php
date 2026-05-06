@@ -159,6 +159,30 @@ if ($type === 'movements') {
         jsonResponse(['error' => 'Datas de início e fim são obrigatórias'], 400);
     }
     
+    // Primeiro, identificamos todos os setores que fazem parte da hierarquia interna
+    // (mesma lógica usada em sectors.php para consistência)
+    $stmtS = $pdo->query("SELECT id, parent_id, is_internal FROM sectors WHERE active = 1");
+    $aS = $stmtS->fetchAll(PDO::FETCH_ASSOC);
+    
+    $intIds = [];
+    foreach ($aS as $s) {
+        if ($s['is_internal']) $intIds[] = (int)$s['id'];
+    }
+    
+    $desc = $intIds;
+    $added = true;
+    while ($added) {
+        $added = false;
+        foreach ($aS as $s) {
+            if ($s['parent_id'] !== null && in_array((int)$s['parent_id'], $desc) && !in_array((int)$s['id'], $desc)) {
+                $desc[] = (int)$s['id'];
+                $added = true;
+            }
+        }
+    }
+    
+    $phs = count($desc) > 0 ? implode(',', array_fill(0, count($desc), '?')) : '0';
+    
     $sql = "
         SELECT 
             s.id,
@@ -168,13 +192,19 @@ if ($type === 'movements') {
             COALESCE(exits.total, 0) as total_exits
         FROM sectors s
         LEFT JOIN (
+            -- Entradas: conta apenas movimentos com action = ENTRADA para o setor
+            -- Isso é correto tanto para dados importados (corrigidos) quanto futuros
             SELECT destination_sector_id, COUNT(*) as total
             FROM movements
             WHERE movement_date BETWEEN ? AND ?
+              AND action = 'ENTRADA'
             GROUP BY destination_sector_id
         ) entries ON s.id = entries.destination_sector_id
         LEFT JOIN (
-            -- Conta saídas baseadas no setor da movimentação anterior
+            -- Saídas: lógica sequencial - quando um processo tem um novo movimento,
+            -- o setor do movimento anterior teve uma saída.
+            -- Isso funciona retroativamente para TODO o histórico, sem depender do campo action.
+            -- Exemplo: IPTU → Simples Nacional: m_next=Simples, m_prev=IPTU → +1 saída para IPTU ✅
             SELECT m_prev.destination_sector_id, COUNT(*) as total
             FROM movements m_next
             JOIN movements m_prev ON m_next.process_id = m_prev.process_id
@@ -185,7 +215,7 @@ if ($type === 'movements') {
               )
             GROUP BY m_prev.destination_sector_id
         ) exits ON s.id = exits.destination_sector_id
-        WHERE s.active = 1 AND s.is_internal = 1
+        WHERE s.active = 1 AND s.id IN ($phs)
         ORDER BY s.id = 1 DESC, (COALESCE(entries.total, 0) + COALESCE(exits.total, 0)) DESC, s.name ASC
     ";
     
@@ -193,8 +223,10 @@ if ($type === 'movements') {
     $start_full = $start . ' 00:00:00';
     $end_full = $end . ' 23:59:59';
     
-    $stmt->execute([$start_full, $end_full, $start_full, $end_full]);
+    $eP = array_merge([$start_full, $end_full, $start_full, $end_full], $desc);
+    $stmt->execute($eP);
     jsonResponse($stmt->fetchAll());
+
 
 } else {
     jsonResponse(['error' => 'Tipo de relatório inválido'], 400);
