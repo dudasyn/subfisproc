@@ -152,6 +152,17 @@ const searchView = {
                             <button class="btn-secondary" id="btn-attach-proc" style="display:none; padding: 0.6rem 1.2rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; border-radius: var(--radius-md);">
                                 <i class="fa-solid fa-link"></i> Apensar Processo
                             </button>
+                            <button class="btn-secondary" id="btn-edit-proc" style="display:none; padding: 0.6rem 1.2rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; border-radius: var(--radius-md); transition: all 0.25s ease;">
+                                <i class="fa-solid fa-pen-to-square"></i> Editar Processo
+                            </button>
+                            <div id="edit-actions" style="display:none; gap:0.5rem;">
+                                <button class="btn-primary" id="btn-save-proc" style="padding: 0.6rem 1.2rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; border-radius: var(--radius-md); background: #10b981; border-color: #10b981; color: white;">
+                                    <i class="fa-solid fa-check"></i> Salvar
+                                </button>
+                                <button class="btn-secondary" id="btn-cancel-edit" style="padding: 0.6rem 1.2rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; border-radius: var(--radius-md);">
+                                    <i class="fa-solid fa-xmark"></i> Cancelar
+                                </button>
+                            </div>
                             <button class="btn-secondary" id="btn-delete-proc" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; display:none; padding: 0.6rem 1.2rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; border-radius: var(--radius-md); transition: all 0.25s ease;">
                                 <i class="fa-solid fa-trash"></i> Excluir Processo
                             </button>
@@ -363,6 +374,14 @@ const searchView = {
         const btnDetachMain = document.getElementById('btn-detach-main');
         const btnTramitar = document.getElementById('btn-tramitar-proc');
         const btnTramitarEmpty = document.getElementById('btn-tramitar-empty');
+        
+        const btnEditProc = document.getElementById('btn-edit-proc');
+        const btnSaveProc = document.getElementById('btn-save-proc');
+        const btnCancelEdit = document.getElementById('btn-cancel-edit');
+        const editActions = document.getElementById('edit-actions');
+        let isEditing = false;
+        let originalData = {};
+        
         let currentProcessId = null;
 
         // Variáveis de paginação para o setor
@@ -566,11 +585,14 @@ const searchView = {
                 <div class="recent-info">
                     <h5>${m.process_number} ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="font-size:0.8rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="font-size:0.8rem; color:var(--primary-color);"></i>' : '')}</h5>
                     <p>${m.subject || 'Sem assunto'}</p>
-                    ${m.parent_id ? `<small style="color:var(--text-secondary); font-size:0.7rem;">Apenso ao ${m.parent_process_number}</small>` : (m.attachments_count > 0 ? `<small style="color:var(--primary-color); font-size:0.7rem;">Possui ${m.attachments_count} apenso(s)</small>` : '')}
+                    <div style="display:flex; gap:0.5rem; margin-top:0.3rem;">
+                        <span class="badge-action btn-detail" data-number="${m.process_number}"><i class="fa-solid fa-eye"></i> Detalhar</span>
+                        <span class="badge-action btn-move-fast" data-number="${m.process_number}"><i class="fa-solid fa-share-from-square"></i> Tramitar</span>
+                    </div>
                 </div>
-                <div class="recent-status">
-                    <span class="badge-${(m.action || 'NOVO').toLowerCase()}">${window.app.formatAction(m.action, m.destination_sector)}</span>
-                    <p style="font-size: 0.7rem; margin-top: 4px;">${window.app.formatDate(m.movement_date)}</p>
+                <div class="recent-status" style="min-width: 180px;">
+                    <span class="badge-${(m.action || 'NOVO').toLowerCase()}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : (m.action || 'NOVO')}</span>
+                    <p style="font-size: 0.75rem; margin-top: 6px; font-weight: 500; color: var(--text-primary);">${window.app.formatDate(m.movement_date)}</p>
                 </div>
             </div>
         `;
@@ -600,6 +622,20 @@ const searchView = {
                 if (processes && processes.length > 0) {
                     searchList.innerHTML = processes.map(renderProcessItem).join('');
                     
+                    searchList.querySelectorAll('.btn-detail').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            loadProcessDetails(btn.dataset.number);
+                        });
+                    });
+
+                    searchList.querySelectorAll('.btn-move-fast').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            window.location.hash = `#movements/${btn.dataset.number}`;
+                        });
+                    });
+
                     document.querySelectorAll('.search-result-item').forEach(item => {
                         item.addEventListener('click', () => {
                             inputSearch.value = item.dataset.number;
@@ -687,32 +723,12 @@ const searchView = {
                         childrenDiv.style.display = 'block';
                         btnAttachProc.style.display = 'block';
                         
-                        // Load children details from the API search to get the numbers
-                        const children = await Api.movements.search(process.process_number, null, false);
-                        // Filter to only those that have this as parent
-                        const actualChildren = children.filter(c => c.parent_id == process.id);
-                        
-                        childrenContainer.innerHTML = actualChildren.map(c => `
-                            <div class="attachment-pill">
+                        childrenContainer.innerHTML = process.attached_processes.map(childNumber => `
+                            <div class="attachment-pill" style="cursor:pointer;" onclick="searchView._autoSearch('${childNumber}')">
                                 <i class="fa-solid fa-paperclip"></i>
-                                <span>${c.process_number}</span>
-                                <button class="btn-detach-child" data-id="${c.id}" title="Desapensar">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
+                                <span>${childNumber}</span>
                             </div>
                         `).join('');
-
-                        document.querySelectorAll('.btn-detach-child').forEach(btn => {
-                            btn.addEventListener('click', async (e) => {
-                                e.stopPropagation();
-                                const childId = btn.dataset.id;
-                                if(confirm('Deseja desapensar este processo?')) {
-                                    await Api.processes.detach(childId);
-                                    window.app.toast('Processo desapensado com sucesso!');
-                                    loadProcessDetails(number);
-                                }
-                            });
-                        });
                     } else {
                         attachDiv.style.display = 'none';
                         childrenDiv.style.display = 'none';
@@ -724,7 +740,7 @@ const searchView = {
                     tbody.innerHTML = history.length ? history.map(h => `
                         <tr>
                             <td>${window.app.formatDate(h.movement_date)}</td>
-                            <td><span class="badge-${h.action.toLowerCase()}">${window.app.formatAction(h.action, h.destination_sector)}</span></td>
+                            <td><span class="badge-${h.action.toLowerCase()}">${h.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : h.action}</span></td>
                             <td>${h.destination_sector}</td>
                             <td>${h.responsible_name || '-'}</td>
                             <td>${h.user_name || '-'}</td>
@@ -738,8 +754,22 @@ const searchView = {
                     emptyDiv.style.display = 'none';
 
                     currentProcessId = process.id;
+                    originalData = {
+                        subject: process.subject || '',
+                        requester: process.requester || '',
+                        document_number: process.document_number || '',
+                        observations: process.observations || ''
+                    };
+
+                    if (user.role === 'Admin' || user.role === 'Gestor' || user.role === 'Secretaria' || user.role === 'Assistente Operacional') {
+                        btnEditProc.style.display = 'block';
+                    } else {
+                        btnEditProc.style.display = 'none';
+                    }
                     if (user.role === 'Admin' || user.role === 'Gestor') {
                         btnDeleteProc.style.display = 'block';
+                    } else {
+                        btnDeleteProc.style.display = 'none';
                     }
                 }
             } catch(e) {
@@ -796,6 +826,72 @@ const searchView = {
                 btnDeleteProc.innerHTML = '<i class="fa-solid fa-trash"></i> Excluir Processo';
             }
         });
+
+        const toggleEditMode = (editing) => {
+            isEditing = editing;
+            const elements = {
+                assunto: document.getElementById('res-assunto'),
+                requerente: document.getElementById('res-requerente'),
+                doc: document.getElementById('res-doc'),
+                obs: document.getElementById('res-obs')
+            };
+
+            if (editing) {
+                elements.assunto.innerHTML = `<input type="text" id="edit-assunto" class="form-control-sm" style="width:100%" value="${originalData.subject}">`;
+                elements.requerente.innerHTML = `<input type="text" id="edit-requerente" class="form-control-sm" style="width:100%" value="${originalData.requester}">`;
+                elements.doc.innerHTML = `<input type="text" id="edit-doc" class="form-control-sm" style="width:100%" value="${originalData.document_number}">`;
+                elements.obs.innerHTML = `<textarea id="edit-obs" class="form-control-sm" style="width:100%; min-height:80px;">${originalData.observations}</textarea>`;
+                
+                btnEditProc.style.display = 'none';
+                editActions.style.display = 'flex';
+                btnDeleteProc.style.display = 'none';
+                btnAttachProc.style.display = 'none';
+            } else {
+                elements.assunto.textContent = originalData.subject || 'Processo Importado';
+                elements.requerente.textContent = originalData.requester || 'Importação de Dados';
+                elements.doc.textContent = originalData.document_number || 'Não informado';
+                elements.obs.textContent = originalData.observations || 'Sem observações';
+                
+                btnEditProc.style.display = 'block';
+                editActions.style.display = 'none';
+                if (user.role === 'Admin' || user.role === 'Gestor') {
+                    btnDeleteProc.style.display = 'block';
+                }
+                btnAttachProc.style.display = 'block';
+            }
+        };
+
+        if (btnEditProc) btnEditProc.addEventListener('click', () => toggleEditMode(true));
+        if (btnCancelEdit) btnCancelEdit.addEventListener('click', () => toggleEditMode(false));
+
+        if (btnSaveProc) {
+            btnSaveProc.addEventListener('click', async () => {
+                const updatedData = {
+                    id: currentProcessId,
+                    subject: document.getElementById('edit-assunto').value.trim(),
+                    requester: document.getElementById('edit-requerente').value.trim(),
+                    document_number: document.getElementById('edit-doc').value.trim(),
+                    observations: document.getElementById('edit-obs').value.trim()
+                };
+
+                try {
+                    btnSaveProc.disabled = true;
+                    btnSaveProc.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    
+                    await Api.processes.update(updatedData);
+                    window.app.toast('Informações atualizadas com sucesso!');
+                    
+                    // Update original data and exit edit mode
+                    originalData = { ...updatedData };
+                    toggleEditMode(false);
+                } catch (err) {
+                    window.app.toast(err.message, 'error');
+                } finally {
+                    btnSaveProc.disabled = false;
+                    btnSaveProc.innerHTML = '<i class="fa-solid fa-check"></i> Salvar';
+                }
+            });
+        }
 
         btnAttachProc.addEventListener('click', async () => {
             const childNumber = prompt('Digite o número do processo que deseja APENSAR a este:\n(O processo já deve estar cadastrado no sistema)');

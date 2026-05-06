@@ -58,6 +58,7 @@ const Api = {
     },
     processes: {
         delete: (id) => Api.request(`processes.php?id=${id}`, 'DELETE'),
+        update: (data) => Api.request('processes.php', 'POST', { action: 'update', ...data }),
         attach: (parentId, childNumber) => Api.request('processes.php', 'POST', { action: 'attach', parent_id: parentId, child_number: childNumber }),
         detach: (childId) => Api.request('processes.php', 'POST', { action: 'detach', child_id: childId })
     },
