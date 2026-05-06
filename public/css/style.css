@@ -1,11 +1,12 @@
 :root {
     /* Color Palette - Portal do Contribuinte PMDC official branding scheme */
-    --bg-base: #f4f7f6;
+    --bg-base: #e0f2fe;          /* Azul Claro Mais Vivo para Contraste */
     --bg-surface: #ffffff;
     --text-primary: #1e293b;
     --text-secondary: #64748b;
     
     --primary: #0072bc;          /* Azul PMDC */
+    --primary-color: var(--primary);
     --primary-hover: #005fa3;    /* Azul PMDC Escurecido */
     --primary-light: #e6f1f8;    /* Azul Claro de Destaque */
     

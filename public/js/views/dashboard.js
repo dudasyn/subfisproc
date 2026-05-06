@@ -491,7 +491,7 @@ const dashboardView = {
                                         <tbody>
                                             ${stats.recent_activity.map(m => {
                                                 const actionBadgeClass = m.action === 'ENTRADA' ? 'badge-success-glow' : 'badge-warning-glow';
-                                                const actionLabel = m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : m.action;
+                                                const actionLabel = window.app.formatAction(m.action, m.destination_sector);
                                                 const processIcon = m.parent_id 
                                                     ? '<i class="fa-solid fa-paperclip" title="Apenso" style="margin-left: 8px; font-size: 0.8rem; color: var(--text-secondary); filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));"></i>' 
                                                     : (m.attachments_count > 0 

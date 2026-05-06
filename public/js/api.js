@@ -101,10 +101,13 @@ const Api = {
         listLatest: () => Api.request('movements.php?latest=1', 'GET'),
         listByProcess: (procId) => Api.request(`movements.php?process_id=${procId}`, 'GET'),
         getByNumber: (number) => Api.request(`movements.php?process_number=${encodeURIComponent(number)}`, 'GET'),
-        search: (query, sector_id = '', only_current = false) => {
+        search: (query, sector_id = '', only_current = false, responsible_id = '', page = 1, limit = 50) => {
             let url = `movements.php?search=${encodeURIComponent(query)}`;
             if (sector_id) url += `&sector_id=${sector_id}`;
             if (only_current) url += `&only_current=1`;
+            if (responsible_id) url += `&responsible_id=${responsible_id}`;
+            if (page) url += `&page=${page}`;
+            if (limit) url += `&limit=${limit}`;
             return Api.request(url, 'GET');
         },
         register: (data) => Api.request('movements.php', 'POST', data)
@@ -117,7 +120,7 @@ const Api = {
     scraper: {
         async fetch(processNumber) {
             try {
-                const response = await fetch(`${API_BASE}/scraper.php?process=${encodeURIComponent(processNumber)}`);
+                const response = await fetch(`${Api.baseUrl}scraper.php?process=${encodeURIComponent(processNumber)}`);
                 const result = await response.json();
                 
                 if (!response.ok || !result.success) {

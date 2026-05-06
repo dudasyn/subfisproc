@@ -76,7 +76,7 @@ class AppManager {
         // Trigger routing
         if (!window.location.hash) {
             const isStaff = this.user.role === 'Admin' || this.user.role === 'Gestor';
-            window.location.hash = isStaff ? '#dashboard' : '#movements';
+            window.location.hash = isStaff ? '#dashboard' : '#search';
         }
         this.handleRoute();
 
@@ -161,7 +161,7 @@ class AppManager {
         let hash = window.location.hash.substring(1);
         
         if (!hash) {
-            window.location.hash = isStaff ? '#dashboard' : '#movements';
+            window.location.hash = isStaff ? '#dashboard' : '#search';
             return;
         }
 
@@ -221,6 +221,20 @@ class AppManager {
             return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
         }
         return new Date(dateStr + 'T00:00:00').toLocaleDateString('pt-BR');
+    }
+
+    formatAction(action, sectorName = '') {
+        if (!action) return '-';
+        if (action === 'ENTRADA') {
+            return 'Tramitação: Entrada no Setor';
+        }
+        if (action === 'SAIDA') {
+            if (sectorName && sectorName.toLowerCase().includes('arquivo')) {
+                return 'Tramitação: Saída do Setor';
+            }
+            return 'Saída Órgão Externo';
+        }
+        return action;
     }
 
     async showAuditorDrawer(responsibleId, name) {
@@ -523,7 +537,7 @@ class AppManager {
                                                 box-shadow:${isFirst ? 'var(--shadow-sm)' : 'none'};
                                             ">
                                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem; flex-wrap:wrap; gap:0.5rem;">
-                                                    <span style="font-size:0.88rem; font-weight:750; color:var(--text-primary);">${h.action === 'ENTRADA' ? 'Entrada no Setor' : 'Saída/Despacho'}</span>
+                                                    <span style="font-size:0.88rem; font-weight:750; color:var(--text-primary);">${this.formatAction(h.action, h.destination_sector)}</span>
                                                     <span class="badge ${actionBadgeClass}" style="font-size:0.7rem; font-weight:700; text-transform:uppercase; padding:0.15rem 0.45rem;">${h.action}</span>
                                                 </div>
                                                 <div style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:0.25rem; font-weight:500;">

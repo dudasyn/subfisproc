@@ -79,10 +79,14 @@ if ($method === 'GET') {
         } else {
             jsonResponse(['exists' => false]);
         }
-    } elseif (isset($_GET['search']) || isset($_GET['sector_id'])) {
+    } elseif (isset($_GET['search']) || isset($_GET['sector_id']) || isset($_GET['responsible_id'])) {
         $search = $_GET['search'] ?? '';
         $sector_id = $_GET['sector_id'] ?? null;
+        $responsible_id = $_GET['responsible_id'] ?? null;
         $only_current = isset($_GET['only_current']) && $_GET['only_current'] === '1';
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
+        $offset = ($page - 1) * $limit;
         
         $params = [];
         $sql = "SELECT DISTINCT p.id, p.process_number, p.subject, p.requester, p.parent_id,
@@ -90,44 +94,59 @@ if ($method === 'GET') {
                 (SELECT process_number FROM processes WHERE id = p.parent_id) as parent_process_number 
                 FROM processes p ";
         
+        $where_clauses = [];
+        
         if ($only_current && $sector_id) {
-            $sql .= "
-                JOIN movements m ON p.id = m.process_id 
-                WHERE m.id IN (SELECT MAX(id) FROM movements GROUP BY process_id)
-                AND m.destination_sector_id = ?
-            ";
+            $sql .= " JOIN movements m ON p.id = m.process_id ";
+            $where_clauses[] = "m.id IN (SELECT MAX(id) FROM movements GROUP BY process_id) AND m.destination_sector_id = ?";
             $params[] = $sector_id;
-            if ($search) {
-                $sql .= " AND p.process_number LIKE ?";
-                $params[] = '%'.$search.'%';
-            }
         } elseif ($sector_id) {
-            $sql .= "
-                JOIN movements m ON p.id = m.process_id 
-                WHERE m.destination_sector_id = ?
-            ";
+            $sql .= " JOIN movements m ON p.id = m.process_id ";
+            $where_clauses[] = "m.destination_sector_id = ?";
             $params[] = $sector_id;
-            if ($search) {
-                $sql .= " AND p.process_number LIKE ?";
-                $params[] = '%'.$search.'%';
-            }
-        } else {
-            $sql .= " WHERE p.process_number LIKE ?";
+        }
+        
+        if ($responsible_id) {
+            $sql .= " JOIN movements m_resp ON p.id = m_resp.process_id ";
+            $where_clauses[] = "m_resp.responsible_id = ?";
+            $params[] = $responsible_id;
+        }
+        
+        if ($search) {
+            $where_clauses[] = "p.process_number LIKE ?";
             $params[] = '%'.$search.'%';
         }
         
-        $sql .= " ORDER BY p.id DESC LIMIT 50";
+        if (!empty($where_clauses)) {
+            $sql .= " WHERE " . implode(" AND ", $where_clauses);
+        }
+        
+        if ($only_current && $sector_id) {
+            $sql .= " ORDER BY m.movement_date DESC, m.id DESC";
+        } else {
+            $sql .= " ORDER BY p.id DESC";
+        }
+        
+        $sql .= " LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
         
         $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
+        $param_index = 1;
+        foreach ($params as $param) {
+            $stmt->bindValue($param_index++, $param, is_int($param) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        
+        $stmt->execute();
         $processes = $stmt->fetchAll();
         
         foreach ($processes as &$p) {
-            $stmt2 = $pdo->prepare('SELECT action, movement_date FROM movements WHERE process_id = ? ORDER BY movement_date DESC, id DESC LIMIT 1');
+            $stmt2 = $pdo->prepare('SELECT action, movement_date, destination_sector_id FROM movements WHERE process_id = ? ORDER BY movement_date DESC, id DESC LIMIT 1');
             $stmt2->execute([$p['id']]);
             $last = $stmt2->fetch();
             $p['action'] = $last ? $last['action'] : 'NOVO';
             $p['movement_date'] = $last ? $last['movement_date'] : null;
+            $p['last_destination_sector_id'] = $last ? $last['destination_sector_id'] : null;
         }
         jsonResponse($processes);
     } else {
@@ -177,14 +196,31 @@ if ($method === 'GET') {
         $stmt->execute([$process_number]);
         $process = $stmt->fetch();
         
-        $process_id = null;
         if ($process) {
             $process_id = $process['id'];
-            // Optionally update observations if provided
-            if (!empty($observations)) {
-                $stmt = $pdo->prepare('UPDATE processes SET observations = ? WHERE id = ?');
-                $stmt->execute([$observations, $process_id]);
+            
+            // REGRA DE NEGÓCIO: Verificar se o processo se encontra atualmente sob a posse do setor do usuário logado
+            $stmt_check = $pdo->prepare('SELECT destination_sector_id, action FROM movements WHERE process_id = ? ORDER BY movement_date DESC, id DESC LIMIT 1');
+            $stmt_check->execute([$process_id]);
+            $last_mov = $stmt_check->fetch();
+            
+            if ($last_mov) {
+                if ($last_mov['destination_sector_id'] != $_SESSION['sector_id']) {
+                    $stmt_sec = $pdo->prepare('SELECT name FROM sectors WHERE id = ?');
+                    $stmt_sec->execute([$last_mov['destination_sector_id']]);
+                    $sec_name = $stmt_sec->fetchColumn() ?: 'outro setor';
+                    
+                    jsonResponse(['error' => "Este processo não está sob posse do seu setor atualmente (está sob custódia de: {$sec_name}). Tramitação não autorizada."], 403);
+                }
             }
+
+            // Atualiza os dados do processo com as informações atualizadas enviadas da tela (Assunto, Requerente, CPF/CNPJ, Observações)
+            $stmt = $pdo->prepare('
+                UPDATE processes 
+                SET subject = ?, requester = ?, document_number = ?, observations = ? 
+                WHERE id = ?
+            ');
+            $stmt->execute([$subject, $requester, $document_number, $observations, $process_id]);
         } else {
             // New process
 

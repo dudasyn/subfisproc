@@ -40,6 +40,7 @@ Este projeto utiliza "Skills" para guiar assistentes de IA (como o Cursor ou o C
 - `architecture.md`: Padrões MVC, namespaces e organização.
 - `deploy.md`: Docker, Nginx e ambiente de execução.
 - `documentation.md`: Padrões de comentários e documentação técnica.
+- `ui.md`: Diretrizes de design system, cores, contraste e estilo visual.
 
 ---
 

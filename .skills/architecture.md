@@ -28,3 +28,23 @@ O projeto segue uma arquitetura Model-View-Controller rigorosa:
 - Arquivos na pasta `api/` (raiz) são considerados legados procedurais.
 - Toda nova funcionalidade deve ser implementada no padrão MVC dentro de `src/`.
 - Funcionalidades legadas devem ser migradas progressivamente para o novo padrão.
+
+## 6. Regras de Negócio Globais e de Custódia
+- **Regra de Custódia de Setor**: Um usuário só possui permissão para movimentar (tramitar) processos que estão atualmente sob a custódia/posse de seu próprio setor.
+- **Implementação**:
+  - **Backend**: Validar a posse checando o `destination_sector_id` da última movimentação registrada do processo antes de permitir um novo cadastro. Lançar `403 Forbidden` com mensagem de advertência clara caso o processo pertença a outrem.
+  - **Frontend**: Ocultar ou desabilitar botões de tramitação caso o processo consultado não atenda à condição de posse do setor do usuário.
+
+## 7. Sincronização e Integração com STPD (Scraper)
+- A busca automatizada de processos externos junto ao STPD é gerenciada de forma isolada e integrada.
+- O frontend acessa o robô scraper através de `Api.scraper.fetch(processNumber)`.
+- **Boas Práticas de Integração**: Nunca utilize referências de hosts externas hardcoded ou globais não declaradas (como `API_BASE`). Utilize sempre o prefixo relativo `Api.baseUrl` para manter a integridade da conexão.
+- **Metadados extraídos**: Devem ser populados os campos básicos (Número, Assunto, Requerente, CPF/CNPJ via regex no frontend) e mantido o cartão premium da "Última Tramitação" sincronizado do portal para visualização do usuário.
+
+## 8. Estratégia de Testes Seguros (Transactions & Rollbacks)
+- Testes que envolvam escrita no banco devem ser feitos dentro de blocos de transação PDO:
+  1. Inicie a transação com `$pdo->beginTransaction()`.
+  2. Crie e simule cenários (Sucesso e Exceção de Negócio) inserindo dados provisórios.
+  3. Execute as asserções de validação em cada caso.
+  4. Garanta a execução de um `$pdo->rollBack()` para retornar o banco de dados ao estado limpo original.
+

@@ -276,7 +276,7 @@ const reportsView = {
                 tbody.innerHTML = data.map(m => `
                     <tr>
                         <td>${window.app.formatDate(m.movement_date)}</td>
-                        <td><span class="badge ${m.action === 'ENTRADA' ? 'badge-success' : 'badge-warning'}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : m.action}</span></td>
+                        <td><span class="badge ${m.action === 'ENTRADA' ? 'badge-success' : 'badge-warning'}">${window.app.formatAction(m.action, m.destination_sector)}</span></td>
                         <td>
                             <strong>${m.process_number}</strong>
                             ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="margin-left:5px; font-size:0.7rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="margin-left:5px; font-size:0.7rem; color:var(--primary-color);"></i>' : '')}

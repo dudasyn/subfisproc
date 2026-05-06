@@ -78,56 +78,72 @@ $scraped_data = [
     'interessado' => null,
     'requerente' => null,
     'assunto' => null, // Complemento do Assunto
-    'assunto_original' => null,
-    'observacao' => null
+    'assunto_original' => null, // Assunto principal do portal
+    'data_abertura' => null,
+    'situacao' => null,
+    'observacao' => null,
+    'ultima_tramitacao' => null
 ];
 
-// Mapeamento de consultas XPath para os campos
+// Mapeamento de consultas XPath exatas usando o atributo "name" dos campos do portal
 $queries = [
-    'interessado' => [
-        "//label[contains(text(), 'Interessado')]/following::input[1]/@value",
-        "//label[contains(text(), 'Interessado')]/following::div[position()=1]",
-        "//label[contains(text(), 'Interessado')]/following::span[position()=1]"
-    ],
-    'requerente' => [
-        "//label[contains(text(), 'Requerente')]/following::input[1]/@value",
-        "//label[contains(text(), 'Requerente')]/following::div[position()=1]",
-        "//label[contains(text(), 'Requerente')]/following::span[position()=1]"
-    ],
-    'assunto_original' => [
-        "//label[text()='Assunto:']/following::input[1]/@value",
-        "//label[text()='Assunto:']/following::div[position()=1]"
-    ],
-    'assunto' => [
-        "//label[contains(text(), 'Complemento do Assunto')]/following::input[1]/@value",
-        "//label[contains(text(), 'Complemento do Assunto')]/following::div[position()=1]"
-    ],
-    'observacao' => [
-        "//label[contains(text(), 'Observação')]/following::textarea[1]",
-        "//label[contains(text(), 'Observação')]/following::div[position()=1]"
-    ]
+    'interessado' => "//input[@name='NOM_INTERESSADO']/@value",
+    'requerente' => "//input[@name='NOM_REQUERENTE']/@value",
+    'assunto_original' => "//input[@name='fk_COD_ASSUNTO_DES_ASSUNTO']/@value",
+    'assunto' => "//input[@name='compl_assunto']/@value",
+    'data_abertura' => "//input[@name='DAT_PROCESSO']/@value",
+    'situacao' => "//input[@name='fk_COD_SITUACAO_DES_SITUACAO']/@value",
+    'observacao' => "//textarea[@name='OBS_PROCESSO']/text()"
 ];
 
-foreach ($queries as $key => $xpaths) {
-    foreach ($xpaths as $query) {
-        $elements = $xpath->query($query);
-        if ($elements->length > 0) {
-            $node = $elements->item(0);
-            $val = $node->nodeValue;
-            // Se for um atributo (@value)
-            if (empty($val) && $node instanceof DOMAttr) {
-                $val = $node->value;
-            }
-            if (!empty(trim($val))) {
-                $scraped_data[$key] = trim(strip_tags($val));
-                break;
-            }
+foreach ($queries as $key => $query) {
+    $elements = $xpath->query($query);
+    if ($elements->length > 0) {
+        $val = $elements->item(0)->nodeValue;
+        if (empty($val) && $elements->item(0) instanceof DOMAttr) {
+            $val = $elements->item(0)->value;
+        }
+        if (!empty(trim($val))) {
+            $scraped_data[$key] = trim(strip_tags($val));
         }
     }
 }
 
+// Se o XPath exato da observação falhar por causa de estrutura do text(), buscamos o nodeValue direto da textarea
+if (empty($scraped_data['observacao'])) {
+    $obs_nodes = $xpath->query("//textarea[@name='OBS_PROCESSO']");
+    if ($obs_nodes->length > 0) {
+        $scraped_data['observacao'] = trim(strip_tags($obs_nodes->item(0)->nodeValue));
+    }
+}
+
+// Se o valor de algum campo ainda estiver nulo ou "NULL" (como o portal costuma enviar), limpamos para string vazia
+foreach ($scraped_data as $key => $val) {
+    if ($val === 'NULL' || $val === 'null') {
+        $scraped_data[$key] = '';
+    }
+}
+
+// 4. Parsea a tabela de tramitações (proc_movimento_PROCESSO_list)
+$rows = $xpath->query("//table[@id='proc_movimento_PROCESSO_list']/tbody/tr");
+if ($rows->length > 0) {
+    $firstRow = $rows->item(0);
+    $tds = $xpath->query("td", $firstRow);
+    if ($tds->length >= 7) {
+        // Remove espaços duplicados ou quebras de linha que possam vir no texto
+        $scraped_data['ultima_tramitacao'] = [
+            'data_envio' => trim(preg_replace('/\s+/', ' ', $tds->item(1)->textContent)),
+            'secretaria_origem' => trim(preg_replace('/\s+/', ' ', $tds->item(2)->textContent)),
+            'setor_origem' => trim(preg_replace('/\s+/', ' ', $tds->item(3)->textContent)),
+            'data_recebimento' => trim(preg_replace('/\s+/', ' ', $tds->item(4)->textContent)),
+            'secretaria_destino' => trim(preg_replace('/\s+/', ' ', $tds->item(5)->textContent)),
+            'setor_destino' => trim(preg_replace('/\s+/', ' ', $tds->item(6)->textContent))
+        ];
+    }
+}
+
 // Se não achamos nada, retornamos erro
-if (empty($scraped_data['interessado']) && empty($scraped_data['assunto'])) {
+if (empty($scraped_data['interessado']) && empty($scraped_data['assunto']) && empty($scraped_data['ultima_tramitacao'])) {
     jsonResponse([
         'success' => false, 
         'message' => 'Processo não encontrado ou sem dados públicos disponíveis'
