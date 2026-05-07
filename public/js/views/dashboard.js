@@ -137,19 +137,44 @@ const dashboardView = {
                         box-shadow: 0 0 0 3px rgba(0, 114, 188, 0.1);
                     }
 
-                    /* Stats Grid */
-                    .premium-stats-grid {
+                    /* Stats Grid and Segmented Target Groups */
+                    .segmented-targets-container {
                         display: grid;
-                        grid-template-columns: repeat(5, 1fr);
-                        gap: 1.25rem;
-                        margin-bottom: 1.5rem;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 1.5rem;
+                        margin-bottom: 2rem;
+                        width: 100%;
                         animation: fadeUp 0.5s ease-out;
                     }
-                    @media (max-width: 1400px) {
-                        .premium-stats-grid { grid-template-columns: repeat(3, 1fr); }
+                    @media (max-width: 1024px) {
+                        .segmented-targets-container {
+                            grid-template-columns: 1fr;
+                        }
                     }
-                    @media (max-width: 768px) {
-                        .premium-stats-grid { grid-template-columns: 1fr; }
+                    .target-group-panel {
+                        background: rgba(248, 250, 252, 0.6);
+                        border: 1px solid var(--border-color);
+                        border-radius: var(--radius-lg);
+                        padding: 1.5rem;
+                        box-shadow: var(--shadow-sm);
+                        display: flex;
+                        flex-direction: column;
+                        gap: 1.25rem;
+                        transition: var(--transition);
+                    }
+                    .target-group-panel:hover {
+                        border-color: rgba(0, 114, 188, 0.12);
+                        background: rgba(248, 250, 252, 0.95);
+                    }
+                    .target-group-grid {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 1rem;
+                    }
+                    @media (max-width: 520px) {
+                        .target-group-grid {
+                            grid-template-columns: 1fr;
+                        }
                     }
 
                     .premium-stat-card {
@@ -175,11 +200,17 @@ const dashboardView = {
                         background: transparent;
                         transition: var(--transition);
                     }
-                    .premium-stat-card.card-entradas::before { background: var(--success); }
-                    .premium-stat-card.card-saidas::before { background: var(--warning); }
-                    .premium-stat-card.card-processos::before { background: var(--primary); }
-                    .premium-stat-card.card-responsibles::before { background: #6366f1; }
-                    .premium-stat-card.card-sectors::before { background: #a855f7; }
+                    
+                    /* Cores específicas das barras superiores dos cartões */
+                    .premium-stat-card.card-subfis-carga::before { background: var(--primary); }
+                    .premium-stat-card.card-subfis-saidas::before { background: var(--warning); }
+                    .premium-stat-card.card-subfis-tramitacoes::before { background: var(--success); }
+                    .premium-stat-card.card-subfis-auditores::before { background: #6366f1; }
+                    
+                    .premium-stat-card.card-aft-carga::before { background: #8b5cf6; }
+                    .premium-stat-card.card-aft-saidas::before { background: var(--warning); }
+                    .premium-stat-card.card-aft-tramitacoes::before { background: var(--success); }
+                    .premium-stat-card.card-aft-auditores::before { background: #6366f1; }
 
                     .premium-stat-card:hover {
                         transform: translateY(-4px);
@@ -375,70 +406,154 @@ const dashboardView = {
                         </div>
                     </div>
 
-                    <!-- Top 5 Counts Cards -->
-                    <div class="premium-stats-grid">
-                        <div class="premium-stat-card card-entradas">
-                            <div class="stat-header">
-                                <h4 class="stat-title">Entradas</h4>
-                                <div class="stat-badge-icon icon-entradas">
-                                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    <!-- Seção de Métricas Segmentadas por Alvo -->
+                    <div style="margin: 2rem 0 1rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                        <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i> Métricas Segmentadas por Alvo
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0;">Acompanhamento de carga de trabalho atual, saídas para outros setores, tramitações internas e equipes dedicadas.</p>
+                    </div>
+
+                    <div class="segmented-targets-container">
+                        <!-- Grupo Gabinete SUBFIS -->
+                        <div class="target-group-panel">
+                            <div style="display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(0, 114, 188, 0.1); padding-bottom: 1rem; margin-bottom: 0.25rem;">
+                                <div style="width: 40px; height: 40px; background: rgba(0, 114, 188, 0.1); color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                                    <i class="fa-solid fa-building"></i>
+                                </div>
+                                <div>
+                                    <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin: 0;">Gabinete SUBFIS</h3>
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Gabinete da Subsecretaria de Fiscalização</span>
                                 </div>
                             </div>
-                            <div class="stat-body">
-                                <h2 class="stat-value" id="count-entradas-val">${stats.entradas}</h2>
-                                <p class="stat-desc">Processos recebidos e tramitados<br>no ano corrente de ${currentYear}.</p>
+                            
+                            <div class="target-group-grid">
+                                <!-- Carga de Trabalho Card -->
+                                <div class="premium-stat-card card-subfis-carga">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem;">Carga de Trabalho</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(0, 114, 188, 0.08); color: var(--primary); font-size: 0.95rem;">
+                                            <i class="fa-solid fa-briefcase"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stat-body">
+                                        <h2 class="stat-value" id="subfis-carga-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.subfis_carga}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Processos sob custódia atual do setor e subsetores.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Saídas Card -->
+                                <div class="premium-stat-card card-subfis-saidas">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem;">Saídas (Exits)</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.08); color: var(--warning); font-size: 0.95rem;">
+                                            <i class="fa-solid fa-right-from-bracket"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stat-body">
+                                        <h2 class="stat-value" id="subfis-saidas-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.subfis_saidas}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Enviados para qualquer setor fora da SUBFIS no período.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Tramitações Card -->
+                                <div class="premium-stat-card card-subfis-tramitacoes">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem;">Tramitações</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.08); color: var(--success); font-size: 0.95rem;">
+                                            <i class="fa-solid fa-shuffle"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stat-body">
+                                        <h2 class="stat-value" id="subfis-tramitacoes-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.subfis_tramitacoes}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Movimentados internamente no grupo SUBFIS no período.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Auditores Card -->
+                                <div class="premium-stat-card card-subfis-auditores">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem;">Auditores</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99, 102, 241, 0.08); color: #6366f1; font-size: 0.95rem;">
+                                            <i class="fa-solid fa-user-tie"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stat-body">
+                                        <h2 class="stat-value" id="subfis-auditores-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.subfis_auditores}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Auditores responsáveis ativos lotados no setor.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="premium-stat-card card-saidas">
-                            <div class="stat-header">
-                                <h4 class="stat-title">Saídas</h4>
-                                <div class="stat-badge-icon icon-saidas">
-                                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        <!-- Grupo Auditoria Fiscal AFT -->
+                        <div class="target-group-panel">
+                            <div style="display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(139, 92, 246, 0.15); padding-bottom: 1rem; margin-bottom: 0.25rem;">
+                                <div style="width: 40px; height: 40px; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                                    <i class="fa-solid fa-gavel"></i>
+                                </div>
+                                <div>
+                                    <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin: 0;">Auditoria Fiscal AFT</h3>
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Equipes de Auditoria Fiscal</span>
                                 </div>
                             </div>
-                            <div class="stat-body">
-                                <h2 class="stat-value" id="count-saidas-val">${stats.saidas}</h2>
-                                <p class="stat-desc">Processos despachados e finalizados<br>no ano corrente de ${currentYear}.</p>
-                            </div>
-                        </div>
+                            
+                            <div class="target-group-grid">
+                                <!-- Carga de Trabalho Card -->
+                                <div class="premium-stat-card card-aft-carga">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem;">Carga de Trabalho</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(139, 92, 246, 0.08); color: #8b5cf6; font-size: 0.95rem;">
+                                            <i class="fa-solid fa-briefcase"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stat-body">
+                                        <h2 class="stat-value" id="aft-carga-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.aft_carga}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Processos sob custódia atual do setor e subsetores.</p>
+                                    </div>
+                                </div>
 
-                        <div class="premium-stat-card card-processos">
-                            <div class="stat-header">
-                                <h4 class="stat-title">Processos</h4>
-                                <div class="stat-badge-icon icon-processos">
-                                    <i class="fa-solid fa-file-invoice"></i>
+                                <!-- Saídas Card -->
+                                <div class="premium-stat-card card-aft-saidas">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem;">Saídas (Exits)</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.08); color: var(--warning); font-size: 0.95rem;">
+                                            <i class="fa-solid fa-right-from-bracket"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stat-body">
+                                        <h2 class="stat-value" id="aft-saidas-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.aft_saidas}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Enviados para qualquer setor fora da AFT no período.</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="stat-body">
-                                <h2 class="stat-value" id="count-processes-val">${stats.total_processes}</h2>
-                                <p class="stat-desc">Volume total de processos ativos<br>no ano corrente de ${currentYear}.</p>
-                            </div>
-                        </div>
 
-                        <div class="premium-stat-card card-responsibles">
-                            <div class="stat-header">
-                                <h4 class="stat-title">Auditores</h4>
-                                <div class="stat-badge-icon icon-responsibles">
-                                    <i class="fa-solid fa-user-tie"></i>
+                                <!-- Tramitações Card -->
+                                <div class="premium-stat-card card-aft-tramitacoes">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem;">Tramitações</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.08); color: var(--success); font-size: 0.95rem;">
+                                            <i class="fa-solid fa-shuffle"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stat-body">
+                                        <h2 class="stat-value" id="aft-tramitacoes-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.aft_tramitacoes}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Movimentados internamente no grupo AFT no período.</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="stat-body">
-                                <h2 class="stat-value" id="count-responsibles-val">${stats.total_responsibles || 0}</h2>
-                                <p class="stat-desc">Auditores e responsáveis técnicos<br>cadastrados e ativos no sistema.</p>
-                            </div>
-                        </div>
 
-                        <div class="premium-stat-card card-sectors">
-                            <div class="stat-header">
-                                <h4 class="stat-title">Setores</h4>
-                                <div class="stat-badge-icon icon-sectors">
-                                    <i class="fa-solid fa-sitemap"></i>
+                                <!-- Auditores Card -->
+                                <div class="premium-stat-card card-aft-auditores">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem;">Auditores</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99, 102, 241, 0.08); color: #6366f1; font-size: 0.95rem;">
+                                            <i class="fa-solid fa-user-tie"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stat-body">
+                                        <h2 class="stat-value" id="aft-auditores-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.aft_auditores}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Auditores responsáveis ativos lotados no setor.</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="stat-body">
-                                <h2 class="stat-value" id="count-sectors-val">${stats.total_sectors || 0}</h2>
-                                <p class="stat-desc">Unidades de destino e subsetores<br>mapeados para fluxo de trâmites.</p>
                             </div>
                         </div>
                     </div>
@@ -636,6 +751,39 @@ const dashboardView = {
         }
 
         try {
+            // Recarregar estatísticas superiores do dashboard de forma síncrona
+            try {
+                const filteredStats = await Api.dashboard.getStats(start, end);
+                
+                // Atualizar valores de SUBFIS no DOM
+                const subfisCarga = document.getElementById('subfis-carga-val');
+                if (subfisCarga) subfisCarga.textContent = filteredStats.subfis_carga;
+                
+                const subfisSaidas = document.getElementById('subfis-saidas-val');
+                if (subfisSaidas) subfisSaidas.textContent = filteredStats.subfis_saidas;
+                
+                const subfisTramitacoes = document.getElementById('subfis-tramitacoes-val');
+                if (subfisTramitacoes) subfisTramitacoes.textContent = filteredStats.subfis_tramitacoes;
+                
+                const subfisAuditores = document.getElementById('subfis-auditores-val');
+                if (subfisAuditores) subfisAuditores.textContent = filteredStats.subfis_auditores;
+
+                // Atualizar valores de AFT no DOM
+                const aftCarga = document.getElementById('aft-carga-val');
+                if (aftCarga) aftCarga.textContent = filteredStats.aft_carga;
+                
+                const aftSaidas = document.getElementById('aft-saidas-val');
+                if (aftSaidas) aftSaidas.textContent = filteredStats.aft_saidas;
+                
+                const aftTramitacoes = document.getElementById('aft-tramitacoes-val');
+                if (aftTramitacoes) aftTramitacoes.textContent = filteredStats.aft_tramitacoes;
+                
+                const aftAuditores = document.getElementById('aft-auditores-val');
+                if (aftAuditores) aftAuditores.textContent = filteredStats.aft_auditores;
+            } catch (cardError) {
+                console.error("Erro ao atualizar os cards do dashboard:", cardError);
+            }
+
             // Fetch raw sector stats from backend report service
             const rawStats = await Api.reports.sectorStats(start, end);
 

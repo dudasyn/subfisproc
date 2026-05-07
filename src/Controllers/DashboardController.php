@@ -23,7 +23,11 @@ class DashboardController {
                 return Response::json(['error' => 'Não autorizado'], 401);
             }
 
-            $stats = $this->movementModel->getDashboardStats();
+            // Captura as datas de início e fim opcionais dos filtros do painel
+            $startDate = $_GET['start'] ?? null;
+            $endDate = $_GET['end'] ?? null;
+
+            $stats = $this->movementModel->getDashboardStats($startDate, $endDate);
             return Response::json($stats);
             
         } catch (\Exception $e) {

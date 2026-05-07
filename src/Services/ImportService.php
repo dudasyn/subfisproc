@@ -110,6 +110,17 @@ class ImportService {
             'batch_id' => $batchId
         ]);
 
+        // Valida se o userId existe na tabela de usuários para evitar violação de FK em movements
+        $stmtCheck = $this->db->prepare("SELECT COUNT(*) FROM users WHERE id = ?");
+        $stmtCheck->execute([$userId]);
+        if ((int)$stmtCheck->fetchColumn() === 0) {
+            $stmtFallback = $this->db->query("SELECT id FROM users ORDER BY id ASC LIMIT 1");
+            $fallbackId = $stmtFallback->fetchColumn();
+            if ($fallbackId) {
+                $userId = (int)$fallbackId;
+            }
+        }
+
         try {
             $this->db->beginTransaction();
 

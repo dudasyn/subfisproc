@@ -95,6 +95,28 @@ const Api = {
         logs: (batchId, level = '') => Api.request(`import/logs?batch=${batchId}${level ? '&level=' + level : ''}`, 'GET'),
         wipe: () => Api.request('import/wipe', 'DELETE'),
         createSnapshot: () => Api.request('import/snapshot', 'POST'),
+        uploadSnapshot: async (formData) => {
+            try {
+                const response = await fetch('api/import/snapshot/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.status === 401) {
+                    window.app.logout(false);
+                    throw new Error('Sessão expirada. Faça login novamente.');
+                }
+                
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || 'Erro ao enviar snapshot');
+                }
+                return result;
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        },
         history: () => Api.request('import/history', 'GET')
     },
     movements: {
@@ -114,7 +136,14 @@ const Api = {
         register: (data) => Api.request('movements.php', 'POST', data)
     },
     dashboard: {
-        getStats: () => Api.request('dashboard', 'GET')
+        getStats: (start = '', end = '') => {
+            let url = 'dashboard';
+            const params = [];
+            if (start) params.push(`start=${start}`);
+            if (end) params.push(`end=${end}`);
+            if (params.length > 0) url += `?${params.join('&')}`;
+            return Api.request(url, 'GET');
+        }
     },
     
     // Novo motorzinho Web Scraper

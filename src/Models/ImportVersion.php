@@ -27,6 +27,16 @@ class ImportVersion {
      * @return int ID do registro criado.
      */
     public function create(array $data): int {
+        // Valida se o user_id existe no banco de dados para evitar violação de FK
+        $userId = $data['user_id'] ?? null;
+        if ($userId !== null) {
+            $stmtCheck = $this->db->prepare("SELECT COUNT(*) FROM users WHERE id = ?");
+            $stmtCheck->execute([$userId]);
+            if ((int)$stmtCheck->fetchColumn() === 0) {
+                $userId = null; // Fallback gracioso se o usuário foi deletado ou a base foi zerada
+            }
+        }
+
         $stmt = $this->db->prepare("
             INSERT INTO import_versions (batch_id, version_label, snapshot_file, status, user_id) 
             VALUES (?, ?, ?, 'pending', ?)
@@ -35,7 +45,7 @@ class ImportVersion {
             $data['batch_id'],
             $data['version_label'],
             $data['snapshot_file'] ?? null,
-            $data['user_id']
+            $userId
         ]);
         return (int)$this->db->lastInsertId();
     }
@@ -93,9 +103,9 @@ class ImportVersion {
      */
     public function getAll(): array {
         $stmt = $this->db->query("
-            SELECT iv.*, u.name as user_name 
+            SELECT iv.*, COALESCE(u.name, 'Sistema / Superadmin') as user_name 
             FROM import_versions iv 
-            JOIN users u ON iv.user_id = u.id 
+            LEFT JOIN users u ON iv.user_id = u.id 
             ORDER BY iv.started_at DESC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

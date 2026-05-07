@@ -57,6 +57,8 @@ $router->delete('/api/import/batch', [ImportController::class, 'undo']);
 $router->post('/api/import/restore', [ImportController::class, 'restore']);
 $router->post('/api/import/legacy-sql', [ImportController::class, 'importLegacySql']);
 $router->post('/api/import/snapshot', [ImportController::class, 'createManual']);
+$router->get('/api/import/snapshot/download', [ImportController::class, 'download']);
+$router->post('/api/import/snapshot/upload', [ImportController::class, 'upload']);
 $router->get('/api/import/snapshots', [ImportController::class, 'snapshots']);
 $router->get('/api/import/logs', [ImportController::class, 'logs']);
 $router->delete('/api/import/wipe', [ImportController::class, 'wipe']);

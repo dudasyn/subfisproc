@@ -2,6 +2,7 @@
 const configView = {
     async render(container, user, params) {
         const isAdmin = user.role === 'Admin' || user.role === 'Gestor';
+        const isSuperAdmin = user.email === 'superadmin';
         
         // Injetar estilos customizados para a aba de importação premium e logs
         if (!document.getElementById('import-premium-styles')) {
@@ -530,13 +531,19 @@ const configView = {
                                 <h3>Histórico de Versões e Backups (Snapshots)</h3>
                                 <p>Gerencie o histórico de importações completas, analise logs ou reverta dados com segurança.</p>
                             </div>
-                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                             <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
                                 <button class="btn-primary" id="btn-create-snapshot" style="background:#4f46e5; border-color:#4338ca; width:auto; padding:0.6rem 1.2rem; font-weight: 600;">
                                     <i class="fa-solid fa-shield-halved"></i> Criar Snapshot de Segurança
                                 </button>
+                                <button class="btn-primary" id="btn-upload-snapshot" style="background:#10b981; border-color:#059669; width:auto; padding:0.6rem 1.2rem; font-weight: 600;" onclick="document.getElementById('input-upload-snapshot').click()">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Enviar Snapshot (.sql)
+                                </button>
+                                <input type="file" id="input-upload-snapshot" accept=".sql" style="display:none;">
+                                ${isSuperAdmin ? `
                                 <button class="btn-secondary" id="btn-wipe-database" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; width:auto; padding:0.6rem 1.2rem; font-weight: 600;">
                                     <i class="fa-solid fa-radiation"></i> Zerar Base de Dados (DANGER)
                                 </button>
+                                ` : ''}
                             </div>
                         </div>
                         <div class="card-body p-0">
@@ -607,6 +614,53 @@ const configView = {
 
             const btnCreateSnapshot = document.getElementById('btn-create-snapshot');
             if (btnCreateSnapshot) btnCreateSnapshot.onclick = () => this.createManualSnapshot();
+
+            const inputUploadSnapshot = document.getElementById('input-upload-snapshot');
+            if (inputUploadSnapshot) {
+                inputUploadSnapshot.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    const extension = file.name.split('.').pop().toLowerCase();
+                    if (extension !== 'sql') {
+                        window.app.toast('Por favor, selecione apenas arquivos de backup com extensão .sql', 'error');
+                        return;
+                    }
+                    
+                    if (!confirm(`Deseja realmente carregar o snapshot de segurança "${file.name}" para o servidor?\n\nEle será registrado na lista de snapshots disponíveis para restauração a qualquer momento.`)) {
+                        inputUploadSnapshot.value = '';
+                        return;
+                    }
+
+                    const modal = document.createElement('div');
+                    modal.id = 'loading-overlay-screen';
+                    modal.style = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; z-index:9999; backdrop-filter:blur(5px);';
+                    modal.innerHTML = `
+                        <i class="fa-solid fa-cloud-arrow-up fa-spin fa-4x" style="color:#10b981; margin-bottom:1.5rem;"></i>
+                        <h2 style="font-weight:700; margin:0; font-size:1.5rem;">Enviando Snapshot...</h2>
+                        <p style="color:#94a3b8; font-size:1rem; margin:0.5rem 0 0 0; text-align:center; max-width:400px; padding:0 1rem;">Processando e salvando arquivo .sql no servidor. Aguarde...</p>
+                    `;
+                    document.body.appendChild(modal);
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('snapshot_file', file);
+                        
+                        await Api.import.uploadSnapshot(formData);
+                        
+                        document.body.removeChild(modal);
+                        window.app.toast('Snapshot de segurança enviado com sucesso!');
+                        await this.loadImportHistory();
+                    } catch(err) {
+                        if (document.getElementById('loading-overlay-screen')) {
+                            document.body.removeChild(modal);
+                        }
+                        window.app.toast(err.message, 'error');
+                    } finally {
+                        inputUploadSnapshot.value = '';
+                    }
+                };
+            }
         }
 
         // Fetch Data for active tab only
@@ -1426,6 +1480,9 @@ const configView = {
                                 <i class="fa-solid fa-terminal"></i>
                             </button>
                             ${hasSnapshot ? `
+                            <button class="btn-action-round download-btn" style="color: #10b981; background: rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.12);" title="Baixar este arquivo de Snapshot (.sql)" onclick="configView.downloadSnapshot('${h.batch_id}', '${formatLabel}')">
+                                <i class="fa-solid fa-download"></i>
+                            </button>
                             <button class="btn-action-round restore-btn" style="color: #4f46e5; background: rgba(79,70,229,0.06); border-color: rgba(79,70,229,0.12);" title="Restaurar este Snapshot de Segurança" onclick="configView.restoreSnapshot('${h.batch_id}', '${formatLabel}')">
                                 <i class="fa-solid fa-history"></i>
                             </button>
@@ -1584,6 +1641,15 @@ const configView = {
         } catch(e) {
             document.body.removeChild(modal);
             window.app.toast('Falha ao restaurar: ' + e.message, 'error');
+        }
+    },
+
+    downloadSnapshot(batchId, label) {
+        try {
+            window.location.href = `api/import/snapshot/download?batch_id=${batchId}`;
+            window.app.toast(`Iniciando download de: ${label}...`);
+        } catch(e) {
+            window.app.toast('Erro ao baixar snapshot: ' + e.message, 'error');
         }
     },
 

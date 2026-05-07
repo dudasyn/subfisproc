@@ -553,6 +553,114 @@ class ImportController {
         }
     }
 
+    /**
+     * GET /api/import/snapshot/download
+     * Serve um arquivo de snapshot .sql para download.
+     * Apenas Admin pode baixar.
+     */
+    public function download() {
+        try {
+            $this->requireAuth();
+            $this->requireRole(['Admin']);
+
+            $batchId = $_GET['batch_id'] ?? null;
+            if (!$batchId) {
+                return Response::json(['error' => 'Parâmetro batch_id é obrigatório'], 400);
+            }
+
+            $version = $this->versionModel->getByBatchId($batchId);
+            if (!$version || empty($version['snapshot_file'])) {
+                return Response::json(['error' => 'Snapshot não encontrado para este lote'], 404);
+            }
+
+            $filePath = $version['snapshot_file'];
+            if (!file_exists($filePath)) {
+                return Response::json(['error' => 'Arquivo de snapshot não existe no servidor: ' . basename($filePath)], 404);
+            }
+
+            // Define os headers de download e faz o streaming do arquivo
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
+            header('Content-Length: ' . filesize($filePath));
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Pragma: no-cache');
+            readfile($filePath);
+            exit;
+
+        } catch (\Exception $e) {
+            return Response::json(['error' => 'Erro ao baixar snapshot: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/import/snapshot/upload
+     * Faz o upload de um snapshot .sql de segurança salvando no servidor e registrando na lista.
+     * Apenas Admin pode fazer upload.
+     */
+    public function upload() {
+        try {
+            $this->requireAuth();
+            $this->requireRole(['Admin']);
+
+            if (!isset($_FILES['snapshot_file']) || $_FILES['snapshot_file']['error'] !== UPLOAD_ERR_OK) {
+                return Response::json(['error' => 'Arquivo de snapshot não enviado ou erro no envio'], 400);
+            }
+
+            $file = $_FILES['snapshot_file'];
+            $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            if ($extension !== 'sql') {
+                return Response::json(['error' => 'Apenas arquivos .sql são permitidos'], 400);
+            }
+
+            // Cria um batch ID único para o upload
+            $batchId = 'up_' . uniqid();
+            $timestamp = date('Ymd_His');
+            $filename = "snap_{$timestamp}_{$batchId}.sql";
+            
+            $snapshotDir = __DIR__ . '/../../data/snapshots';
+            if (!is_dir($snapshotDir)) {
+                mkdir($snapshotDir, 0755, true);
+            }
+            $destPath = $snapshotDir . '/' . $filename;
+
+            // Move o arquivo enviado para a pasta de snapshots
+            if (!move_uploaded_file($file['tmp_name'], $destPath)) {
+                return Response::json(['error' => 'Falha ao salvar arquivo no servidor'], 500);
+            }
+
+            $userId = $_SESSION['user_id'];
+            $versionLabel = "Snapshot Enviado: " . $file['name'];
+
+            // Criar registro de versão já como completo (disponível para restauração futura)
+            $this->versionModel->create([
+                'batch_id' => $batchId,
+                'version_label' => $versionLabel,
+                'user_id' => $userId,
+                'snapshot_file' => $destPath
+            ]);
+
+            // Atualiza o status para completo e adiciona os detalhes do arquivo
+            $this->versionModel->updateSnapshotFile($batchId, $destPath);
+            $this->versionModel->updateStatus($batchId, 'completed', [
+                'type' => 'upload',
+                'message' => 'Snapshot carregado com sucesso via upload externo',
+                'original_name' => $file['name'],
+                'size_bytes' => filesize($destPath)
+            ]);
+
+            $this->logger->info($batchId, 'snapshot', 'Snapshot recebido com sucesso via upload: ' . $file['name']);
+
+            return Response::json([
+                'success' => true,
+                'message' => 'Snapshot enviado com sucesso!',
+                'batch_id' => $batchId
+            ]);
+
+        } catch (\Exception $e) {
+            return Response::json(['error' => 'Falha ao carregar snapshot: ' . $e->getMessage()], 500);
+        }
+    }
+
     // ========================================================================
     // Métodos auxiliares
     // ========================================================================

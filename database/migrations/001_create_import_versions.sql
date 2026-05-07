@@ -9,10 +9,10 @@ CREATE TABLE IF NOT EXISTS import_versions (
     version_label VARCHAR(100) NOT NULL,
     snapshot_file VARCHAR(255) DEFAULT NULL,
     status ENUM('pending', 'running', 'completed', 'failed', 'rolled_back') NOT NULL DEFAULT 'pending',
-    user_id INT NOT NULL,
+    user_id INT DEFAULT NULL,
     stats_json TEXT DEFAULT NULL,
     error_message TEXT DEFAULT NULL,
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
