@@ -210,6 +210,19 @@ if ($method === 'GET') {
             $process_id = $pdo->lastInsertId();
         }
         
+        // Validate auditor-sector link: if the auditor is not assigned to the
+        // destination sector, nullify responsible_id so the process does not
+        // incorrectly appear in their workload. Historical data is preserved as-is.
+        if ($responsible_id && $destination_sector_id) {
+            $stmtCheck = $pdo->prepare(
+                'SELECT 1 FROM responsible_sectors WHERE responsible_id = ? AND sector_id = ?'
+            );
+            $stmtCheck->execute([$responsible_id, $destination_sector_id]);
+            if (!$stmtCheck->fetch()) {
+                $responsible_id = null;
+            }
+        }
+
         // Insert movement
         $stmt = $pdo->prepare('INSERT INTO movements (process_id, movement_date, action, destination_sector_id, responsible_id, user_id) VALUES (?, ?, ?, ?, ?, ?)');
         $stmt->execute([$process_id, $movement_date, $action, $destination_sector_id, $responsible_id, $_SESSION['user_id']]);
