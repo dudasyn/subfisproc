@@ -17,6 +17,32 @@ class Movement {
     }
 
     /**
+     * Retorna recursivamente todos os IDs de setores descendentes de um setor pai (incluindo o próprio pai).
+     * 
+     * @param int $parentId ID do setor pai.
+     * @return array Array de IDs de setores.
+     */
+    private function getSectorDescendants(int $parentId): array {
+        $sectorIds = [$parentId];
+        $currentLevel = [$parentId];
+        
+        while (!empty($currentLevel)) {
+            $inClause = implode(',', array_map('intval', $currentLevel));
+            $stmt = $this->db->query("SELECT id FROM sectors WHERE parent_id IN ($inClause)");
+            $children = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            if (empty($children)) {
+                break;
+            }
+            
+            $sectorIds = array_merge($sectorIds, $children);
+            $currentLevel = $children;
+        }
+        
+        return array_unique($sectorIds);
+    }
+
+    /**
      * Calcula as estatísticas consolidadas e segmentadas por grupo alvo (SUBFIS e AFT)
      * para exibição dinâmica no Dashboard analítico.
      * 
@@ -35,7 +61,14 @@ class Movement {
             $endDate = date('Y-m-d');
         }
 
-        // 1. Carga de Trabalho Atual do Grupo SUBFIS (Setor 316 e subsetores)
+        // Recupera de forma recursiva os setores pertencentes a cada grupo administrativo
+        $subfisSectorIds = $this->getSectorDescendants(316);
+        $aftSectorIds = $this->getSectorDescendants(319);
+
+        $subfisIdsStr = implode(',', $subfisSectorIds);
+        $aftIdsStr = implode(',', $aftSectorIds);
+
+        // 1. Entrada de Processos (Carga de Trabalho Atual) do Grupo SUBFIS (Setor 316 e subsetores)
         // Conta apenas os processos cujo último trâmite registrado aponta para o grupo.
         $subfisCargaSql = "
             SELECT COUNT(*) 
@@ -45,11 +78,10 @@ class Movement {
                 FROM movements 
                 GROUP BY process_id
             ) latest ON m.id = latest.max_id
-            INNER JOIN sectors s ON m.destination_sector_id = s.id 
-            WHERE (s.id = 316 OR s.parent_id = 316)";
+            WHERE m.destination_sector_id IN ($subfisIdsStr)";
         $stats['subfis_carga'] = (int)$this->db->query($subfisCargaSql)->fetchColumn();
 
-        // 2. Carga de Trabalho Atual do Grupo AFT (Setor 319 e subsetores)
+        // 2. Entrada de Processos (Carga de Trabalho Atual) do Grupo AFT (Setor 319 e subsetores)
         // Conta apenas os processos cujo último trâmite registrado aponta para o grupo.
         $aftCargaSql = "
             SELECT COUNT(*) 
@@ -59,11 +91,10 @@ class Movement {
                 FROM movements 
                 GROUP BY process_id
             ) latest ON m.id = latest.max_id
-            INNER JOIN sectors s ON m.destination_sector_id = s.id 
-            WHERE (s.id = 319 OR s.parent_id = 319)";
+            WHERE m.destination_sector_id IN ($aftIdsStr)";
         $stats['aft_carga'] = (int)$this->db->query($aftCargaSql)->fetchColumn();
 
-        // 3. Estatísticas de Fluxo (Saídas e Tramitações) no período com LAG()
+        // 3. Estatísticas de Fluxo (Saídas de Processos e Tramitações) no período com LAG()
         // Executa uma única varredura sequencial indexada em tempo recorde O(N log N).
         $flowSql = "
             SELECT 
@@ -75,12 +106,11 @@ class Movement {
                 SELECT 
                     m.id,
                     m.movement_date,
-                    CASE WHEN s_curr.id = 316 OR s_curr.parent_id = 316 THEN 1 ELSE 0 END as curr_is_subfis,
-                    CASE WHEN s_curr.id = 319 OR s_curr.parent_id = 319 THEN 1 ELSE 0 END as curr_is_aft,
-                    LAG(CASE WHEN s_curr.id = 316 OR s_curr.parent_id = 316 THEN 1 ELSE 0 END) OVER (PARTITION BY m.process_id ORDER BY m.id) as prev_is_subfis,
-                    LAG(CASE WHEN s_curr.id = 319 OR s_curr.parent_id = 319 THEN 1 ELSE 0 END) OVER (PARTITION BY m.process_id ORDER BY m.id) as prev_is_aft
+                    CASE WHEN m.destination_sector_id IN ($subfisIdsStr) THEN 1 ELSE 0 END as curr_is_subfis,
+                    CASE WHEN m.destination_sector_id IN ($aftIdsStr) THEN 1 ELSE 0 END as curr_is_aft,
+                    LAG(CASE WHEN m.destination_sector_id IN ($subfisIdsStr) THEN 1 ELSE 0 END) OVER (PARTITION BY m.process_id ORDER BY m.id) as prev_is_subfis,
+                    LAG(CASE WHEN m.destination_sector_id IN ($aftIdsStr) THEN 1 ELSE 0 END) OVER (PARTITION BY m.process_id ORDER BY m.id) as prev_is_aft
                 FROM movements m
-                INNER JOIN sectors s_curr ON m.destination_sector_id = s_curr.id
             ) flow
             WHERE flow.movement_date >= :start_date AND flow.movement_date <= :end_date";
             
@@ -100,16 +130,14 @@ class Movement {
         $subfisAuditorsSql = "
             SELECT COUNT(*) 
             FROM responsibles r 
-            INNER JOIN sectors s ON r.sector_id = s.id 
-            WHERE r.active = 1 AND (s.id = 316 OR s.parent_id = 316)";
+            WHERE r.active = 1 AND r.sector_id IN ($subfisIdsStr)";
         $stats['subfis_auditores'] = (int)$this->db->query($subfisAuditorsSql)->fetchColumn();
 
         // 5. Auditores Responsáveis Ativos no Grupo AFT
         $aftAuditorsSql = "
             SELECT COUNT(*) 
             FROM responsibles r 
-            INNER JOIN sectors s ON r.sector_id = s.id 
-            WHERE r.active = 1 AND (s.id = 319 OR s.parent_id = 319)";
+            WHERE r.active = 1 AND r.sector_id IN ($aftIdsStr)";
         $stats['aft_auditores'] = (int)$this->db->query($aftAuditorsSql)->fetchColumn();
 
         // 6. Propriedades de Legado / Compatibilidade Retroativa de Visões

@@ -411,7 +411,7 @@ const dashboardView = {
                         <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 10px;">
                             <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i> Métricas Segmentadas por Alvo
                         </h3>
-                        <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0;">Acompanhamento de carga de trabalho atual, saídas para outros setores, tramitações internas e equipes dedicadas.</p>
+                        <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0;">Acompanhamento de entrada de processos, saídas de processos, tramitações internas e equipes dedicadas.</p>
                     </div>
 
                     <div class="segmented-targets-container">
@@ -428,10 +428,10 @@ const dashboardView = {
                             </div>
                             
                             <div class="target-group-grid">
-                                <!-- Carga de Trabalho Card -->
+                                <!-- Entrada de Processos Card -->
                                 <div class="premium-stat-card card-subfis-carga">
                                     <div class="stat-header" style="margin-bottom: 0.5rem;">
-                                        <h4 class="stat-title" style="font-size: 0.75rem;">Carga de Trabalho</h4>
+                                        <h4 class="stat-title" style="font-size: 0.75rem;">Entrada de Processos</h4>
                                         <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(0, 114, 188, 0.08); color: var(--primary); font-size: 0.95rem;">
                                             <i class="fa-solid fa-briefcase"></i>
                                         </div>
@@ -442,10 +442,10 @@ const dashboardView = {
                                     </div>
                                 </div>
 
-                                <!-- Saídas Card -->
+                                <!-- Saídas de Processos Card -->
                                 <div class="premium-stat-card card-subfis-saidas">
                                     <div class="stat-header" style="margin-bottom: 0.5rem;">
-                                        <h4 class="stat-title" style="font-size: 0.75rem;">Saídas (Exits)</h4>
+                                        <h4 class="stat-title" style="font-size: 0.75rem;">Saídas de Processos</h4>
                                         <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.08); color: var(--warning); font-size: 0.95rem;">
                                             <i class="fa-solid fa-right-from-bracket"></i>
                                         </div>
@@ -499,10 +499,10 @@ const dashboardView = {
                             </div>
                             
                             <div class="target-group-grid">
-                                <!-- Carga de Trabalho Card -->
+                                <!-- Entrada de Processos Card -->
                                 <div class="premium-stat-card card-aft-carga">
                                     <div class="stat-header" style="margin-bottom: 0.5rem;">
-                                        <h4 class="stat-title" style="font-size: 0.75rem;">Carga de Trabalho</h4>
+                                        <h4 class="stat-title" style="font-size: 0.75rem;">Entrada de Processos</h4>
                                         <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(139, 92, 246, 0.08); color: #8b5cf6; font-size: 0.95rem;">
                                             <i class="fa-solid fa-briefcase"></i>
                                         </div>
@@ -513,10 +513,10 @@ const dashboardView = {
                                     </div>
                                 </div>
 
-                                <!-- Saídas Card -->
+                                <!-- Saídas de Processos Card -->
                                 <div class="premium-stat-card card-aft-saidas">
                                     <div class="stat-header" style="margin-bottom: 0.5rem;">
-                                        <h4 class="stat-title" style="font-size: 0.75rem;">Saídas (Exits)</h4>
+                                        <h4 class="stat-title" style="font-size: 0.75rem;">Saídas de Processos</h4>
                                         <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.08); color: var(--warning); font-size: 0.95rem;">
                                             <i class="fa-solid fa-right-from-bracket"></i>
                                         </div>
@@ -566,7 +566,7 @@ const dashboardView = {
                             <div class="card-header" style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: #ffffff; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                                 <div>
                                     <h3 style="font-size: 1.2rem; font-weight: 750; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
-                                        <i class="fa-solid fa-ranking-star" style="color: var(--primary);"></i> Top 20 Carga de Trabalho por Setor
+                                        <i class="fa-solid fa-ranking-star" style="color: var(--primary);"></i> Top 20 Entrada de Processos por Setor
                                     </h3>
                                     <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0 0;">Ranking das unidades administrativas ordenado pelo fluxo de trâmites.</p>
                                 </div>
@@ -591,7 +591,7 @@ const dashboardView = {
                                             <tr>
                                                 <td colspan="6" class="text-center" style="padding: 4rem;">
                                                     <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--primary); margin-bottom: 0.5rem; display:block;"></i>
-                                                    Calculando carga de trabalho dos setores...
+                                                    Calculando entrada de processos dos setores...
                                                 </td>
                                             </tr>
                                         </tbody>
