@@ -68,8 +68,8 @@ class Movement {
         $subfisIdsStr = implode(',', $subfisSectorIds);
         $aftIdsStr = implode(',', $aftSectorIds);
 
-        // 1. Entrada de Processos (Carga de Trabalho Atual) do Grupo SUBFIS (Setor 316 e subsetores)
-        // Conta apenas os processos cujo último trâmite registrado aponta para o grupo.
+        // 1. Sob Custódia (Carga de Trabalho Atual) do Grupo SUBFIS (Setor 316 e subsetores) - Sempre data corrente
+        // Conta apenas os processos cujo último trâmite registrado aponta para o grupo na data corrente.
         $subfisCargaSql = "
             SELECT COUNT(*) 
             FROM movements m 
@@ -81,8 +81,8 @@ class Movement {
             WHERE m.destination_sector_id IN ($subfisIdsStr)";
         $stats['subfis_carga'] = (int)$this->db->query($subfisCargaSql)->fetchColumn();
 
-        // 2. Entrada de Processos (Carga de Trabalho Atual) do Grupo AFT (Setor 319 e subsetores)
-        // Conta apenas os processos cujo último trâmite registrado aponta para o grupo.
+        // 2. Sob Custódia (Carga de Trabalho Atual) do Grupo AFT (Setor 319 e subsetores) - Sempre data corrente
+        // Conta apenas os processos cujo último trâmite registrado aponta para o grupo na data corrente.
         $aftCargaSql = "
             SELECT COUNT(*) 
             FROM movements m 
@@ -94,12 +94,14 @@ class Movement {
             WHERE m.destination_sector_id IN ($aftIdsStr)";
         $stats['aft_carga'] = (int)$this->db->query($aftCargaSql)->fetchColumn();
 
-        // 3. Estatísticas de Fluxo (Saídas de Processos e Tramitações) no período com LAG()
+        // 3. Estatísticas de Fluxo (Entradas, Saídas de Processos e Tramitações) no período com LAG()
         // Executa uma única varredura sequencial indexada em tempo recorde O(N log N).
         $flowSql = "
             SELECT 
+                SUM(CASE WHEN (prev_is_subfis = 0 OR prev_is_subfis IS NULL) AND curr_is_subfis = 1 THEN 1 ELSE 0 END) as subfis_entradas,
                 SUM(CASE WHEN prev_is_subfis = 1 AND curr_is_subfis = 0 THEN 1 ELSE 0 END) as subfis_saidas,
                 SUM(CASE WHEN prev_is_subfis = 1 AND curr_is_subfis = 1 THEN 1 ELSE 0 END) as subfis_tramitacoes,
+                SUM(CASE WHEN (prev_is_aft = 0 OR prev_is_aft IS NULL) AND curr_is_aft = 1 THEN 1 ELSE 0 END) as aft_entradas,
                 SUM(CASE WHEN prev_is_aft = 1 AND curr_is_aft = 0 THEN 1 ELSE 0 END) as aft_saidas,
                 SUM(CASE WHEN prev_is_aft = 1 AND curr_is_aft = 1 THEN 1 ELSE 0 END) as aft_tramitacoes
             FROM (
@@ -121,8 +123,10 @@ class Movement {
         ]);
         $flow = $stmt->fetch(PDO::FETCH_ASSOC);
         
+        $stats['subfis_entradas'] = (int)($flow['subfis_entradas'] ?? 0);
         $stats['subfis_saidas'] = (int)($flow['subfis_saidas'] ?? 0);
         $stats['subfis_tramitacoes'] = (int)($flow['subfis_tramitacoes'] ?? 0);
+        $stats['aft_entradas'] = (int)($flow['aft_entradas'] ?? 0);
         $stats['aft_saidas'] = (int)($flow['aft_saidas'] ?? 0);
         $stats['aft_tramitacoes'] = (int)($flow['aft_tramitacoes'] ?? 0);
 
@@ -141,7 +145,7 @@ class Movement {
         $stats['aft_auditores'] = (int)$this->db->query($aftAuditorsSql)->fetchColumn();
 
         // 6. Propriedades de Legado / Compatibilidade Retroativa de Visões
-        $stats['entradas'] = $stats['subfis_tramitacoes'] + $stats['aft_tramitacoes'];
+        $stats['entradas'] = $stats['subfis_entradas'] + $stats['aft_entradas'];
         $stats['saidas'] = $stats['subfis_saidas'] + $stats['aft_saidas'];
         $stats['total_processes'] = (int)$this->db->query('SELECT COUNT(*) FROM processes')->fetchColumn();
         $stats['total_responsibles'] = (int)$this->db->query('SELECT COUNT(*) FROM responsibles WHERE active = 1')->fetchColumn();
@@ -185,6 +189,48 @@ class Movement {
         ';
         
         $stats['recent_activity'] = $this->db->query($recentSql)->fetchAll(PDO::FETCH_ASSOC);
+
+        // 6. Estatísticas Mensais Comparativas (Entrada de Processos Mês a Mês)
+        $currentYear = (int)date('Y');
+        $startYear = $currentYear - 2;
+        
+        $monthlySql = "
+            SELECT 
+                YEAR(movement_date) as year,
+                MONTH(movement_date) as month,
+                COUNT(*) as count
+            FROM movements
+            WHERE action = 'ENTRADA'
+              AND movement_date IS NOT NULL
+              AND YEAR(movement_date) >= :start_year
+              AND YEAR(movement_date) <= :current_year
+            GROUP BY YEAR(movement_date), MONTH(movement_date)
+            ORDER BY year ASC, month ASC";
+            
+        try {
+            $stmt = $this->db->prepare($monthlySql);
+            $stmt->execute([
+                ':start_year' => $startYear,
+                ':current_year' => $currentYear
+            ]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $monthlyStats = [];
+            for ($y = $startYear; $y <= $currentYear; $y++) {
+                $monthlyStats[(string)$y] = array_fill(0, 12, 0);
+            }
+            
+            foreach ($rows as $row) {
+                $yStr = (string)$row['year'];
+                $mIdx = (int)$row['month'] - 1;
+                if (isset($monthlyStats[$yStr]) && $mIdx >= 0 && $mIdx < 12) {
+                    $monthlyStats[$yStr][$mIdx] = (int)$row['count'];
+                }
+            }
+            $stats['monthly_stats'] = $monthlyStats;
+        } catch (\Exception $e) {
+            $stats['monthly_stats'] = [];
+        }
 
         return $stats;
     }

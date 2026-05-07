@@ -36,6 +36,7 @@ const dashboardView = {
                 Api.dashboard.getStats(),
                 Api.sectors.list()
             ]);
+            this.sectors = sectors;
 
             // Set up default filter dates (Start of Current Year to Today)
             const today = new Date();
@@ -168,13 +169,8 @@ const dashboardView = {
                     }
                     .target-group-grid {
                         display: grid;
-                        grid-template-columns: 1fr 1fr;
+                        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
                         gap: 1rem;
-                    }
-                    @media (max-width: 520px) {
-                        .target-group-grid {
-                            grid-template-columns: 1fr;
-                        }
                     }
 
                     .premium-stat-card {
@@ -190,32 +186,42 @@ const dashboardView = {
                         position: relative;
                         overflow: hidden;
                     }
-                    .premium-stat-card::before {
-                        content: '';
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 3px;
-                        background: transparent;
-                        transition: var(--transition);
-                    }
+                    /* Premium Cards Border & Top/Left Accent Colors */
+                    .premium-stat-card.card-custodia-subfis { border-left: 4px solid var(--primary); }
+                    .premium-stat-card.card-custodia-subfis .stat-badge-icon { background: rgba(0, 114, 188, 0.08); color: var(--primary); }
                     
-                    /* Cores específicas das barras superiores dos cartões */
-                    .premium-stat-card.card-subfis-carga::before { background: var(--primary); }
-                    .premium-stat-card.card-subfis-saidas::before { background: var(--warning); }
-                    .premium-stat-card.card-subfis-tramitacoes::before { background: var(--success); }
-                    .premium-stat-card.card-subfis-auditores::before { background: #6366f1; }
-                    
-                    .premium-stat-card.card-aft-carga::before { background: #8b5cf6; }
-                    .premium-stat-card.card-aft-saidas::before { background: var(--warning); }
-                    .premium-stat-card.card-aft-tramitacoes::before { background: var(--success); }
-                    .premium-stat-card.card-aft-auditores::before { background: #6366f1; }
+                    .premium-stat-card.card-custodia-aft { border-left: 4px solid #8b5cf6; }
+                    .premium-stat-card.card-custodia-aft .stat-badge-icon { background: rgba(139, 92, 246, 0.08); color: #8b5cf6; }
+
+                    .premium-stat-card.card-entradas { border-left: 4px solid #10b981; }
+                    .premium-stat-card.card-entradas .stat-badge-icon { background: rgba(16, 185, 129, 0.08); color: #10b981; }
+
+                    .premium-stat-card.card-saidas { border-left: 4px solid #ea580c; }
+                    .premium-stat-card.card-saidas .stat-badge-icon { background: rgba(234, 88, 12, 0.08); color: #ea580c; }
+
+                    .premium-stat-card.card-tramitacoes { border-left: 4px solid #6366f1; }
+                    .premium-stat-card.card-tramitacoes .stat-badge-icon { background: rgba(99, 102, 241, 0.08); color: #6366f1; }
+
+                    .premium-stat-card.card-auditores { border-left: 4px solid #64748b; }
+                    .premium-stat-card.card-auditores .stat-badge-icon { background: rgba(100, 116, 139, 0.08); color: #64748b; }
 
                     .premium-stat-card:hover {
                         transform: translateY(-4px);
                         box-shadow: var(--shadow-lg);
                         border-color: rgba(0, 114, 188, 0.15);
+                    }
+
+                    .split-tables-container {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 1.5rem;
+                        padding: 1.5rem;
+                    }
+                    @media (max-width: 992px) {
+                        .split-tables-container {
+                            grid-template-columns: 1fr !important;
+                            gap: 2rem !important;
+                        }
                     }
 
                     .stat-header {
@@ -428,59 +434,73 @@ const dashboardView = {
                             </div>
                             
                             <div class="target-group-grid">
-                                <!-- Entrada de Processos Card -->
-                                <div class="premium-stat-card card-subfis-carga">
-                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
-                                        <h4 class="stat-title" style="font-size: 0.75rem;">Entrada de Processos</h4>
-                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(0, 114, 188, 0.08); color: var(--primary); font-size: 0.95rem;">
-                                            <i class="fa-solid fa-briefcase"></i>
+                                <!-- Sob Custódia Card -->
+                                <div class="premium-stat-card card-custodia-subfis">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">Sob Custódia (${new Date().toLocaleDateString('pt-BR')})</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                            <i class="fa-solid fa-lock"></i>
                                         </div>
                                     </div>
                                     <div class="stat-body">
-                                        <h2 class="stat-value" id="subfis-carga-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.subfis_carga}</h2>
-                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Processos sob custódia atual do setor e subsetores.</p>
+                                        <h2 class="stat-value" id="subfis-custodia-val" style="font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: 800; color: var(--text-primary);">${stats.subfis_carga}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2; color: var(--text-secondary);">Processos parados/atualmente sob responsabilidade do setor.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Entrada de Processos Card -->
+                                <div class="premium-stat-card card-entradas">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">Entrada de Processos</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                            <i class="fa-solid fa-right-to-bracket"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stat-body">
+                                        <h2 class="stat-value" id="subfis-carga-val" style="font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: 800; color: var(--text-primary);">${stats.subfis_entradas}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2; color: var(--text-secondary);">Processos que deram entrada no período filtrado.</p>
                                     </div>
                                 </div>
 
                                 <!-- Saídas de Processos Card -->
-                                <div class="premium-stat-card card-subfis-saidas">
-                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
-                                        <h4 class="stat-title" style="font-size: 0.75rem;">Saídas de Processos</h4>
-                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.08); color: var(--warning); font-size: 0.95rem;">
+                                <div class="premium-stat-card card-saidas">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">Saídas de Processos</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
                                             <i class="fa-solid fa-right-from-bracket"></i>
                                         </div>
                                     </div>
                                     <div class="stat-body">
-                                        <h2 class="stat-value" id="subfis-saidas-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.subfis_saidas}</h2>
-                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Enviados para qualquer setor fora da SUBFIS no período.</p>
+                                        <h2 class="stat-value" id="subfis-saidas-val" style="font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: 800; color: var(--text-primary);">${stats.subfis_saidas}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2; color: var(--text-secondary);">Enviados para qualquer setor fora da SUBFIS no período.</p>
                                     </div>
                                 </div>
 
                                 <!-- Tramitações Card -->
-                                <div class="premium-stat-card card-subfis-tramitacoes">
-                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
-                                        <h4 class="stat-title" style="font-size: 0.75rem;">Tramitações</h4>
-                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.08); color: var(--success); font-size: 0.95rem;">
+                                <div class="premium-stat-card card-tramitacoes">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">Tramitações</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
                                             <i class="fa-solid fa-shuffle"></i>
                                         </div>
                                     </div>
                                     <div class="stat-body">
-                                        <h2 class="stat-value" id="subfis-tramitacoes-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.subfis_tramitacoes}</h2>
-                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Movimentados internamente no grupo SUBFIS no período.</p>
+                                        <h2 class="stat-value" id="subfis-tramitacoes-val" style="font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: 800; color: var(--text-primary);">${stats.subfis_tramitacoes}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2; color: var(--text-secondary);">Movimentados internamente no grupo SUBFIS no período.</p>
                                     </div>
                                 </div>
 
                                 <!-- Auditores Card -->
-                                <div class="premium-stat-card card-subfis-auditores">
-                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
-                                        <h4 class="stat-title" style="font-size: 0.75rem;">Auditores</h4>
-                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99, 102, 241, 0.08); color: #6366f1; font-size: 0.95rem;">
+                                <div class="premium-stat-card card-auditores">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">Auditores</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
                                             <i class="fa-solid fa-user-tie"></i>
                                         </div>
                                     </div>
                                     <div class="stat-body">
-                                        <h2 class="stat-value" id="subfis-auditores-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.subfis_auditores}</h2>
-                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Auditores responsáveis ativos lotados no setor.</p>
+                                        <h2 class="stat-value" id="subfis-auditores-val" style="font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: 800; color: var(--text-primary);">${stats.subfis_auditores}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2; color: var(--text-secondary);">Auditores responsáveis ativos lotados no setor.</p>
                                     </div>
                                 </div>
                             </div>
@@ -499,60 +519,75 @@ const dashboardView = {
                             </div>
                             
                             <div class="target-group-grid">
-                                <!-- Entrada de Processos Card -->
-                                <div class="premium-stat-card card-aft-carga">
-                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
-                                        <h4 class="stat-title" style="font-size: 0.75rem;">Entrada de Processos</h4>
-                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(139, 92, 246, 0.08); color: #8b5cf6; font-size: 0.95rem;">
-                                            <i class="fa-solid fa-briefcase"></i>
+                                <!-- Sob Custódia Card -->
+                                <div class="premium-stat-card card-custodia-aft">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">Sob Custódia (${new Date().toLocaleDateString('pt-BR')})</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                            <i class="fa-solid fa-lock"></i>
                                         </div>
                                     </div>
                                     <div class="stat-body">
-                                        <h2 class="stat-value" id="aft-carga-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.aft_carga}</h2>
-                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Processos sob custódia atual do setor e subsetores.</p>
+                                        <h2 class="stat-value" id="aft-custodia-val" style="font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: 800; color: var(--text-primary);">${stats.aft_carga}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2; color: var(--text-secondary);">Processos parados/atualmente sob responsabilidade do setor.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Entrada de Processos Card -->
+                                <div class="premium-stat-card card-entradas">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">Entrada de Processos</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                                            <i class="fa-solid fa-right-to-bracket"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stat-body">
+                                        <h2 class="stat-value" id="aft-carga-val" style="font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: 800; color: var(--text-primary);">${stats.aft_entradas}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2; color: var(--text-secondary);">Processos que deram entrada no período filtrado.</p>
                                     </div>
                                 </div>
 
                                 <!-- Saídas de Processos Card -->
-                                <div class="premium-stat-card card-aft-saidas">
-                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
-                                        <h4 class="stat-title" style="font-size: 0.75rem;">Saídas de Processos</h4>
-                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.08); color: var(--warning); font-size: 0.95rem;">
+                                <div class="premium-stat-card card-saidas">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">Saídas de Processos</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
                                             <i class="fa-solid fa-right-from-bracket"></i>
                                         </div>
                                     </div>
                                     <div class="stat-body">
-                                        <h2 class="stat-value" id="aft-saidas-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.aft_saidas}</h2>
-                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Enviados para qualquer setor fora da AFT no período.</p>
+                                        <h2 class="stat-value" id="aft-saidas-val" style="font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: 800; color: var(--text-primary);">${stats.aft_saidas}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2; color: var(--text-secondary);">Enviados para qualquer sector fora da AFT no período.</p>
                                     </div>
                                 </div>
 
                                 <!-- Tramitações Card -->
-                                <div class="premium-stat-card card-aft-tramitacoes">
-                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
-                                        <h4 class="stat-title" style="font-size: 0.75rem;">Tramitações</h4>
-                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.08); color: var(--success); font-size: 0.95rem;">
+                                <div class="premium-stat-card card-tramitacoes">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">Tramitações</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
                                             <i class="fa-solid fa-shuffle"></i>
                                         </div>
                                     </div>
                                     <div class="stat-body">
-                                        <h2 class="stat-value" id="aft-tramitacoes-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.aft_tramitacoes}</h2>
-                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Movimentados internamente no grupo AFT no período.</p>
+                                        <h2 class="stat-value" id="aft-tramitacoes-val" style="font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: 800; color: var(--text-primary);">${stats.aft_tramitacoes}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2; color: var(--text-secondary);">Movimentados internamente no grupo AFT no período.</p>
                                     </div>
                                 </div>
 
                                 <!-- Auditores Card -->
-                                <div class="premium-stat-card card-aft-auditores">
-                                    <div class="stat-header" style="margin-bottom: 0.5rem;">
-                                        <h4 class="stat-title" style="font-size: 0.75rem;">Auditores</h4>
-                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99, 102, 241, 0.08); color: #6366f1; font-size: 0.95rem;">
+                                <div class="premium-stat-card card-auditores">
+                                    <div class="stat-header" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <h4 class="stat-title" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">Auditores</h4>
+                                        <div class="stat-badge-icon" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
                                             <i class="fa-solid fa-user-tie"></i>
                                         </div>
                                     </div>
                                     <div class="stat-body">
-                                        <h2 class="stat-value" id="aft-auditores-val" style="font-size: 1.8rem; margin-bottom: 0.25rem;">${stats.aft_auditores}</h2>
-                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2;">Auditores responsáveis ativos lotados no setor.</p>
+                                        <h2 class="stat-value" id="aft-auditores-val" style="font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: 800; color: var(--text-primary);">${stats.aft_auditores}</h2>
+                                        <p class="stat-desc" style="font-size: 0.78rem; line-height: 1.2; color: var(--text-secondary);">Auditores responsáveis ativos lotados no setor.</p>
                                     </div>
+                                </div></div>
                                 </div>
                             </div>
                         </div>
@@ -561,44 +596,82 @@ const dashboardView = {
                     <!-- Bottom Grid -->
                     <div class="dashboard-bottom-grid">
                         
-                        <!-- 1. Top 20 Sector Workload Grid (Full Width Stack) -->
+                        <!-- 1. Top 20 Sector Workload Grid (Split SUBFIS and AFT) -->
                         <div class="card" style="box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; margin: 0;">
                             <div class="card-header" style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: #ffffff; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                                 <div>
                                     <h3 style="font-size: 1.2rem; font-weight: 750; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
                                         <i class="fa-solid fa-ranking-star" style="color: var(--primary);"></i> Top 20 Entrada de Processos por Setor
                                     </h3>
-                                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0 0;">Ranking das unidades administrativas ordenado pelo fluxo de trâmites.</p>
+                                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0 0;">Ranking das unidades administrativas ordenado pela entrada de processos.</p>
                                 </div>
                                 <div id="sector-grid-date-badge" style="font-size: 0.75rem; background: rgba(0, 114, 188, 0.08); color: var(--primary); font-weight: 700; padding: 0.4rem 0.8rem; border-radius: var(--radius-full);">
                                     Carregando...
                                 </div>
                             </div>
-                            <div class="card-body p-0" style="max-height: 480px; overflow-y: auto;">
-                                <div class="table-responsive">
-                                    <table class="data-table" style="width: 100%; border-collapse: collapse;">
-                                        <thead>
-                                            <tr>
-                                                <th style="padding: 1.1rem 1.5rem; font-size: 0.75rem; letter-spacing: 0.75px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center; width: 60px;">Rank</th>
-                                                <th style="padding: 1.1rem 1.5rem; font-size: 0.75rem; letter-spacing: 0.75px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color);">Setor</th>
-                                                <th style="padding: 1.1rem 1.5rem; font-size: 0.75rem; letter-spacing: 0.75px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center;">Entradas</th>
-                                                <th style="padding: 1.1rem 1.5rem; font-size: 0.75rem; letter-spacing: 0.75px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center;">Saídas</th>
-                                                <th style="padding: 1.1rem 1.5rem; font-size: 0.75rem; letter-spacing: 0.75px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center;">Trâmites</th>
-                                                <th style="padding: 1.1rem 1.5rem; font-size: 0.75rem; letter-spacing: 0.75px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center;">Saldo</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="sector-workload-tbody">
-                                            <tr>
-                                                <td colspan="6" class="text-center" style="padding: 4rem;">
-                                                    <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--primary); margin-bottom: 0.5rem; display:block;"></i>
-                                                    Calculando entrada de processos dos setores...
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                            <div class="card-body p-0">
+                                <div class="split-tables-container">
+                                    <!-- SUBFIS Sector Table -->
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; border-bottom: 2px solid rgba(0, 114, 188, 0.1); padding-bottom: 0.5rem;">
+                                            <div style="width: 28px; height: 28px; background: rgba(0, 114, 188, 0.08); color: var(--primary); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">
+                                                <i class="fa-solid fa-building"></i>
+                                            </div>
+                                            <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary); margin: 0;">Gabinete SUBFIS</h4>
+                                        </div>
+                                        <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                                            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="padding: 0.8rem 1rem; font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center; width: 50px;">Rank</th>
+                                                        <th style="padding: 0.8rem 1rem; font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color);">Setor</th>
+                                                        <th style="padding: 0.8rem 1rem; font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center; width: 80px;">Entradas</th>
+                                                        <th style="padding: 0.8rem 1rem; font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center; width: 80px;">Saídas</th>
+                                                        <th style="padding: 0.8rem 1rem; font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center; width: 80px;">Saldo</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="subfis-sector-workload-tbody">
+                                                    <tr>
+                                                        <td colspan="5" class="text-center" style="padding: 3rem; color: var(--text-secondary);">
+                                                            <i class="fa-solid fa-spinner fa-spin" style="margin-right: 5px;"></i> Carregando setores SUBFIS...
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- AFT Sector Table -->
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; border-bottom: 2px solid rgba(139, 92, 246, 0.15); padding-bottom: 0.5rem;">
+                                            <div style="width: 28px; height: 28px; background: rgba(139, 92, 246, 0.08); color: #8b5cf6; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">
+                                                <i class="fa-solid fa-gavel"></i>
+                                            </div>
+                                            <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary); margin: 0;">Auditoria Fiscal AFT</h4>
+                                        </div>
+                                        <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                                            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="padding: 0.8rem 1rem; font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center; width: 50px;">Rank</th>
+                                                        <th style="padding: 0.8rem 1rem; font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color);">Setor</th>
+                                                        <th style="padding: 0.8rem 1rem; font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center; width: 80px;">Entradas</th>
+                                                        <th style="padding: 0.8rem 1rem; font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center; width: 80px;">Saídas</th>
+                                                        <th style="padding: 0.8rem 1rem; font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 2px solid var(--border-color); text-align: center; width: 80px;">Saldo</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="aft-sector-workload-tbody">
+                                                    <tr>
+                                                        <td colspan="5" class="text-center" style="padding: 3rem; color: var(--text-secondary);">
+                                                            <i class="fa-solid fa-spinner fa-spin" style="margin-right: 5px;"></i> Carregando setores AFT...
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
                         <!-- 2. Recent Movements (Original Grid, now full width) -->
                         <div class="card" style="box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; margin: 0;">
@@ -672,13 +745,13 @@ const dashboardView = {
 
                     </div>
 
-                    <!-- Year-Over-Year Column Chart (Full Width Bottom) -->
+                    <!-- Monthly Line Chart (Full Width Bottom) -->
                     <div class="card" style="box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); border-radius: var(--radius-lg); margin-top: 1.5rem; padding: 1.5rem; background: #ffffff; animation: fadeUp 0.7s ease-out;">
                         <div style="margin-bottom: 1.25rem;">
                             <h3 style="font-size: 1.2rem; font-weight: 750; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-chart-column" style="color: var(--primary);"></i> Comparativo de Produtividade Anual
+                                <i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> Comparativo de Produtividade Mensal
                             </h3>
-                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0 0;">Análise do ano corrente versus anos anteriores de processos criados, entradas e saídas consolidadas.</p>
+                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0 0;">Evolução temporal e comparativa das entradas de processos mês a mês (últimos 3 anos).</p>
                         </div>
                         <div style="position: relative; height: 350px; width: 100%;">
                             <canvas id="yearly-comparison-chart"></canvas>
@@ -713,7 +786,7 @@ const dashboardView = {
 
             // Perform initial load of filtered sector metrics & draw yearly comparison chart
             this.updateFilteredData(defaultStart, defaultEnd, '');
-            this.renderYearlyChart(stats.yearly_stats || []);
+            this.renderYearlyChart(stats.monthly_stats || {});
 
         } catch (e) {
             container.innerHTML = `
@@ -729,16 +802,50 @@ const dashboardView = {
     /**
      * Re-renders the Top 20 Sector Workload grid dynamically inside the dashboard without refreshing the entire page.
      */
+    getSectorDescendants(sectors, parentId) {
+        const parentIdInt = parseInt(parentId);
+        const descendants = [parentIdInt];
+        const queue = [parentIdInt];
+        
+        while (queue.length > 0) {
+            const currentId = queue.shift();
+            sectors.forEach(s => {
+                if (s.parent_id !== null && parseInt(s.parent_id) === currentId) {
+                    const childId = parseInt(s.id);
+                    if (!descendants.includes(childId)) {
+                        descendants.push(childId);
+                        queue.push(childId);
+                    }
+                }
+            });
+        }
+        return descendants;
+    },
+
+    /**
+     * Re-renders the Top 20 Sector Workload grid dynamically inside the dashboard without refreshing the entire page.
+     */
     async updateFilteredData(start, end, sectorId) {
-        const tbody = document.getElementById('sector-workload-tbody');
+        const subfisTbody = document.getElementById('subfis-sector-workload-tbody');
+        const aftTbody = document.getElementById('aft-sector-workload-tbody');
         const badge = document.getElementById('sector-grid-date-badge');
         
-        if (tbody) {
-            tbody.innerHTML = `
+        if (subfisTbody) {
+            subfisTbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center" style="padding: 4rem;">
+                    <td colspan="5" class="text-center" style="padding: 3rem;">
                         <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--primary); margin-bottom: 0.5rem; display:block;"></i>
-                        Recalculando fluxo de trâmites...
+                        Recalculando...
+                    </td>
+                </tr>
+            `;
+        }
+        if (aftTbody) {
+            aftTbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center" style="padding: 3rem;">
+                        <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:#8b5cf6; margin-bottom: 0.5rem; display:block;"></i>
+                        Recalculando...
                     </td>
                 </tr>
             `;
@@ -756,8 +863,11 @@ const dashboardView = {
                 const filteredStats = await Api.dashboard.getStats(start, end);
                 
                 // Atualizar valores de SUBFIS no DOM
+                const subfisCustodia = document.getElementById('subfis-custodia-val');
+                if (subfisCustodia) subfisCustodia.textContent = filteredStats.subfis_carga;
+
                 const subfisCarga = document.getElementById('subfis-carga-val');
-                if (subfisCarga) subfisCarga.textContent = filteredStats.subfis_carga;
+                if (subfisCarga) subfisCarga.textContent = filteredStats.subfis_entradas;
                 
                 const subfisSaidas = document.getElementById('subfis-saidas-val');
                 if (subfisSaidas) subfisSaidas.textContent = filteredStats.subfis_saidas;
@@ -769,8 +879,11 @@ const dashboardView = {
                 if (subfisAuditores) subfisAuditores.textContent = filteredStats.subfis_auditores;
 
                 // Atualizar valores de AFT no DOM
+                const aftCustodia = document.getElementById('aft-custodia-val');
+                if (aftCustodia) aftCustodia.textContent = filteredStats.aft_carga;
+
                 const aftCarga = document.getElementById('aft-carga-val');
-                if (aftCarga) aftCarga.textContent = filteredStats.aft_carga;
+                if (aftCarga) aftCarga.textContent = filteredStats.aft_entradas;
                 
                 const aftSaidas = document.getElementById('aft-saidas-val');
                 if (aftSaidas) aftSaidas.textContent = filteredStats.aft_saidas;
@@ -787,7 +900,7 @@ const dashboardView = {
             // Fetch raw sector stats from backend report service
             const rawStats = await Api.reports.sectorStats(start, end);
 
-            // Compute totals & balance metrics and sort/limit to top 20
+            // Compute totals & balance metrics
             let processed = rawStats.map(s => {
                 const totalEntries = parseInt(s.total_entries || 0);
                 const totalExits = parseInt(s.total_exits || 0);
@@ -810,85 +923,147 @@ const dashboardView = {
                 processed = processed.filter(s => String(s.id) === String(sectorId));
             }
 
-            // Rank and sort by total movements desc
-            processed.sort((a, b) => b.movements - a.movements);
-            const top20 = processed.slice(0, 20);
+            // Segment into SUBFIS and AFT descendants
+            const subfisIds = this.getSectorDescendants(this.sectors || [], 316);
+            const aftIds = this.getSectorDescendants(this.sectors || [], 319);
 
-            if (!tbody) return;
+            const subfisProcessed = processed.filter(s => subfisIds.includes(parseInt(s.id)));
+            const aftProcessed = processed.filter(s => aftIds.includes(parseInt(s.id)));
 
-            if (top20.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center" style="padding: 3rem; color: var(--text-secondary); font-size: 0.95rem;">
-                            <i class="fa-solid fa-circle-info fa-2x" style="display:block; margin-bottom:0.5rem; opacity:0.5;"></i>
-                            Nenhuma movimentação encontrada no período selecionado.
-                        </td>
-                    </tr>
-                `;
-                return;
+            // Sort each by entries descending
+            subfisProcessed.sort((a, b) => b.entries - a.entries);
+            aftProcessed.sort((a, b) => b.entries - a.entries);
+
+            const top20Subfis = subfisProcessed.slice(0, 20);
+            const top20Aft = aftProcessed.slice(0, 20);
+
+            // Render SUBFIS
+            if (subfisTbody) {
+                if (top20Subfis.length === 0) {
+                    subfisTbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center" style="padding: 3rem; color: var(--text-secondary); font-size: 0.9rem;">
+                                <i class="fa-solid fa-circle-info" style="display:block; margin-bottom:0.5rem; opacity:0.5; font-size: 1.5rem;"></i>
+                                Nenhuma entrada encontrada.
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    subfisTbody.innerHTML = top20Subfis.map((s, index) => {
+                        const rankNum = index + 1;
+                        let rankClass = '';
+                        if (rankNum === 1) rankClass = 'rank-1';
+                        else if (rankNum === 2) rankClass = 'rank-2';
+                        else if (rankNum === 3) rankClass = 'rank-3';
+
+                        let balClass = 'balance-neutral';
+                        let balSymbol = '';
+                        if (s.balance > 0) {
+                            balClass = 'balance-positive';
+                            balSymbol = '+';
+                        } else if (s.balance < 0) {
+                            balClass = 'balance-negative';
+                        }
+
+                        return `
+                            <tr class="dashboard-table-row">
+                                <td style="padding: 0.8rem 1rem; text-align: center; vertical-align: middle;">
+                                    <div class="rank-badge ${rankClass}" style="width: 24px; height: 24px; line-height: 24px; font-size: 0.8rem;">${rankNum}</div>
+                                </td>
+                                <td style="padding: 0.8rem 1rem; vertical-align: middle; color: var(--text-primary); font-weight: 700; font-size: 0.88rem;">
+                                    <div style="display: flex; flex-direction: column;">
+                                        <span>${s.name}</span>
+                                        ${s.alias !== s.name ? `<span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 500;">${s.alias}</span>` : ''}
+                                    </div>
+                                </td>
+                                <td style="padding: 0.8rem 1rem; text-align: center; vertical-align: middle; font-weight: 600; color: #059669;">
+                                    ${s.entries}
+                                </td>
+                                <td style="padding: 0.8rem 1rem; text-align: center; vertical-align: middle; font-weight: 600; color: #d97706;">
+                                    ${s.exits}
+                                </td>
+                                <td style="padding: 0.8rem 1rem; text-align: center; vertical-align: middle;">
+                                    <span class="balance-badge ${balClass}" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">${balSymbol}${s.balance}</span>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
             }
 
-            tbody.innerHTML = top20.map((s, index) => {
-                const rankNum = index + 1;
-                let rankClass = '';
-                if (rankNum === 1) rankClass = 'rank-1';
-                else if (rankNum === 2) rankClass = 'rank-2';
-                else if (rankNum === 3) rankClass = 'rank-3';
+            // Render AFT
+            if (aftTbody) {
+                if (top20Aft.length === 0) {
+                    aftTbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center" style="padding: 3rem; color: var(--text-secondary); font-size: 0.9rem;">
+                                <i class="fa-solid fa-circle-info" style="display:block; margin-bottom:0.5rem; opacity:0.5; font-size: 1.5rem;"></i>
+                                Nenhuma entrada encontrada.
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    aftTbody.innerHTML = top20Aft.map((s, index) => {
+                        const rankNum = index + 1;
+                        let rankClass = '';
+                        if (rankNum === 1) rankClass = 'rank-1';
+                        else if (rankNum === 2) rankClass = 'rank-2';
+                        else if (rankNum === 3) rankClass = 'rank-3';
 
-                let balClass = 'balance-neutral';
-                let balSymbol = '';
-                if (s.balance > 0) {
-                    balClass = 'balance-positive';
-                    balSymbol = '+';
-                } else if (s.balance < 0) {
-                    balClass = 'balance-negative';
+                        let balClass = 'balance-neutral';
+                        let balSymbol = '';
+                        if (s.balance > 0) {
+                            balClass = 'balance-positive';
+                            balSymbol = '+';
+                        } else if (s.balance < 0) {
+                            balClass = 'balance-negative';
+                        }
+
+                        return `
+                            <tr class="dashboard-table-row">
+                                <td style="padding: 0.8rem 1rem; text-align: center; vertical-align: middle;">
+                                    <div class="rank-badge ${rankClass}" style="width: 24px; height: 24px; line-height: 24px; font-size: 0.8rem;">${rankNum}</div>
+                                </td>
+                                <td style="padding: 0.8rem 1rem; vertical-align: middle; color: var(--text-primary); font-weight: 700; font-size: 0.88rem;">
+                                    <div style="display: flex; flex-direction: column;">
+                                        <span>${s.name}</span>
+                                        ${s.alias !== s.name ? `<span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 500;">${s.alias}</span>` : ''}
+                                    </div>
+                                </td>
+                                <td style="padding: 0.8rem 1rem; text-align: center; vertical-align: middle; font-weight: 600; color: #059669;">
+                                    ${s.entries}
+                                </td>
+                                <td style="padding: 0.8rem 1rem; text-align: center; vertical-align: middle; font-weight: 600; color: #d97706;">
+                                    ${s.exits}
+                                </td>
+                                <td style="padding: 0.8rem 1rem; text-align: center; vertical-align: middle;">
+                                    <span class="balance-badge ${balClass}" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">${balSymbol}${s.balance}</span>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
                 }
-
-                return `
-                    <tr class="dashboard-table-row">
-                        <td style="padding: 1rem 1.5rem; text-align: center; vertical-align: middle;">
-                            <div class="rank-badge ${rankClass}">${rankNum}</div>
-                        </td>
-                        <td style="padding: 1rem 1.5rem; vertical-align: middle; color: var(--text-primary); font-weight: 700; font-size: 0.92rem;">
-                            <div style="display: flex; flex-direction: column;">
-                                <span>${s.name}</span>
-                                ${s.alias !== s.name ? `<span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">${s.alias}</span>` : ''}
-                            </div>
-                        </td>
-                        <td style="padding: 1rem 1.5rem; text-align: center; vertical-align: middle; font-weight: 600; color: #059669;">
-                            ${s.entries}
-                        </td>
-                        <td style="padding: 1rem 1.5rem; text-align: center; vertical-align: middle; font-weight: 600; color: #d97706;">
-                            ${s.exits}
-                        </td>
-                        <td style="padding: 1rem 1.5rem; text-align: center; vertical-align: middle; font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">
-                            ${s.movements}
-                        </td>
-                        <td style="padding: 1rem 1.5rem; text-align: center; vertical-align: middle;">
-                            <span class="balance-badge ${balClass}">${balSymbol}${s.balance}</span>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+            }
 
         } catch (err) {
-            if (tbody) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center" style="padding: 3rem; color: var(--danger); font-weight: 500;">
-                            <i class="fa-solid fa-triangle-exclamation fa-2x" style="margin-bottom:0.5rem; display:block;"></i>
-                            Falha ao carregar dados dos setores: ${err.message}
-                        </td>
-                    </tr>
-                `;
-            }
+            console.error("Falha ao carregar dados dos setores:", err);
+            const errHtml = `
+                <tr>
+                    <td colspan="5" class="text-center" style="padding: 3rem; color: var(--danger); font-weight: 500;">
+                        <i class="fa-solid fa-triangle-exclamation" style="margin-bottom:0.5rem; display:block; font-size: 1.5rem;"></i>
+                        Falha ao carregar dados dos setores: ${err.message}
+                    </td>
+                </tr>
+            `;
+            if (subfisTbody) subfisTbody.innerHTML = errHtml;
+            if (aftTbody) aftTbody.innerHTML = errHtml;
         }
     },
 
     /**
      * Initializes and renders the YoY Chart.js bar graph comparing inputs, outputs, and processes.
      */
-    renderYearlyChart(yearlyData) {
+    renderYearlyChart(monthlyData) {
         const canvas = document.getElementById('yearly-comparison-chart');
         if (!canvas) return;
 
@@ -910,56 +1085,75 @@ const dashboardView = {
         }
 
         // Handle empty dataset edge case
-        if (!yearlyData || yearlyData.length === 0) {
+        if (!monthlyData || Object.keys(monthlyData).length === 0) {
             const ctx = canvas.getContext('2d');
             ctx.font = '14px Outfit, sans-serif';
             ctx.fillStyle = '#64748b';
             ctx.textAlign = 'center';
-            ctx.fillText('Nenhum dado anual consolidado encontrado para exibir o gráfico.', canvas.width / 2, canvas.height / 2);
+            ctx.fillText('Nenhum dado mensal consolidado encontrado para exibir o gráfico.', canvas.width / 2, canvas.height / 2);
             return;
         }
 
-        // Prepare labels (Years) and series arrays
-        const labels = yearlyData.map(item => `Ano ${item.year}`);
-        const entriesData = yearlyData.map(item => parseInt(item.entradas));
-        const exitsData = yearlyData.map(item => parseInt(item.saidas));
-        const processesData = yearlyData.map(item => parseInt(item.processos));
+        const monthsLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        
+        // Prepare datasets dynamically for each year available (up to 3 years)
+        const years = Object.keys(monthlyData).sort(); 
+        
+        const colorPalette = {
+            0: { // Earliest Year (e.g., 2024)
+                borderColor: '#94a3b8', // Slate Gray
+                backgroundColor: '#94a3b8',
+                borderDash: [5, 5] // Dashed line for older year
+            },
+            1: { // Middle Year (e.g., 2025)
+                borderColor: '#10b981', // Emerald Green
+                backgroundColor: '#10b981'
+            },
+            2: { // Current Year (e.g., 2026)
+                borderColor: '#0072bc', // PMDC Branding Blue
+                backgroundColor: '#0072bc',
+                borderWidth: 4,
+                pointRadius: 5,
+                pointHoverRadius: 8
+            }
+        };
+
+        const datasets = years.map((year, index) => {
+            const palette = colorPalette[index] || {
+                borderColor: '#f59e0b',
+                backgroundColor: '#f59e0b'
+            };
+
+            return {
+                label: `Ano ${year}`,
+                data: monthlyData[year],
+                borderColor: palette.borderColor,
+                backgroundColor: palette.backgroundColor,
+                borderWidth: palette.borderWidth || 3,
+                borderDash: palette.borderDash || [],
+                tension: 0.35, // Smooth Bezier Curves
+                pointRadius: palette.pointRadius || 4,
+                pointHoverRadius: palette.pointHoverRadius || 6,
+                pointBackgroundColor: '#ffffff',
+                pointBorderWidth: 2,
+                fill: false
+            };
+        });
 
         const ctx = canvas.getContext('2d');
         this.chartInstance = new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Entradas (Tramitações)',
-                        data: entriesData,
-                        backgroundColor: '#10b981', // Success HSL Green
-                        borderRadius: 6,
-                        borderSkipped: false,
-                        maxBarThickness: 32
-                    },
-                    {
-                        label: 'Saídas (Despachos)',
-                        data: exitsData,
-                        backgroundColor: '#f59e0b', // Accent HSL Orange/Amber
-                        borderRadius: 6,
-                        borderSkipped: false,
-                        maxBarThickness: 32
-                    },
-                    {
-                        label: 'Novos Processos',
-                        data: processesData,
-                        backgroundColor: '#0072bc', // PMDC Branding HSL Blue
-                        borderRadius: 6,
-                        borderSkipped: false,
-                        maxBarThickness: 32
-                    }
-                ]
+                labels: monthsLabels,
+                datasets: datasets
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
                 plugins: {
                     legend: {
                         position: 'top',

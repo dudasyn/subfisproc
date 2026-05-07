@@ -18,7 +18,9 @@ if ($method === 'GET') {
     $stmt = $pdo->query("
         SELECT s.*, 
         (SELECT COUNT(*) FROM sectors s2 WHERE s2.parent_id = s.id AND s2.active = 1) as children_count,
-        (SELECT COUNT(*) FROM movements m WHERE m.destination_sector_id = s.id) as movement_count
+        (SELECT COUNT(*) FROM movements m WHERE m.destination_sector_id = s.id) as movement_count,
+        (SELECT GROUP_CONCAT(r.name SEPARATOR ', ') FROM responsible_sectors rs JOIN responsibles r ON rs.responsible_id = r.id WHERE rs.sector_id = s.id AND r.active = 1) as responsible_names,
+        (SELECT GROUP_CONCAT(r.id SEPARATOR ',') FROM responsible_sectors rs JOIN responsibles r ON rs.responsible_id = r.id WHERE rs.sector_id = s.id AND r.active = 1) as responsible_ids
         FROM sectors s 
         $where_clause 
         ORDER BY 
@@ -108,9 +110,25 @@ if ($method === 'GET') {
     $is_internal = isset($data['is_internal']) ? (int)$data['is_internal'] : 1;
     if (empty($name)) jsonResponse(['error' => 'Nome do setor é obrigatório'], 400);
 
-    $stmt = $pdo->prepare('INSERT INTO sectors (name, alias, parent_id, is_internal) VALUES (?, ?, ?, ?)');
-    $stmt->execute([$name, $alias, $parent_id, $is_internal]);
-    jsonResponse(['id' => $pdo->lastInsertId(), 'parent_id' => $parent_id, 'name' => $name, 'alias' => $alias, 'is_internal' => $is_internal, 'active' => 1]);
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare('INSERT INTO sectors (name, alias, parent_id, is_internal) VALUES (?, ?, ?, ?)');
+        $stmt->execute([$name, $alias, $parent_id, $is_internal]);
+        $sector_id = $pdo->lastInsertId();
+
+        $responsible_ids = $data['responsible_ids'] ?? [];
+        if (!empty($responsible_ids)) {
+            $stmt2 = $pdo->prepare('INSERT IGNORE INTO responsible_sectors (responsible_id, sector_id) VALUES (?, ?)');
+            foreach ($responsible_ids as $rid) {
+                $stmt2->execute([$rid, $sector_id]);
+            }
+        }
+        $pdo->commit();
+        jsonResponse(['id' => $sector_id, 'parent_id' => $parent_id, 'name' => $name, 'alias' => $alias, 'is_internal' => $is_internal, 'active' => 1]);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        jsonResponse(['error' => $e->getMessage()], 500);
+    }
 } elseif ($method === 'PUT') {
     $data = json_decode(file_get_contents('php://input'), true);
     
@@ -121,9 +139,27 @@ if ($method === 'GET') {
     $is_internal = isset($data['is_internal']) ? (int)$data['is_internal'] : 1;
     if (!$id || empty($name)) jsonResponse(['error' => 'ID e Nome são obrigatórios'], 400);
 
-    $stmt = $pdo->prepare('UPDATE sectors SET name = ?, alias = ?, parent_id = ?, is_internal = ? WHERE id = ?');
-    $stmt->execute([$name, $alias, $parent_id, $is_internal, $id]);
-    jsonResponse(['success' => true]);
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare('UPDATE sectors SET name = ?, alias = ?, parent_id = ?, is_internal = ? WHERE id = ?');
+        $stmt->execute([$name, $alias, $parent_id, $is_internal, $id]);
+
+        // Clean up previous and insert new responsible links
+        $pdo->prepare('DELETE FROM responsible_sectors WHERE sector_id = ?')->execute([$id]);
+        
+        $responsible_ids = $data['responsible_ids'] ?? [];
+        if (!empty($responsible_ids)) {
+            $stmt2 = $pdo->prepare('INSERT IGNORE INTO responsible_sectors (responsible_id, sector_id) VALUES (?, ?)');
+            foreach ($responsible_ids as $rid) {
+                $stmt2->execute([$rid, $id]);
+            }
+        }
+        $pdo->commit();
+        jsonResponse(['success' => true]);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        jsonResponse(['error' => $e->getMessage()], 500);
+    }
 } elseif ($method === 'DELETE') {
     $id = $_GET['id'] ?? 0;
     

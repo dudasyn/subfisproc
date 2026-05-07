@@ -313,15 +313,16 @@ const configView = {
                                     <thead>
                                         <tr>
                                             <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Nome do Setor / Sigla</th>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 160px; text-align: center;">Tipo</th>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 260px; text-align: center;">Hierarquia (Pai/Filho)</th>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 140px; text-align: center;">Movimentações</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 140px; text-align: center;">Tipo</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Hierarquia (Pai/Filho)</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center;">Auditor Responsável</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 120px; text-align: center;">Movimentações</th>
                                             <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody id="grid-sectors">
                                         <tr>
-                                            <td colspan="5" class="text-center p-4 text-secondary">
+                                            <td colspan="6" class="text-center p-4 text-secondary">
                                                 <i class="fa-solid fa-circle-notch fa-spin fa-2x mb-1" style="color: var(--primary);"></i>
                                                 <p>Carregando setores ativos...</p>
                                             </td>
@@ -343,15 +344,16 @@ const configView = {
                                     <thead>
                                         <tr>
                                             <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Nome do Setor / Sigla</th>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 160px; text-align: center;">Tipo</th>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 260px; text-align: center;">Hierarquia (Pai/Filho)</th>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 140px; text-align: center;">Movimentações</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 140px; text-align: center;">Tipo</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Hierarquia (Pai/Filho)</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center;">Auditor Responsável</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 120px; text-align: center;">Movimentações</th>
                                             <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody id="grid-inactive-sectors">
                                         <tr>
-                                            <td colspan="5" class="text-center p-4 text-secondary">
+                                            <td colspan="6" class="text-center p-4 text-secondary">
                                                 Nenhum sector inativo encontrado.
                                             </td>
                                         </tr>
@@ -373,7 +375,6 @@ const configView = {
                                 <p>Gerencie os Auditores Fiscais e demais responsáveis pelos processos.</p>
                             </div>
                              <div style="display:flex; gap:0.5rem;">
-                                <button class="btn-secondary" id="btn-clear-all-responsible-sectors" style="width:auto; padding:0.6rem 1.2rem; background:#fee2e2; color:#b91c1c; border-color:#fecaca;"><i class="fa-solid fa-eraser"></i> Limpar Todos Setores</button>
                                 <button class="btn-primary" id="btn-add-responsible" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-user-plus"></i> Novo Responsável</button>
                              </div>
                         </div>
@@ -743,6 +744,10 @@ const configView = {
             const depth = getDepth(s);
             const indentStyle = depth > 0 ? `padding-left: ${depth * 1.5 + 1}rem;` : 'padding-left: 1rem;';
 
+            const auditorBadges = s.responsible_names
+                ? s.responsible_names.split(', ').map(name => `<span class="badge badge-success" style="margin: 2px; font-size: 0.72rem; padding: 0.2rem 0.4rem; white-space: nowrap;"><i class="fa-solid fa-user-shield"></i> ${name}</span>`).join('')
+                : '<span style="color: var(--text-secondary); font-size: 0.82rem; font-style: italic;">Nenhum</span>';
+
             return `
                 <tr class="sector-row ${s.active == 0 ? 'inactive-sector' : ''}" data-id="${s.id}" style="${rowOpacity}">
                     <td style="padding: 1rem; vertical-align: middle; ${indentStyle}">
@@ -761,13 +766,18 @@ const configView = {
                         ${levelBadgeHtml}
                     </td>
                     <td style="padding: 1rem; text-align: center; vertical-align: middle;">
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.2rem; max-width: 250px; margin: 0 auto;">
+                            ${auditorBadges}
+                        </div>
+                    </td>
+                    <td style="padding: 1rem; text-align: center; vertical-align: middle;">
                         <span class="badge" style="background: #f1f5f9; color: #334155; font-weight: 700; font-size: 0.82rem; padding: 0.3rem 0.6rem; border-radius: var(--radius-md); border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
                             <i class="fa-solid fa-exchange-alt" style="color: var(--text-secondary);"></i> ${s.movement_count || 0}
                         </span>
                     </td>
                     <td style="padding: 1rem; text-align: center; vertical-align: middle;">
                         <div style="display: flex; gap: 0.4rem; justify-content: center; align-items: center;">
-                            <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.8rem; border-radius: var(--radius-md);" onclick="configView.showSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', '${(s.alias || '').replace(/'/g, "\\'")}', ${s.is_internal}, ${s.parent_id || 'null'})">
+                            <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.8rem; border-radius: var(--radius-md);" onclick="configView.showSectorModal(${s.id})">
                                 <i class="fa-solid fa-pen"></i> Editar
                             </button>
                             <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.8rem; background: var(--bg-secondary); color: var(--primary); border-radius: var(--radius-md);" onclick="configView.showMergeSectorModal(${s.id}, '${s.name.replace(/'/g, "\\'")}')" title="Mesclar histórico com outro setor">
@@ -878,6 +888,9 @@ const configView = {
 
     async loadResponsibles() {
         try {
+            if (!this.sectors || this.sectors.length === 0) {
+                this.sectors = await Api.sectors.list(true);
+            }
             this.responsibles_list = await Api.responsibles.list();
             const tbody = document.getElementById('tbody-responsibles');
             if (!tbody) return;
@@ -910,14 +923,7 @@ const configView = {
         if (!confirm('ATENÇÃO: Isso irá remover TODOS os vínculos de setores de TODOS os responsáveis (Auditores). Esta ação não pode ser desfeita. Deseja continuar?')) return;
         
         try {
-            const res = await fetch('api/responsibles.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'clear_all_sectors' })
-            });
-            const data = await res.json();
-            if (data.error) throw new Error(data.error);
-            
+            await Api.responsibles.clearAllSectors();
             window.app.toast('Vínculos de setores removidos com sucesso!');
             this.loadResponsibles();
         } catch (e) {
@@ -945,17 +951,7 @@ const configView = {
                 const targetId = document.getElementById('merge-resp-target').value;
                 if (!targetId) throw new Error('Selecione um auditor de destino');
 
-                const res = await fetch('api/responsibles.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'merge',
-                        source_id: sourceId,
-                        target_id: targetId
-                    })
-                });
-                const data = await res.json();
-                if (data.error) throw new Error(data.error);
+                await Api.responsibles.merge(sourceId, targetId);
 
                 window.app.toast('Auditores mesclados com sucesso!');
                 this.loadResponsibles();
@@ -1073,9 +1069,9 @@ const configView = {
             const name = document.getElementById('resp-name').value;
             const sector_ids = selectedSectors.map(s => s.id);
             if (id) {
-                await fetch('api/responsibles.php', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, name, sector_ids }) }).then(r => r.json());
+                await Api.responsibles.update(id, name, sector_ids);
             } else {
-                await fetch('api/responsibles.php', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name, sector_ids }) }).then(r => r.json());
+                await Api.responsibles.create(name, sector_ids);
             }
             window.app.toast('Responsável salvo!');
             this.loadResponsibles();
@@ -1122,7 +1118,25 @@ const configView = {
         renderBadges();
     },
 
-    showSectorModal(id = null, currentName = '', currentAlias = '', isInternal = 0, parentId = null) {
+    async showSectorModal(id = null) {
+        // Defensive load of responsibles list in memory
+        if (!this.responsibles_list || this.responsibles_list.length === 0) {
+            this.responsibles_list = await Api.responsibles.list();
+        }
+
+        const sector = id ? this.sectors.find(s => s.id === id) : null;
+        const currentName = sector ? sector.name : '';
+        const currentAlias = sector ? sector.alias : '';
+        const isInternal = sector ? (sector.is_internal || sector.is_internal_hierarchy) : 1;
+        const parentId = sector ? sector.parent_id : null;
+
+        // Fetch current linked auditors/responsibles
+        let selectedResponsibles = [];
+        if (sector && sector.responsible_ids) {
+            const rids = sector.responsible_ids.split(',').map(rid => parseInt(rid.trim(), 10));
+            selectedResponsibles = this.responsibles_list.filter(r => rids.includes(parseInt(r.id, 10)));
+        }
+
         const parentOptions = this.sectors
             .filter(s => s.id !== id)
             .map(s => `<option value="${s.id}" ${s.id === parentId ? 'selected' : ''}>${s.alias || s.name}</option>`)
@@ -1157,26 +1171,44 @@ const configView = {
                     <strong>Setor Interno SMF:</strong> As movimentações entre este setor e subsetores serão tratadas como tramitação interna. <strong>Externo Não SMF:</strong> Trata de movimentações de saída para órgãos fora da administração ou outras secretarias.
                 </small>
             </div>
+            <div class="form-group mb-1">
+                <label>Adicionar Auditor Responsável por este Setor</label>
+                <select id="sec-add-resp">
+                    <option value="">Selecione um auditor para vincular...</option>
+                    ${this.responsibles_list.map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
+                </select>
+                <small class="text-secondary">Selecione os auditores/responsáveis associados a este setor.</small>
+            </div>
+            <div class="form-group">
+                <label>Auditores Responsáveis Vinculados</label>
+                <div id="sec-badge-container" style="display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 44px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #f8fafc;">
+                    <!-- Badges injected here -->
+                </div>
+            </div>
         `;
+
         this.showModal(id ? 'Editar Setor' : 'Novo Setor', html, async () => {
             try {
                 const name = document.getElementById('sec-name').value;
                 const alias = document.getElementById('sec-alias').value;
                 const is_internal = parseInt(document.getElementById('sec-internal').value, 10);
                 const parent_id = document.getElementById('sec-parent').value || null;
+                const responsible_ids = selectedResponsibles.map(r => parseInt(r.id, 10));
                 
+                const bodyData = { name, alias, is_internal, parent_id, responsible_ids };
                 if (id) {
+                    bodyData.id = id;
                     await fetch('api/sectors.php', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id, name, alias, is_internal, parent_id })
-                    });
+                        body: JSON.stringify(bodyData)
+                    }).then(r => r.json());
                 } else {
                     await fetch('api/sectors.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, alias, is_internal, parent_id })
-                    });
+                        body: JSON.stringify(bodyData)
+                    }).then(r => r.json());
                 }
                 
                 window.app.toast('Setor salvo!');
@@ -1185,6 +1217,46 @@ const configView = {
                 window.app.toast(e.message, 'error');
             }
         });
+
+        // Initialize UI logic
+        const container = document.getElementById('sec-badge-container');
+        const select = document.getElementById('sec-add-resp');
+
+        const renderBadges = () => {
+            if (selectedResponsibles.length === 0) {
+                container.innerHTML = '<span class="text-secondary" style="font-size: 0.85rem; padding: 0.2rem 0.5rem;">Nenhum auditor selecionado</span>';
+                return;
+            }
+
+            container.innerHTML = selectedResponsibles.map(r => `
+                <span class="badge badge-neutral badge-removable" data-id="${r.id}" style="cursor: pointer;">
+                    ${r.name}
+                    <i class="fa-solid fa-xmark badge-remove-btn"></i>
+                </span>
+            `).join('');
+
+            // Attach individual remove events
+            container.querySelectorAll('.badge-removable').forEach(badge => {
+                badge.onclick = () => {
+                    const rid = badge.dataset.id;
+                    selectedResponsibles = selectedResponsibles.filter(r => String(r.id) !== String(rid));
+                    renderBadges();
+                };
+            });
+        };
+
+        select.onchange = () => {
+            const rid = select.value;
+            if (!rid) return;
+            if (!selectedResponsibles.some(r => String(r.id) === String(rid))) {
+                const responsible = this.responsibles_list.find(r => String(r.id) === String(rid));
+                if (responsible) selectedResponsibles.push(responsible);
+                renderBadges();
+            }
+            select.value = ''; // Reset select
+        };
+
+        renderBadges();
     },
 
     showMergeSectorModal(sourceId, sourceName) {
