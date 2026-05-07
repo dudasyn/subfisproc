@@ -282,7 +282,6 @@ const configView = {
                             </div>
                             <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap: wrap;">
                                 <button class="btn-secondary" id="btn-show-inactive-sectors" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-eye"></i> Exibir Inativos c/ Dados</button>
-                                <button class="btn-secondary" id="btn-delete-all-sectors" style="padding:0.6rem 1.2rem; background:#fee2e2; color:#b91c1c; border-color:#fecaca;"><i class="fa-solid fa-trash-can"></i> Excluir Todos</button>
                                 <button class="btn-primary" id="btn-add-sector" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-plus"></i> Novo Setor</button>
                             </div>
                         </div>
@@ -306,29 +305,96 @@ const configView = {
                                     </select>
                                 </div>
                             </div>
+                            <!-- Lista de Setores Ativos Segmentada em 3 Blocos -->
                             
-                            <!-- Lista de Setores Ativos -->
-                            <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface);">
-                                <table class="data-table" style="margin-bottom:0; width:100%;">
-                                    <thead>
-                                        <tr>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Nome do Setor / Sigla</th>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 140px; text-align: center;">Tipo</th>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Hierarquia (Pai/Filho)</th>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center;">Auditor Responsável</th>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 120px; text-align: center;">Movimentações</th>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="grid-sectors">
-                                        <tr>
-                                            <td colspan="6" class="text-center p-4 text-secondary">
-                                                <i class="fa-solid fa-circle-notch fa-spin fa-2x mb-1" style="color: var(--primary);"></i>
-                                                <p>Carregando setores ativos...</p>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <!-- Bloco 1: Auditoria Fiscal -->
+                            <div class="sector-segment mb-2" style="border: 1px solid #ddd6fe; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface); box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.05);">
+                                <div style="background: linear-gradient(135deg, #f5f3ff, #ede9fe); padding: 0.85rem 1.25rem; border-bottom: 1px solid #ddd6fe; display: flex; align-items: center; gap: 0.65rem;">
+                                    <i class="fa-solid fa-user-shield" style="color: #7c3aed; font-size: 1.25rem;"></i>
+                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #5b21b6; text-transform: uppercase; letter-spacing: 0.5px;">Auditoria Fiscal (AFT & Subsetores)</h4>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table" style="margin-bottom:0; width:100%;">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Nome do Setor / Sigla</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 140px; text-align: center;">Tipo</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Hierarquia (Pai/Filho)</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center;">Auditor Responsável</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center; width: 140px;">Proc. em Análise</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="grid-sectors-aft">
+                                            <tr>
+                                                <td colspan="6" class="text-center p-4 text-secondary">
+                                                    <i class="fa-solid fa-circle-notch fa-spin fa-2x mb-1" style="color: #7c3aed;"></i>
+                                                    <p>Carregando setores da Auditoria Fiscal...</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Bloco 2: Subsecretaria de Fiscalização -->
+                            <div class="sector-segment mb-2" style="border: 1px solid #bae6fd; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface); box-shadow: 0 4px 6px -1px rgba(2, 132, 199, 0.05);">
+                                <div style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); padding: 0.85rem 1.25rem; border-bottom: 1px solid #bae6fd; display: flex; align-items: center; gap: 0.65rem;">
+                                    <i class="fa-solid fa-building" style="color: #0284c7; font-size: 1.25rem;"></i>
+                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #0369a1; text-transform: uppercase; letter-spacing: 0.5px;">Subsecretaria de Fiscalização (SUBFIS & Subsetores)</h4>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table" style="margin-bottom:0; width:100%;">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Nome do Setor / Sigla</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 140px; text-align: center;">Tipo</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Hierarquia (Pai/Filho)</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center;">Auditor Responsável</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center; width: 140px;">Proc. em Análise</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="grid-sectors-subfis">
+                                            <tr>
+                                                <td colspan="6" class="text-center p-4 text-secondary">
+                                                    <i class="fa-solid fa-circle-notch fa-spin fa-2x mb-1" style="color: #0284c7;"></i>
+                                                    <p>Carregando setores da Subsecretaria de Fiscalização...</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Bloco 3: Outros Setores -->
+                            <div class="sector-segment" style="border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface);">
+                                <div style="background: #f8fafc; padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.65rem;">
+                                    <i class="fa-solid fa-folder-open" style="color: var(--text-secondary); font-size: 1.25rem;"></i>
+                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">Outros Setores</h4>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table" style="margin-bottom:0; width:100%;">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Nome do Setor / Sigla</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 140px; text-align: center;">Tipo</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Hierarquia (Pai/Filho)</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center;">Auditor Responsável</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center; width: 140px;">Proc. em Análise</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="grid-sectors-others">
+                                            <tr>
+                                                <td colspan="6" class="text-center p-4 text-secondary">
+                                                    <i class="fa-solid fa-circle-notch fa-spin fa-2x mb-1" style="color: var(--text-secondary);"></i>
+                                                    <p>Carregando outros setores...</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -347,7 +413,7 @@ const configView = {
                                             <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 140px; text-align: center;">Tipo</th>
                                             <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Hierarquia (Pai/Filho)</th>
                                             <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center;">Auditor Responsável</th>
-                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 120px; text-align: center;">Movimentações</th>
+                                            <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center; width: 140px;">Proc. em Análise</th>
                                             <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Ações</th>
                                         </tr>
                                     </thead>
@@ -378,12 +444,90 @@ const configView = {
                                 <button class="btn-primary" id="btn-add-responsible" style="width:auto; padding:0.6rem 1.2rem;"><i class="fa-solid fa-user-plus"></i> Novo Responsável</button>
                              </div>
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="data-table">
-                                    <thead><tr><th>Nome</th><th>Setor</th><th class="text-center">Ações</th></tr></thead>
-                                    <tbody id="tbody-responsibles"><tr><td colspan="3" class="text-center">Carregando...</td></tr></tbody>
-                                </table>
+                        <div class="card-body p-3" style="background: #f8fafc; display: flex; flex-direction: column; gap: 1.5rem;">
+                            
+                            <!-- Bloco 1: Auditoria Fiscal -->
+                            <div class="sector-segment mb-2" style="border: 1px solid #ddd6fe; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface); box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.05);">
+                                <div style="background: linear-gradient(135deg, #f5f3ff, #ede9fe); padding: 0.85rem 1.25rem; border-bottom: 1px solid #ddd6fe; display: flex; align-items: center; gap: 0.65rem;">
+                                    <i class="fa-solid fa-user-shield" style="color: #7c3aed; font-size: 1.25rem;"></i>
+                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #5b21b6; text-transform: uppercase; letter-spacing: 0.5px;">Auditoria Fiscal</h4>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table" style="margin-bottom:0; width:100%;">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Nome</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Setor(es) Atribuído(s)</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center;">Proc. em Análise</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbody-responsibles-aft">
+                                            <tr>
+                                                <td colspan="4" class="text-center p-4 text-secondary">
+                                                    <i class="fa-solid fa-circle-notch fa-spin fa-2x mb-1" style="color: #7c3aed;"></i>
+                                                    <p>Carregando responsáveis da Auditoria Fiscal...</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Bloco 2: Subsecretaria de Fiscalização -->
+                            <div class="sector-segment mb-2" style="border: 1px solid #bae6fd; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface); box-shadow: 0 4px 6px -1px rgba(2, 132, 199, 0.05);">
+                                <div style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); padding: 0.85rem 1.25rem; border-bottom: 1px solid #bae6fd; display: flex; align-items: center; gap: 0.65rem;">
+                                    <i class="fa-solid fa-building" style="color: #0284c7; font-size: 1.25rem;"></i>
+                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #0369a1; text-transform: uppercase; letter-spacing: 0.5px;">Subsecretaria de Fiscalização</h4>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table" style="margin-bottom:0; width:100%;">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Nome</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Setor(es) Atribuído(s)</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center;">Proc. em Análise</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbody-responsibles-subfis">
+                                            <tr>
+                                                <td colspan="4" class="text-center p-4 text-secondary">
+                                                    <i class="fa-solid fa-circle-notch fa-spin fa-2x mb-1" style="color: #0284c7;"></i>
+                                                    <p>Carregando responsáveis da Subsecretaria de Fiscalização...</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Bloco 3: Outros Responsáveis -->
+                            <div class="sector-segment" style="border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface);">
+                                <div style="background: #f8fafc; padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.65rem;">
+                                    <i class="fa-solid fa-user-group" style="color: var(--text-secondary); font-size: 1.25rem;"></i>
+                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">Outros Responsáveis</h4>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table" style="margin-bottom:0; width:100%;">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Nome</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary);">Setor(es) Atribuído(s)</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); text-align: center;">Proc. em Análise</th>
+                                                <th style="padding: 1rem; background: #f8fafc; font-weight: 700; color: var(--text-primary); width: 220px; text-align: center;">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbody-responsibles-others">
+                                            <tr>
+                                                <td colspan="4" class="text-center p-4 text-secondary">
+                                                    <i class="fa-solid fa-circle-notch fa-spin fa-2x mb-1" style="color: var(--text-secondary);"></i>
+                                                    <p>Carregando outros responsáveis...</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -577,9 +721,6 @@ const configView = {
         const btnAddSector = document.getElementById('btn-add-sector');
         if (btnAddSector) btnAddSector.onclick = () => this.showSectorModal();
 
-        const btnDeleteAllSectors = document.getElementById('btn-delete-all-sectors');
-        if (btnDeleteAllSectors) btnDeleteAllSectors.onclick = () => this.deleteAllSectors();
-
         const btnAddResponsible = document.getElementById('btn-add-responsible');
         if (btnAddResponsible) btnAddResponsible.onclick = () => this.showResponsibleModal();
 
@@ -696,15 +837,29 @@ const configView = {
             this.sectors = await Api.sectors.list(this.showInactive);
             this.filterAndRenderSectors();
         } catch (e) {
-            const grid = document.getElementById('grid-sectors');
-            if (grid) grid.innerHTML = `<div style="grid-column: 1 / -1;" class="text-center p-3 text-danger"><i class="fa-solid fa-triangle-exclamation fa-2x mb-1"></i><p>Erro ao carregar setores: ${e.message}</p></div>`;
+            ['grid-sectors-aft', 'grid-sectors-subfis', 'grid-sectors-others'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center p-4 text-danger">
+                                <i class="fa-solid fa-triangle-exclamation fa-2x mb-1" style="color: var(--danger);"></i>
+                                <p>Erro ao carregar setores: ${e.message}</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
         }
     },
 
     filterAndRenderSectors() {
-        const gridActive = document.getElementById('grid-sectors');
+        const gridAft = document.getElementById('grid-sectors-aft');
+        const gridSubfis = document.getElementById('grid-sectors-subfis');
+        const gridOthers = document.getElementById('grid-sectors-others');
         const gridInactive = document.getElementById('grid-inactive-sectors');
-        if (!gridActive) return;
+
+        if (!gridAft && !gridSubfis && !gridOthers) return;
 
         const searchVal = (document.getElementById('sector-search-input')?.value || '').toLowerCase().trim();
         const typeFilter = document.getElementById('sector-filter-type')?.value || 'all';
@@ -748,6 +903,15 @@ const configView = {
                 ? s.responsible_names.split(', ').map(name => `<span class="badge badge-success" style="margin: 2px; font-size: 0.72rem; padding: 0.2rem 0.4rem; white-space: nowrap;"><i class="fa-solid fa-user-shield"></i> ${name}</span>`).join('')
                 : '<span style="color: var(--text-secondary); font-size: 0.82rem; font-style: italic;">Nenhum</span>';
 
+            const stationedCount = parseInt(s.stationed_processes_count || 0, 10);
+            const stationedBadgeHtml = stationedCount > 0
+                ? `<span class="badge" style="background: #fee2e2; color: #991b1b; font-weight: 700; font-size: 0.82rem; padding: 0.3rem 0.6rem; border-radius: var(--radius-md); border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 4px; box-shadow: var(--shadow-sm);" title="${stationedCount} processo(s) parados neste setor">
+                    <i class="fa-solid fa-hourglass-half" style="color: #b91c1c;"></i> ${stationedCount}
+                   </span>`
+                : `<span class="badge" style="background: #f0fdf4; color: #166534; font-weight: 500; font-size: 0.82rem; padding: 0.3rem 0.6rem; border-radius: var(--radius-md); border: 1px solid #bbf7d0; display: inline-flex; align-items: center; gap: 4px;" title="Setor livre e seguro para exclusão">
+                    <i class="fa-solid fa-check" style="color: #15803d;"></i> 0
+                   </span>`;
+
             return `
                 <tr class="sector-row ${s.active == 0 ? 'inactive-sector' : ''}" data-id="${s.id}" style="${rowOpacity}">
                     <td style="padding: 1rem; vertical-align: middle; ${indentStyle}">
@@ -771,9 +935,7 @@ const configView = {
                         </div>
                     </td>
                     <td style="padding: 1rem; text-align: center; vertical-align: middle;">
-                        <span class="badge" style="background: #f1f5f9; color: #334155; font-weight: 700; font-size: 0.82rem; padding: 0.3rem 0.6rem; border-radius: var(--radius-md); border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
-                            <i class="fa-solid fa-exchange-alt" style="color: var(--text-secondary);"></i> ${s.movement_count || 0}
-                        </span>
+                        ${stationedBadgeHtml}
                     </td>
                     <td style="padding: 1rem; text-align: center; vertical-align: middle;">
                         <div style="display: flex; gap: 0.4rem; justify-content: center; align-items: center;">
@@ -819,6 +981,35 @@ const configView = {
             return matchesSearch;
         });
 
+        // Helper to extract descendant IDs recursively (BFS)
+        const getSectorDescendants = (sectorsList, parentId) => {
+            const parentIdInt = parseInt(parentId, 10);
+            const descendants = [parentIdInt];
+            const queue = [parentIdInt];
+            
+            while (queue.length > 0) {
+                const currentId = queue.shift();
+                sectorsList.forEach(s => {
+                    if (s.parent_id !== null && parseInt(s.parent_id, 10) === currentId) {
+                        const childId = parseInt(s.id, 10);
+                        if (!descendants.includes(childId)) {
+                            descendants.push(childId);
+                            queue.push(childId);
+                        }
+                    }
+                });
+            }
+            return descendants;
+        };
+
+        const subfisSectorIds = getSectorDescendants(this.sectors, 316);
+        const aftSectorIds = getSectorDescendants(this.sectors, 319);
+
+        // Classify filtered active sectors into three segmented branches
+        const aftActive = filteredActive.filter(s => aftSectorIds.includes(parseInt(s.id, 10)));
+        const subfisActive = filteredActive.filter(s => subfisSectorIds.includes(parseInt(s.id, 10)));
+        const othersActive = filteredActive.filter(s => !aftSectorIds.includes(parseInt(s.id, 10)) && !subfisSectorIds.includes(parseInt(s.id, 10)));
+
         // Alphabetical & Hierarchical sorting logic
         const getSortedHierarchicalList = (sectorsList) => {
             const sorted = [];
@@ -853,29 +1044,39 @@ const configView = {
             return sorted;
         };
 
-        const sortedActive = getSortedHierarchicalList(filteredActive);
+        const sortedAft = getSortedHierarchicalList(aftActive);
+        const sortedSubfis = getSortedHierarchicalList(subfisActive);
+        const sortedOthers = getSortedHierarchicalList(othersActive);
         const sortedInactive = getSortedHierarchicalList(filteredInactive);
 
-        // Render Active
-        if (sortedActive.length === 0) {
-            gridActive.innerHTML = `
-                <tr>
-                    <td colspan="5" class="text-center p-4 text-secondary">
-                        <i class="fa-solid fa-folder-open fa-2x mb-1" style="opacity: 0.5; display: block; margin: 0 auto 0.5rem;"></i>
-                        Nenhum setor ativo correspondente aos filtros foi encontrado.
-                    </td>
-                </tr>
-            `;
-        } else {
-            gridActive.innerHTML = sortedActive.map(s => buildRow(s)).join('');
-        }
+        // Helper to render individual grid content
+        const renderGrid = (gridEl, list, emptyMsg) => {
+            if (!gridEl) return;
+            if (list.length === 0) {
+                gridEl.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center p-4 text-secondary">
+                            <i class="fa-solid fa-folder-open fa-2x mb-1" style="opacity: 0.5; display: block; margin: 0 auto 0.5rem;"></i>
+                            ${emptyMsg}
+                        </td>
+                    </tr>
+                `;
+            } else {
+                gridEl.innerHTML = list.map(s => buildRow(s)).join('');
+            }
+        };
+
+        // Render Active Tables
+        renderGrid(gridAft, sortedAft, 'Nenhum setor da Auditoria Fiscal correspondente aos filtros ativos foi encontrado.');
+        renderGrid(gridSubfis, sortedSubfis, 'Nenhum setor da Subsecretaria de Fiscalização correspondente aos filtros ativos foi encontrado.');
+        renderGrid(gridOthers, sortedOthers, 'Nenhum setor adicional correspondente aos filtros ativos foi encontrado.');
 
         // Render Inactive
         if (gridInactive) {
             if (sortedInactive.length === 0) {
                 gridInactive.innerHTML = `
                     <tr>
-                        <td colspan="5" class="text-center p-4 text-secondary">
+                        <td colspan="6" class="text-center p-4 text-secondary">
                             Nenhum setor inativo encontrado.
                         </td>
                     </tr>
@@ -892,30 +1093,94 @@ const configView = {
                 this.sectors = await Api.sectors.list(true);
             }
             this.responsibles_list = await Api.responsibles.list();
-            const tbody = document.getElementById('tbody-responsibles');
-            if (!tbody) return;
-            if (this.responsibles_list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="text-center">Nenhum responsável cadastrado</td></tr>`;
-                return;
-            }
-            tbody.innerHTML = this.responsibles_list.map(r => {
-                const sectorBadges = r.sector_name 
-                    ? r.sector_name.split(', ').map(s => `<span class="badge badge-neutral" style="margin-right:2px;">${s}</span>`).join('')
-                    : '<span class="badge badge-neutral" style="color:var(--text-secondary)">Sem setor</span>';
-                return `
-                <tr>
-                    <td><strong>${r.name}</strong></td>
-                    <td>${sectorBadges}</td>
-                    <td class="text-center">
-                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showResponsibleModal(${r.id}, '${r.name.replace(/'/g, "\\'")}', '${r.sector_ids || ''}')"><i class="fa-solid fa-pen"></i> Editar</button>
-                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:var(--bg-secondary); color:var(--primary); margin-left:5px;" onclick="configView.showMergeResponsibleModal(${r.id}, '${r.name.replace(/'/g, "\\'")}')" title="Mesclar auditor duplicado"><i class="fa-solid fa-code-merge"></i> Mesclar</button>
-                        <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c; margin-left:5px;" onclick="configView.deleteResponsible(${r.id})"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>`;
-            }).join('');
+
+            // Helper to extract descendant IDs recursively (BFS)
+            const getSectorDescendants = (sectorsList, parentId) => {
+                const parentIdInt = parseInt(parentId, 10);
+                const descendants = [parentIdInt];
+                const queue = [parentIdInt];
+                
+                while (queue.length > 0) {
+                    const currentId = queue.shift();
+                    sectorsList.forEach(s => {
+                        if (s.parent_id !== null && parseInt(s.parent_id, 10) === currentId) {
+                            const childId = parseInt(s.id, 10);
+                            if (!descendants.includes(childId)) {
+                                descendants.push(childId);
+                                queue.push(childId);
+                            }
+                        }
+                    });
+                }
+                return descendants;
+            };
+
+            const subfisSectorIds = getSectorDescendants(this.sectors, 316);
+            const aftSectorIds = getSectorDescendants(this.sectors, 319);
+
+            const aftResponsibles = [];
+            const subfisResponsibles = [];
+            const othersResponsibles = [];
+
+            this.responsibles_list.forEach(r => {
+                const rSectorIds = r.sector_ids ? r.sector_ids.split(',').map(id => parseInt(id.trim(), 10)) : [];
+                
+                const belongsToAft = rSectorIds.some(id => aftSectorIds.includes(id));
+                const belongsToSubfis = rSectorIds.some(id => subfisSectorIds.includes(id));
+
+                if (belongsToAft) {
+                    aftResponsibles.push(r);
+                } else if (belongsToSubfis) {
+                    subfisResponsibles.push(r);
+                } else {
+                    othersResponsibles.push(r);
+                }
+            });
+
+            const renderList = (tbodyId, list, emptyMessage) => {
+                const tbody = document.getElementById(tbodyId);
+                if (!tbody) return;
+                
+                if (list.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-secondary">${emptyMessage}</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = list.map(r => {
+                    const sectorBadges = r.sector_name 
+                        ? r.sector_name.split(', ').map(s => `<span class="badge badge-neutral" style="margin-right:2px;">${s}</span>`).join('')
+                        : '<span class="badge badge-neutral" style="color:var(--text-secondary)">Sem setor</span>';
+                    
+                    const count = r.stationed_processes_count || 0;
+                    const stationedBadgeHtml = count > 0 
+                        ? `<span class="badge" style="background: #fee2e2; color: #991b1b; padding: 0.3rem 0.6rem; border-radius: 99px; font-weight: 700; border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-hourglass-half" style="font-size: 0.8rem;"></i> ${count}</span>`
+                        : `<span class="badge" style="background: #f0fdf4; color: #166534; padding: 0.3rem 0.6rem; border-radius: 99px; font-weight: 600; border: 1px solid #dcfce7; display: inline-flex; align-items: center; gap: 0.3rem;"><i class="fa-solid fa-check" style="font-size: 0.8rem;"></i> 0</span>`;
+
+                    return `
+                    <tr>
+                        <td><strong>${r.name}</strong></td>
+                        <td>${sectorBadges}</td>
+                        <td class="text-center" style="vertical-align: middle;">${stationedBadgeHtml}</td>
+                        <td class="text-center" style="white-space: nowrap;">
+                            <div style="display: flex; justify-content: center; gap: 5px;">
+                                <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showResponsibleModal(${r.id}, '${r.name.replace(/'/g, "\\'")}', '${r.sector_ids || ''}', ${count})"><i class="fa-solid fa-pen"></i> Editar</button>
+                                <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:var(--bg-secondary); color:var(--primary);" onclick="configView.showMergeResponsibleModal(${r.id}, '${r.name.replace(/'/g, "\\'")}')" title="Mesclar auditor duplicado"><i class="fa-solid fa-code-merge"></i> Mesclar</button>
+                                <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c;" onclick="configView.deleteResponsible(${r.id})"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('');
+            };
+
+            renderList('tbody-responsibles-aft', aftResponsibles, 'Nenhum auditor responsável vinculado aos setores da Auditoria Fiscal.');
+            renderList('tbody-responsibles-subfis', subfisResponsibles, 'Nenhum auditor responsável vinculado aos setores da Subsecretaria.');
+            renderList('tbody-responsibles-others', othersResponsibles, 'Nenhum outro responsável cadastrado.');
+
         } catch (e) {
-            const tbody = document.getElementById('tbody-responsibles');
-            if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">Erro ao carregar responsáveis: ${e.message}</td></tr>`;
+            ['tbody-responsibles-aft', 'tbody-responsibles-subfis', 'tbody-responsibles-others'].forEach(id => {
+                const tbody = document.getElementById(id);
+                if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Erro ao carregar: ${e.message}</td></tr>`;
+            });
         }
     },
 
@@ -1038,7 +1303,7 @@ const configView = {
         };
     },
 
-    showResponsibleModal(id = null, currentName = '', currentSectorIds = '') {
+    showResponsibleModal(id = null, currentName = '', currentSectorIds = '', stationedCount = 0) {
         let selectedSectors = [];
         if (currentSectorIds) {
             const ids = currentSectorIds.split(',').map(s => s.trim());
@@ -1052,10 +1317,11 @@ const configView = {
             </div>
             <div class="form-group mb-1">
                 <label>Adicionar Setor de Atuação</label>
-                <select id="resp-add-sector">
-                    <option value="">Selecione um setor para adicionar...</option>
+                <select id="resp-add-sector" ${stationedCount > 0 ? 'disabled' : ''}>
+                    <option value="">${stationedCount > 0 ? 'Setores bloqueados para alteração' : 'Selecione um setor para adicionar...'}</option>
                     ${this.sectors.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('')}
                 </select>
+                ${stationedCount > 0 ? `<small style="color:#b91c1c; display:block; margin-top:0.3rem;"><i class="fa-solid fa-lock"></i> Auditor possui ${stationedCount} processo(s) em análise. Zere a carga antes de alterar os setores.</small>` : ''}
             </div>
             <div class="form-group">
                 <label>Setores Selecionados</label>
@@ -1088,20 +1354,22 @@ const configView = {
             }
 
             container.innerHTML = selectedSectors.map(s => `
-                <span class="badge badge-neutral badge-removable" data-id="${s.id}" style="cursor: pointer;">
+                <span class="badge badge-neutral ${stationedCount === 0 ? 'badge-removable' : ''}" data-id="${s.id}" style="${stationedCount === 0 ? 'cursor: pointer;' : ''}">
                     ${s.alias || s.name}
-                    <i class="fa-solid fa-xmark badge-remove-btn"></i>
+                    ${stationedCount === 0 ? '<i class="fa-solid fa-xmark badge-remove-btn"></i>' : ''}
                 </span>
             `).join('');
 
-            // Attach individual remove events
-            container.querySelectorAll('.badge-removable').forEach(badge => {
-                badge.onclick = () => {
-                    const sid = badge.dataset.id;
-                    selectedSectors = selectedSectors.filter(s => String(s.id) !== String(sid));
-                    renderBadges();
-                };
-            });
+            // Attach individual remove events only if not blocked
+            if (stationedCount === 0) {
+                container.querySelectorAll('.badge-removable').forEach(badge => {
+                    badge.onclick = () => {
+                        const sid = badge.dataset.id;
+                        selectedSectors = selectedSectors.filter(s => String(s.id) !== String(sid));
+                        renderBadges();
+                    };
+                });
+            }
         };
 
         select.onchange = () => {
@@ -1429,6 +1697,11 @@ const configView = {
     },
 
     async deleteResponsible(id) {
+        const resp = this.responsibles_list ? this.responsibles_list.find(r => parseInt(r.id, 10) === parseInt(id, 10)) : null;
+        if (resp && parseInt(resp.stationed_processes_count || 0, 10) > 0) {
+            window.app.toast(`Este auditor não pode ser removido porque possui ${resp.stationed_processes_count} processo(s) em análise.`, 'error');
+            return;
+        }
         if (!confirm('Deseja realmente remover este responsável?')) return;
         try {
             await Api.responsibles.delete(id);
@@ -1438,6 +1711,11 @@ const configView = {
     },
 
     async deleteSector(id) {
+        const sector = this.sectors ? this.sectors.find(s => parseInt(s.id, 10) === parseInt(id, 10)) : null;
+        if (sector && parseInt(sector.stationed_processes_count || 0, 10) > 0) {
+            window.app.toast(`Este setor não pode ser excluído porque possui ${sector.stationed_processes_count} processo(s) em análise.`, 'error');
+            return;
+        }
         if (!confirm('Deseja realmente excluir este setor? O histórico será mantido.')) return;
         try {
             await Api.sectors.delete(id);
@@ -1447,6 +1725,10 @@ const configView = {
     },
 
     async deleteAllSectors() {
+        if (this.sectors && this.sectors.some(s => s.active == 1 && parseInt(s.stationed_processes_count || 0, 10) > 0)) {
+            window.app.toast('Não é possível excluir todos os setores porque existem processos em análise em setores ativos do sistema.', 'error');
+            return;
+        }
         if (!confirm('CUIDADO: Deseja realmente excluir TODOS os setores? Esta ação não tem volta e afeta os relatórios atuais.')) return;
         try {
             await Api.sectors.delete('all');

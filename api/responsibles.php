@@ -11,7 +11,15 @@ if ($method === 'GET') {
     $stmt = $pdo->query('
         SELECT r.id, r.name, r.active, r.created_at,
                GROUP_CONCAT(s.id ORDER BY s.name SEPARATOR ",") as sector_ids,
-               GROUP_CONCAT(s.name ORDER BY s.name SEPARATOR ", ") as sector_name
+               GROUP_CONCAT(s.name ORDER BY s.name SEPARATOR ", ") as sector_name,
+               (SELECT COUNT(*) 
+                FROM movements m2 
+                INNER JOIN (
+                    SELECT process_id, MAX(id) as max_id 
+                    FROM movements 
+                    GROUP BY process_id
+                ) latest ON m2.id = latest.max_id 
+                WHERE m2.responsible_id = r.id) as stationed_processes_count
         FROM responsibles r
         LEFT JOIN responsible_sectors rs ON r.id = rs.responsible_id
         LEFT JOIN sectors s ON rs.sector_id = s.id
@@ -93,6 +101,33 @@ if ($method === 'GET') {
 
     if (!$id || empty($name)) jsonResponse(['error' => 'ID e Nome são obrigatórios'], 400);
 
+    // Check stationed processes
+    $stmtCount = $pdo->prepare('
+        SELECT COUNT(*) 
+        FROM movements m2 
+        INNER JOIN (
+            SELECT process_id, MAX(id) as max_id 
+            FROM movements 
+            GROUP BY process_id
+        ) latest ON m2.id = latest.max_id 
+        WHERE m2.responsible_id = ?
+    ');
+    $stmtCount->execute([$id]);
+    $stationed_count = (int)$stmtCount->fetchColumn();
+
+    if ($stationed_count > 0) {
+        $stmtOldSectors = $pdo->prepare('SELECT sector_id FROM responsible_sectors WHERE responsible_id = ?');
+        $stmtOldSectors->execute([$id]);
+        $old_sectors = $stmtOldSectors->fetchAll(PDO::FETCH_COLUMN);
+        
+        $old_sorted = array_map('intval', $old_sectors); sort($old_sorted);
+        $new_sorted = array_map('intval', $sector_ids); sort($new_sorted);
+        
+        if (implode(',', $old_sorted) !== implode(',', $new_sorted)) {
+            jsonResponse(['error' => "Não é possível alterar os setores deste auditor pois ele possui $stationed_count processo(s) parado(s) sob sua responsabilidade. Zere a carga antes de remanejá-lo."], 400);
+        }
+    }
+
     $pdo->beginTransaction();
     try {
         $stmt = $pdo->prepare('UPDATE responsibles SET name = ? WHERE id = ?');
@@ -116,6 +151,24 @@ if ($method === 'GET') {
 } elseif ($method === 'DELETE') {
     $id = $_GET['id'] ?? 0;
     if (!$id) jsonResponse(['error' => 'ID é obrigatório'], 400);
+
+    $stmtCount = $pdo->prepare('
+        SELECT COUNT(*) 
+        FROM movements m2 
+        INNER JOIN (
+            SELECT process_id, MAX(id) as max_id 
+            FROM movements 
+            GROUP BY process_id
+        ) latest ON m2.id = latest.max_id 
+        WHERE m2.responsible_id = ?
+    ');
+    $stmtCount->execute([$id]);
+    $stationed_count = (int)$stmtCount->fetchColumn();
+
+    if ($stationed_count > 0) {
+        jsonResponse(['error' => "Não é possível excluir este responsável pois ele possui $stationed_count processo(s) parados(s) com ele."], 400);
+    }
+
     $stmt = $pdo->prepare('UPDATE responsibles SET active = 0 WHERE id = ?');
     $stmt->execute([$id]);
     jsonResponse(['success' => true]);

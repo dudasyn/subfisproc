@@ -745,16 +745,30 @@ const dashboardView = {
 
                     </div>
 
-                    <!-- Monthly Line Chart (Full Width Bottom) -->
-                    <div class="card" style="box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); border-radius: var(--radius-lg); margin-top: 1.5rem; padding: 1.5rem; background: #ffffff; animation: fadeUp 0.7s ease-out;">
-                        <div style="margin-bottom: 1.25rem;">
-                            <h3 style="font-size: 1.2rem; font-weight: 750; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> Comparativo de Produtividade Mensal
-                            </h3>
-                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0 0;">Evolução temporal e comparativa das entradas de processos mês a mês (últimos 3 anos).</p>
+                    <!-- Monthly Line Charts (Full Width Bottom, Split SUBFIS/AFT) -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; animation: fadeUp 0.7s ease-out;">
+                        <div class="card" style="box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; background: #ffffff;">
+                            <div style="margin-bottom: 1.25rem;">
+                                <h3 style="font-size: 1.2rem; font-weight: 750; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> Entradas Mensais - SUBFIS
+                                </h3>
+                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0 0;">Volume de entradas mês a mês (últimos 3 anos).</p>
+                            </div>
+                            <div style="position: relative; height: 350px; width: 100%;">
+                                <canvas id="chart-subfis-entradas"></canvas>
+                            </div>
                         </div>
-                        <div style="position: relative; height: 350px; width: 100%;">
-                            <canvas id="yearly-comparison-chart"></canvas>
+
+                        <div class="card" style="box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; background: #ffffff;">
+                            <div style="margin-bottom: 1.25rem;">
+                                <h3 style="font-size: 1.2rem; font-weight: 750; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-chart-line" style="color: #8b5cf6;"></i> Entradas Mensais - AFT
+                                </h3>
+                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0 0;">Volume de entradas mês a mês (últimos 3 anos).</p>
+                            </div>
+                            <div style="position: relative; height: 350px; width: 100%;">
+                                <canvas id="chart-aft-entradas"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -786,7 +800,7 @@ const dashboardView = {
 
             // Perform initial load of filtered sector metrics & draw yearly comparison chart
             this.updateFilteredData(defaultStart, defaultEnd, '');
-            this.renderYearlyChart(stats.monthly_stats || {});
+            this.renderMonthlyCharts(stats.monthly_entradas_subfis || {}, stats.monthly_entradas_aft || {});
 
         } catch (e) {
             container.innerHTML = `
@@ -1061,169 +1075,120 @@ const dashboardView = {
     },
 
     /**
-     * Initializes and renders the YoY Chart.js bar graph comparing inputs, outputs, and processes.
+     * Initializes and renders the Monthly Chart.js line graphs comparing entries for SUBFIS and AFT.
      */
-    renderYearlyChart(monthlyData) {
-        const canvas = document.getElementById('yearly-comparison-chart');
-        if (!canvas) return;
+    renderMonthlyCharts(subfisData, aftData) {
+        const canvasSubfis = document.getElementById('chart-subfis-entradas');
+        const canvasAft = document.getElementById('chart-aft-entradas');
 
-        // Clean up previous instance if exists to prevent rendering bugs on navigation
-        if (this.chartInstance) {
-            this.chartInstance.destroy();
-            this.chartInstance = null;
-        }
+        if (this.chartSubfis) this.chartSubfis.destroy();
+        if (this.chartAft) this.chartAft.destroy();
 
-        // Verify Chart.js is successfully loaded
         if (typeof Chart === 'undefined') {
-            canvas.parentElement.innerHTML = `
-                <div class="text-center p-4" style="color: var(--text-secondary);">
-                    <i class="fa-solid fa-circle-exclamation fa-2x" style="display:block; margin-bottom: 0.5rem;"></i>
-                    Erro: Biblioteca de gráficos (Chart.js) não foi carregada corretamente.
-                </div>
-            `;
-            return;
-        }
-
-        // Handle empty dataset edge case
-        if (!monthlyData || Object.keys(monthlyData).length === 0) {
-            const ctx = canvas.getContext('2d');
-            ctx.font = '14px Outfit, sans-serif';
-            ctx.fillStyle = '#64748b';
-            ctx.textAlign = 'center';
-            ctx.fillText('Nenhum dado mensal consolidado encontrado para exibir o gráfico.', canvas.width / 2, canvas.height / 2);
+            if (canvasSubfis) canvasSubfis.parentElement.innerHTML = '<div class="text-center p-4">Erro: Chart.js não carregado.</div>';
+            if (canvasAft) canvasAft.parentElement.innerHTML = '<div class="text-center p-4">Erro: Chart.js não carregado.</div>';
             return;
         }
 
         const monthsLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-        
-        // Prepare datasets dynamically for each year available (up to 3 years)
-        const years = Object.keys(monthlyData).sort(); 
-        
-        const colorPalette = {
-            0: { // Earliest Year (e.g., 2024)
-                borderColor: '#94a3b8', // Slate Gray
-                backgroundColor: '#94a3b8',
-                borderDash: [5, 5] // Dashed line for older year
+
+        const createDatasets = (dataMap, primaryColor) => {
+            if (!dataMap || Object.keys(dataMap).length === 0) return [];
+            const years = Object.keys(dataMap).sort();
+            
+            return years.map((year, index) => {
+                // Style based on relative year age
+                const isCurrent = index === years.length - 1;
+                const isPrevious = index === years.length - 2;
+                
+                let color = primaryColor;
+                let dash = [];
+                let width = 3;
+                let bg = primaryColor;
+                
+                if (!isCurrent) {
+                    if (isPrevious) {
+                        color = '#94a3b8'; // Slate
+                        bg = '#94a3b8';
+                        width = 2;
+                    } else {
+                        color = '#cbd5e1'; // Light Slate
+                        bg = '#cbd5e1';
+                        dash = [5, 5];
+                        width = 2;
+                    }
+                }
+
+                return {
+                    label: `Entradas ${year}`,
+                    data: dataMap[year],
+                    borderColor: color,
+                    backgroundColor: bg,
+                    borderWidth: isCurrent ? 4 : width,
+                    borderDash: dash,
+                    tension: 0.35, // Smooth Bezier Curves
+                    pointRadius: isCurrent ? 5 : 3,
+                    pointHoverRadius: isCurrent ? 8 : 5,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    fill: false
+                };
+            });
+        };
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { font: { family: 'Outfit, sans-serif', size: 12, weight: 600 }, color: '#475569', usePointStyle: true, boxWidth: 14 }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleFont: { family: 'Outfit, sans-serif', size: 13, weight: 700 },
+                    bodyFont: { family: 'Outfit, sans-serif', size: 12, weight: 500 },
+                    padding: 12, cornerRadius: 8, usePointStyle: true
+                }
             },
-            1: { // Middle Year (e.g., 2025)
-                borderColor: '#10b981', // Emerald Green
-                backgroundColor: '#10b981'
-            },
-            2: { // Current Year (e.g., 2026)
-                borderColor: '#0072bc', // PMDC Branding Blue
-                backgroundColor: '#0072bc',
-                borderWidth: 4,
-                pointRadius: 5,
-                pointHoverRadius: 8
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { family: 'Outfit, sans-serif', size: 12, weight: 700 }, color: '#64748b' } },
+                y: { grid: { color: '#f1f5f9', drawTicks: false }, ticks: { font: { family: 'Outfit, sans-serif', size: 11 }, color: '#64748b', padding: 8 }, border: { dash: [4, 4], color: '#e2e8f0' } }
             }
         };
 
-        const datasets = years.map((year, index) => {
-            const palette = colorPalette[index] || {
-                borderColor: '#f59e0b',
-                backgroundColor: '#f59e0b'
-            };
-
-            return {
-                label: `Ano ${year}`,
-                data: monthlyData[year],
-                borderColor: palette.borderColor,
-                backgroundColor: palette.backgroundColor,
-                borderWidth: palette.borderWidth || 3,
-                borderDash: palette.borderDash || [],
-                tension: 0.35, // Smooth Bezier Curves
-                pointRadius: palette.pointRadius || 4,
-                pointHoverRadius: palette.pointHoverRadius || 6,
-                pointBackgroundColor: '#ffffff',
-                pointBorderWidth: 2,
-                fill: false
-            };
-        });
-
-        const ctx = canvas.getContext('2d');
-        this.chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: monthsLabels,
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: 'index',
-                },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            font: {
-                                family: 'Outfit, sans-serif',
-                                size: 12,
-                                weight: 600
-                            },
-                            color: '#475569',
-                            boxWidth: 14,
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            padding: 20
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                        titleFont: {
-                            family: 'Outfit, sans-serif',
-                            size: 13,
-                            weight: 700
-                        },
-                        bodyFont: {
-                            family: 'Outfit, sans-serif',
-                            size: 12,
-                            weight: 500
-                        },
-                        padding: 12,
-                        cornerRadius: 8,
-                        boxPadding: 6,
-                        usePointStyle: true
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                family: 'Outfit, sans-serif',
-                                size: 12,
-                                weight: 700
-                            },
-                            color: '#64748b'
-                        }
-                    },
-                    y: {
-                        grid: {
-                            color: '#f1f5f9',
-                            drawTicks: false
-                        },
-                        ticks: {
-                            font: {
-                                family: 'Outfit, sans-serif',
-                                size: 11,
-                                weight: 500
-                            },
-                            color: '#64748b',
-                            padding: 8
-                        },
-                        border: {
-                            dash: [4, 4],
-                            color: '#e2e8f0'
-                        }
-                    }
-                }
+        if (canvasSubfis) {
+            if (Object.keys(subfisData).length === 0) {
+                const ctx = canvasSubfis.getContext('2d');
+                ctx.font = '14px Outfit, sans-serif';
+                ctx.fillStyle = '#64748b';
+                ctx.textAlign = 'center';
+                ctx.fillText('Nenhuma entrada registrada', canvasSubfis.width / 2, canvasSubfis.height / 2);
+            } else {
+                this.chartSubfis = new Chart(canvasSubfis.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: monthsLabels, datasets: createDatasets(subfisData, '#0072bc') },
+                    options: chartOptions
+                });
             }
-        });
+        }
+
+        if (canvasAft) {
+            if (Object.keys(aftData).length === 0) {
+                const ctx = canvasAft.getContext('2d');
+                ctx.font = '14px Outfit, sans-serif';
+                ctx.fillStyle = '#64748b';
+                ctx.textAlign = 'center';
+                ctx.fillText('Nenhuma entrada registrada', canvasAft.width / 2, canvasAft.height / 2);
+            } else {
+                this.chartAft = new Chart(canvasAft.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: monthsLabels, datasets: createDatasets(aftData, '#8b5cf6') },
+                    options: chartOptions
+                });
+            }
+        }
     }
 };
 

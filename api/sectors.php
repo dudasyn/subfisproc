@@ -19,6 +19,14 @@ if ($method === 'GET') {
         SELECT s.*, 
         (SELECT COUNT(*) FROM sectors s2 WHERE s2.parent_id = s.id AND s2.active = 1) as children_count,
         (SELECT COUNT(*) FROM movements m WHERE m.destination_sector_id = s.id) as movement_count,
+        (SELECT COUNT(*) 
+         FROM movements m2 
+         INNER JOIN (
+             SELECT process_id, MAX(id) as max_id 
+             FROM movements 
+             GROUP BY process_id
+         ) latest ON m2.id = latest.max_id 
+         WHERE m2.destination_sector_id = s.id) as stationed_processes_count,
         (SELECT GROUP_CONCAT(r.name SEPARATOR ', ') FROM responsible_sectors rs JOIN responsibles r ON rs.responsible_id = r.id WHERE rs.sector_id = s.id AND r.active = 1) as responsible_names,
         (SELECT GROUP_CONCAT(r.id SEPARATOR ',') FROM responsible_sectors rs JOIN responsibles r ON rs.responsible_id = r.id WHERE rs.sector_id = s.id AND r.active = 1) as responsible_ids
         FROM sectors s 
@@ -166,9 +174,44 @@ if ($method === 'GET') {
     if (!$id) jsonResponse(['error' => 'ID é obrigatório'], 400);
 
     if ($id === 'all') {
+        // Verificar se há qualquer processo estacionado em setores ativos
+        $stmt_check = $pdo->query("
+            SELECT COUNT(*) 
+            FROM movements m2 
+            INNER JOIN (
+                SELECT process_id, MAX(id) as max_id 
+                FROM movements 
+                GROUP BY process_id
+            ) latest ON m2.id = latest.max_id 
+            INNER JOIN sectors s ON m2.destination_sector_id = s.id
+            WHERE s.active = 1
+        ");
+        $total_stationed = (int)$stmt_check->fetchColumn();
+        if ($total_stationed > 0) {
+            jsonResponse(['error' => "Não é possível excluir todos os setores pois existem {$total_stationed} processo(s) estacionado(s) no sistema."], 400);
+        }
+
         $stmt = $pdo->prepare('UPDATE sectors SET active = 0 WHERE id > 0');
         $stmt->execute();
     } else {
+        // Verificar se há processos estacionados neste setor antes de excluir
+        $stmt_check = $pdo->prepare("
+            SELECT COUNT(*) 
+            FROM movements m2 
+            INNER JOIN (
+                SELECT process_id, MAX(id) as max_id 
+                FROM movements 
+                GROUP BY process_id
+            ) latest ON m2.id = latest.max_id 
+            WHERE m2.destination_sector_id = ?
+        ");
+        $stmt_check->execute([$id]);
+        $stationed_count = (int)$stmt_check->fetchColumn();
+        
+        if ($stationed_count > 0) {
+            jsonResponse(['error' => "Este setor não pode ser excluído pois possui {$stationed_count} processo(s) estacionado(s) atualmente."], 400);
+        }
+
         // Soft delete to maintain history in movements and users
         $stmt = $pdo->prepare('UPDATE sectors SET active = 0 WHERE id = ?');
         $stmt->execute([$id]);

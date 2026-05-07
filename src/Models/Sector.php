@@ -20,7 +20,15 @@ class Sector {
         $stmt = $this->db->query("
             SELECT s.*, 
             (SELECT COUNT(*) FROM sectors s2 WHERE s2.parent_id = s.id AND s2.active = 1) as children_count,
-            (SELECT COUNT(*) FROM movements m WHERE m.destination_sector_id = s.id) as movement_count
+            (SELECT COUNT(*) FROM movements m WHERE m.destination_sector_id = s.id) as movement_count,
+            (SELECT COUNT(*) 
+             FROM movements m2 
+             INNER JOIN (
+                 SELECT process_id, MAX(id) as max_id 
+                 FROM movements 
+                 GROUP BY process_id
+             ) latest ON m2.id = latest.max_id 
+             WHERE m2.destination_sector_id = s.id) as stationed_processes_count
             FROM sectors s 
             $whereClause 
             ORDER BY 
