@@ -45,6 +45,9 @@ const movementsView = {
                                     <select id="mov-responsavel">
                                         <option value="">Nenhum / Não definido</option>
                                     </select>
+                                    <small id="mov-fiscal-warning" style="color:var(--warning-color, #eab308); font-weight: 500; display:none; margin-top:0.25rem;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> <strong>Atenção:</strong> Auditor não lotado no setor selecionado.
+                                    </small>
                                 </div>
                             </div>
                             
@@ -195,7 +198,35 @@ const movementsView = {
             }
         };
 
-        destinoSelect.addEventListener('change', updateActionAutomatically);
+        const validateFiscalSector = () => {
+            const sectorId = destinoSelect.value;
+            const respId = responsavelSelect.value;
+            const warningEl = document.getElementById('mov-fiscal-warning');
+            
+            if (!sectorId || !respId) {
+                warningEl.style.display = 'none';
+                return;
+            }
+            
+            const resp = this.responsibles.find(r => String(r.id) === String(respId));
+            if (!resp) {
+                warningEl.style.display = 'none';
+                return;
+            }
+            
+            const allowedSectors = resp.sector_ids ? resp.sector_ids.split(',') : [];
+            if (!allowedSectors.includes(String(sectorId))) {
+                warningEl.style.display = 'block';
+            } else {
+                warningEl.style.display = 'none';
+            }
+        };
+
+        destinoSelect.addEventListener('change', () => {
+            updateActionAutomatically();
+            validateFiscalSector();
+        });
+        responsavelSelect.addEventListener('change', validateFiscalSector);
 
         // Format verification warning (non-blocking)
         processInput.addEventListener('input', () => {
@@ -261,6 +292,7 @@ const movementsView = {
                     // Auto-fill Auditor Responsável
                     if (process.last_responsible_id) {
                         responsavelSelect.value = process.last_responsible_id;
+                        validateFiscalSector();
                     }
 
                     // WARNING: Process has attachments
@@ -338,6 +370,7 @@ const movementsView = {
                 destinoSelect.value = user && user.sector_id ? user.sector_id : '';
                 document.getElementById('mov-attachments-alert').style.display = 'none';
                 responsavelSelect.value = '';
+                validateFiscalSector();
             } catch (err) {
                 window.app.toast(err.message, 'error');
             } finally {
