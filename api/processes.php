@@ -86,11 +86,46 @@ if ($method === 'DELETE') {
         }
 
         try {
-            $stmt = $pdo->prepare('UPDATE processes SET process_number = ?, subject = ?, requester = ?, document_number = ?, observations = ? WHERE id = ?');
-            $stmt->execute([$process_number, $subject, $requester, $document_number, $observations, $id]);
-            
-            jsonResponse(['success' => true]);
+            // Check if process_number already exists and is different from $id
+            $stmt = $pdo->prepare('SELECT id FROM processes WHERE process_number = ? AND id != ?');
+            $stmt->execute([$process_number, $id]);
+            $existing = $stmt->fetch();
+
+            if ($existing) {
+                // Merge logic
+                $existing_id = $existing['id'];
+                
+                $pdo->beginTransaction();
+                
+                // 1. Move all movements to the existing process
+                $stmt = $pdo->prepare('UPDATE movements SET process_id = ? WHERE process_id = ?');
+                $stmt->execute([$existing_id, $id]);
+                
+                // 2. Move all attachments to the existing process
+                $stmt = $pdo->prepare('UPDATE processes SET parent_id = ? WHERE parent_id = ?');
+                $stmt->execute([$existing_id, $id]);
+                
+                // 3. Update existing process details with the new submitted info
+                $stmt = $pdo->prepare('UPDATE processes SET subject = ?, requester = ?, document_number = ?, observations = ? WHERE id = ?');
+                $stmt->execute([$subject, $requester, $document_number, $observations, $existing_id]);
+                
+                // 4. Delete the old process
+                $stmt = $pdo->prepare('DELETE FROM processes WHERE id = ?');
+                $stmt->execute([$id]);
+                
+                $pdo->commit();
+                jsonResponse(['success' => true, 'merged' => true, 'new_id' => $existing_id]);
+            } else {
+                // Normal update
+                $stmt = $pdo->prepare('UPDATE processes SET process_number = ?, subject = ?, requester = ?, document_number = ?, observations = ? WHERE id = ?');
+                $stmt->execute([$process_number, $subject, $requester, $document_number, $observations, $id]);
+                
+                jsonResponse(['success' => true]);
+            }
         } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             jsonResponse(['error' => 'Erro ao atualizar processo: ' . $e->getMessage()], 500);
         }
     } else {
