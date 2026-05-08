@@ -18,114 +18,123 @@ const searchView = {
                     </div>
                 </div>
 
-                <!-- Seção 1 (Topo): Processos Atualmente no Seu Setor -->
-                <div id="recent-section" class="card mb-2" style="box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
-                    <div class="card-header border-bottom flex-between" style="flex-wrap: wrap; gap: 1rem;">
-                        <h4 id="recent-section-title" style="display: flex; align-items: center; gap: 8px; font-weight: 750; margin: 0;">
-                            <i class="fa-solid fa-building" style="color:var(--primary-color);"></i> Processos Atualmente no Seu Setor
-                        </h4>
-                        <!-- Controles de Paginação do Setor (5 em 5) -->
-                        <div id="sector-pagination" style="display: flex; gap: 0.5rem; align-items: center;">
-                            <button id="btn-sector-prev" class="btn-secondary" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-md); transition: var(--transition); border: 1px solid var(--border-color); background: var(--bg-soft); cursor: pointer;"><i class="fa-solid fa-chevron-left"></i></button>
-                            <span id="sector-page-info" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); min-width: 90px; text-align: center;">Página 1 de 1</span>
-                            <button id="btn-sector-next" class="btn-secondary" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-md); transition: var(--transition); border: 1px solid var(--border-color); background: var(--bg-soft); cursor: pointer;"><i class="fa-solid fa-chevron-right"></i></button>
-                        </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <!-- Filtros Sensitivos do Setor (Número e Data com Mês/Ano) -->
-                        <div id="sector-filters-panel" style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); background: var(--bg-soft); display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; align-items: center;">
-                            <div class="mov-input-icon-wrapper" style="width: 100%;">
-                                <i class="fa-solid fa-filter" style="color: var(--primary-color);"></i>
-                                <input type="text" id="sector-filter-query" placeholder="Filtrar por número nesta lista (sensitivo)..." style="width: 100%; height: 38px; border-radius: var(--radius-md); font-size: 0.85rem; padding-left: 2.5rem; background: var(--bg-primary); border: 1px solid var(--border-color);">
-                            </div>
-                            <div class="mov-input-icon-wrapper">
-                                <i class="fa-solid fa-calendar-days" style="color: var(--primary-color);"></i>
-                                <select id="sector-filter-month" style="height: 38px; border-radius: var(--radius-md); background-color: var(--bg-primary); padding-left: 2.5rem; width: 100%; font-size: 0.85rem; border: 1px solid var(--border-color);">
-                                    <option value="">Filtrar Mês...</option>
-                                    <option value="01">Janeiro</option>
-                                    <option value="02">Fevereiro</option>
-                                    <option value="03">Março</option>
-                                    <option value="04">Abril</option>
-                                    <option value="05">Maio</option>
-                                    <option value="06">Junho</option>
-                                    <option value="07">Julho</option>
-                                    <option value="08">Agosto</option>
-                                    <option value="09">Setembro</option>
-                                    <option value="10">Outubro</option>
-                                    <option value="11">Novembro</option>
-                                    <option value="12">Dezembro</option>
-                                </select>
-                            </div>
-                            <div class="mov-input-icon-wrapper">
-                                <i class="fa-solid fa-calendar" style="color: var(--primary-color);"></i>
-                                <select id="sector-filter-year" style="height: 38px; border-radius: var(--radius-md); background-color: var(--bg-primary); padding-left: 2.5rem; width: 100%; font-size: 0.85rem; border: 1px solid var(--border-color);">
-                                    <option value="">Filtrar Ano...</option>
-                                </select>
+                <!-- PAINEL PRINCIPAL (Divide o fluxo em 3 Áreas Claras e Premium) -->
+                <div id="main-panel">
+                    
+                    <!-- ÁREA 1: Processos em Análise no Setor (Custódia Ativa) -->
+                    <div id="analysis-section" class="card mb-4" style="box-shadow: 0 4px 20px rgba(0,0,0,0.02); border-left: 5px solid #0072bc;">
+                        <div class="card-header border-bottom flex-between" style="flex-wrap: wrap; gap: 1rem; background: rgba(0, 114, 188, 0.02);">
+                            <h4 style="display: flex; align-items: center; gap: 10px; font-weight: 750; margin: 0; color: #0072bc; font-family: 'Outfit', sans-serif;">
+                                <i class="fa-solid fa-hourglass-half"></i> ÁREA 1: Processos em Análise no Setor
+                            </h4>
+                            <!-- Controles de Paginação -->
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <button id="btn-analysis-prev" class="btn-secondary" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-soft); cursor: pointer;"><i class="fa-solid fa-chevron-left"></i></button>
+                                <span id="analysis-page-info" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); min-width: 90px; text-align: center;">Página 1 de 1</span>
+                                <button id="btn-analysis-next" class="btn-secondary" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-soft); cursor: pointer;"><i class="fa-solid fa-chevron-right"></i></button>
                             </div>
                         </div>
-                        <div class="recent-list" id="recent-processes-list">
-                            <div class="p-3 text-center text-secondary">
-                                <i class="fa-solid fa-spinner fa-spin"></i> Carregando processos...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Seção 2: Buscar Processo Fora do Setor -->
-                <div id="search-filter-card" class="card mb-2">
-                    <div class="card-header border-bottom">
-                        <h3 style="font-size: 1.15rem; display: flex; align-items: center; gap: 8px; font-weight: 750; margin: 0;"><i class="fa-solid fa-magnifying-glass" style="color:var(--primary-color);"></i> Buscar Processo Fora do Setor</h3>
-                        <p class="text-secondary" style="font-size: 0.85rem; margin-top: 0.25rem;">Filtre processos de qualquer setor da prefeitura por número, por auditor ou por destino.</p>
-                    </div>
-                    <div class="card-body" style="padding: 1.5rem;">
-                        <div class="grid-form" style="gap:1.25rem;">
-                            <!-- Linha 1: Campos de Busca -->
-                            <div class="form-group col-span-2">
-                                <label style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.4rem; display: block;">Número do Processo</label>
+                        <div class="card-body p-0">
+                            <!-- Filtro sensitivo local -->
+                            <div style="padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border-color); background: var(--bg-soft);">
                                 <div class="mov-input-icon-wrapper" style="width: 100%;">
-                                    <i class="fa-solid fa-magnifying-glass" style="color: var(--primary-color);"></i>
-                                    <input type="text" id="search-input" placeholder="Digite o número exato ou parte (Ex: 009/002082/2026)..." style="width: 100%; height: 46px; border-radius: var(--radius-md);">
+                                    <i class="fa-solid fa-filter" style="color: #0072bc;"></i>
+                                    <input type="text" id="analysis-filter-query" placeholder="Filtrar processos em análise por número (sensitivo)..." style="width: 100%; height: 38px; border-radius: var(--radius-md); font-size: 0.85rem; padding-left: 2.5rem; background: var(--bg-primary); border: 1px solid var(--border-color);">
                                 </div>
                             </div>
-                            <div class="form-group col-span-1">
-                                <label style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.4rem; display: block;">Filtrar por Setor</label>
-                                <div class="mov-input-icon-wrapper">
-                                    <i class="fa-solid fa-building" style="color: var(--primary-color);"></i>
-                                    <select id="filter-sector" style="height: 46px; border-radius: var(--radius-md); background-color: var(--bg-primary); padding-left: 2.8rem; width: 100%;">
-                                        <option value="">Todos os setores...</option>
-                                    </select>
+                            <div class="recent-list" id="analysis-processes-list">
+                                <div class="p-3 text-center text-secondary">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> Carregando processos em análise...
                                 </div>
-                            </div>
-                            <div class="form-group col-span-1">
-                                <label style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.4rem; display: block;">Por Auditor/Responsável</label>
-                                <div class="mov-input-icon-wrapper">
-                                    <i class="fa-solid fa-user-tie" style="color: var(--primary-color);"></i>
-                                    <select id="filter-auditor" style="height: 46px; border-radius: var(--radius-md); background-color: var(--bg-primary); padding-left: 2.8rem; width: 100%;">
-                                        <option value="">Todos os auditores...</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Tipo de Filtro -->
-                            <input type="hidden" id="filter-mode" value="current">
-
-                            <!-- Linha 2: Botões Simétricos Expandidos -->
-                            <div class="form-group col-span-4" style="display: flex; gap: 1rem; margin-top: 0.5rem; align-items: center; width: 100%;">
-                                <button id="btn-search-proc" class="btn-primary" style="height: 48px; flex: 3; display: flex; align-items: center; justify-content: center; gap: 0.6rem; background: linear-gradient(135deg, #79b947, #5c9e2b); border: none; box-shadow: 0 4px 10px rgba(121, 185, 71, 0.25); font-weight: 700; font-size: 0.95rem; transition: all 0.25s ease;">
-                                    <i class="fa-solid fa-sliders"></i> Filtrar Processos
-                                </button>
-                                <button id="btn-clear-filters-top" class="btn-secondary" type="button" style="height: 48px; flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: var(--bg-soft); border: 1px solid var(--border-color); color: var(--text-primary); font-weight: 600; font-size: 0.95rem; transition: all 0.25s ease;">
-                                    <i class="fa-solid fa-filter-circle-xmark" style="color: var(--text-secondary);"></i> Limpar Filtros
-                                </button>
                             </div>
                         </div>
                     </div>
+
+                    <!-- ÁREA 2: Processos já Tramitados (Histórico de Trâmites) -->
+                    <div id="tramitados-section" class="card mb-4" style="box-shadow: 0 4px 20px rgba(0,0,0,0.02); border-left: 5px solid #8b5cf6;">
+                        <div class="card-header border-bottom flex-between" style="flex-wrap: wrap; gap: 1rem; background: rgba(139, 92, 246, 0.02);">
+                            <h4 style="display: flex; align-items: center; gap: 10px; font-weight: 750; margin: 0; color: #8b5cf6; font-family: 'Outfit', sans-serif;">
+                                <i class="fa-solid fa-history"></i> ÁREA 2: Processos já Tramitados
+                            </h4>
+                            <!-- Controles de Paginação -->
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <button id="btn-tramitados-prev" class="btn-secondary" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-soft); cursor: pointer;"><i class="fa-solid fa-chevron-left"></i></button>
+                                <span id="tramitados-page-info" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); min-width: 90px; text-align: center;">Página 1 de 1</span>
+                                <button id="btn-tramitados-next" class="btn-secondary" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-soft); cursor: pointer;"><i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <!-- Filtro sensitivo local -->
+                            <div style="padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border-color); background: var(--bg-soft);">
+                                <div class="mov-input-icon-wrapper" style="width: 100%;">
+                                    <i class="fa-solid fa-filter" style="color: #8b5cf6;"></i>
+                                    <input type="text" id="tramitados-filter-query" placeholder="Filtrar processos tramitados por número (sensitivo)..." style="width: 100%; height: 38px; border-radius: var(--radius-md); font-size: 0.85rem; padding-left: 2.5rem; background: var(--bg-primary); border: 1px solid var(--border-color);">
+                                </div>
+                            </div>
+                            <div class="recent-list" id="tramitados-processes-list">
+                                <div class="p-3 text-center text-secondary">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> Carregando processos já tramitados...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ÁREA 3: Buscar Processos Fora do Setor (Consulta Avançada) -->
+                    <div id="search-filter-card" class="card mb-4" style="box-shadow: 0 4px 20px rgba(0,0,0,0.02); border-left: 5px solid #f59e0b;">
+                        <div class="card-header border-bottom" style="background: rgba(245, 158, 11, 0.02);">
+                            <h3 style="font-size: 1.15rem; display: flex; align-items: center; gap: 10px; font-weight: 750; margin: 0; color: #f59e0b; font-family: 'Outfit', sans-serif;"><i class="fa-solid fa-magnifying-glass"></i> ÁREA 3: Buscar Processos Fora do Setor</h3>
+                            <p class="text-secondary" style="font-size: 0.85rem; margin-top: 0.25rem;">Consulte processos que não estão em sua custódia ativa (busca geral restrita ao seu escopo de acesso).</p>
+                        </div>
+                        <div class="card-body" style="padding: 1.5rem;">
+                            <div class="grid-form" style="gap:1.25rem;">
+                                <!-- Linha 1: Campos de Busca -->
+                                <div class="form-group col-span-2">
+                                    <label style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.4rem; display: block;">Número do Processo</label>
+                                    <div class="mov-input-icon-wrapper" style="width: 100%;">
+                                        <i class="fa-solid fa-magnifying-glass" style="color: #f59e0b;"></i>
+                                        <input type="text" id="search-input" placeholder="Digite o número exato ou parcial (Ex: 009/002082/2026)..." style="width: 100%; height: 46px; border-radius: var(--radius-md);">
+                                    </div>
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.4rem; display: block;">Filtrar por Setor</label>
+                                    <div class="mov-input-icon-wrapper">
+                                        <i class="fa-solid fa-building" style="color: #f59e0b;"></i>
+                                        <select id="filter-sector" style="height: 46px; border-radius: var(--radius-md); background-color: var(--bg-primary); padding-left: 2.8rem; width: 100%;">
+                                            <option value="">Todos os setores...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.4rem; display: block;">Por Auditor/Responsável</label>
+                                    <div class="mov-input-icon-wrapper">
+                                        <i class="fa-solid fa-user-tie" style="color: #f59e0b;"></i>
+                                        <select id="filter-auditor" style="height: 46px; border-radius: var(--radius-md); background-color: var(--bg-primary); padding-left: 2.8rem; width: 100%;">
+                                            <option value="">Todos os auditores...</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <input type="hidden" id="filter-mode" value="current">
+
+                                <!-- Linha 2: Botões Simétricos Expandidos -->
+                                <div class="form-group col-span-4" style="display: flex; gap: 1rem; margin-top: 0.5rem; align-items: center; width: 100%;">
+                                    <button id="btn-search-proc" class="btn-primary" style="height: 48px; flex: 3; display: flex; align-items: center; justify-content: center; gap: 0.6rem; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25); font-weight: 700; font-size: 0.95rem; transition: all 0.25s ease; color: white;">
+                                        <i class="fa-solid fa-search"></i> Buscar Fora do Setor
+                                    </button>
+                                    <button id="btn-clear-filters-top" class="btn-secondary" type="button" style="height: 48px; flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: var(--bg-soft); border: 1px solid var(--border-color); color: var(--text-primary); font-weight: 600; font-size: 0.95rem; transition: all 0.25s ease;">
+                                        <i class="fa-solid fa-filter-circle-xmark" style="color: var(--text-secondary);"></i> Limpar Filtros
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
-                <!-- Seção 3: Resultados da Busca -->
-                <div id="search-list-section" class="card mb-2" style="display:none; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
+                <!-- SEÇÃO DE RESULTADOS DA BUSCA -->
+                <div id="search-list-section" class="card mb-4" style="display:none; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
                     <div class="card-header border-bottom flex-between">
-                        <h4>Resultados da Busca Geral (50 em 50)</h4>
+                        <h4 style="font-weight: 750; color: #f59e0b;"><i class="fa-solid fa-list"></i> Resultados da Busca Fora do Setor</h4>
                         <button class="btn-secondary" id="btn-back-recent" style="padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600;">
                             <i class="fa-solid fa-arrow-left"></i> Voltar
                         </button>
@@ -136,7 +145,7 @@ const searchView = {
                     </div>
                 </div>
 
-                <!-- Seção 4: Detalhes do Processo -->
+                <!-- SEÇÃO DE DETALHES DO PROCESSO (Ativa após clique) -->
                 <div id="search-results" style="display:none;">
                     <!-- Banner de Alerta de Posse de Setor -->
                     <div id="posse-alert-banner" style="display:none; margin-bottom: 1.25rem;"></div>
@@ -172,13 +181,24 @@ const searchView = {
                     <div class="grid-form mb-2">
                         <div class="card col-span-4 search-process-details-card" style="box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
                             <div class="card-header border-bottom">
-                                <h4 style="display: flex; align-items: center; gap: 8px; font-weight: 750;">
-                                    <i class="fa-solid fa-circle-info" style="color: var(--primary-color);"></i> Informações Gerais do Processo
+                                <h4 style="display: flex; align-items: center; gap: 8px; font-weight: 750; flex-wrap: wrap;">
+                                    <i class="fa-solid fa-circle-info" style="color: var(--primary-color);"></i> Informações Gerais do Processo:
+                                    <span id="res-process-number-badge" style="background: rgba(0, 114, 188, 0.1); color: #0072bc; padding: 4px 12px; border-radius: 6px; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.15rem; margin-left: 5px; border: 1px solid rgba(0, 114, 188, 0.2);"></span>
                                 </h4>
                             </div>
                             <div class="card-body" style="padding: 1.5rem;">
                                 <div class="details-grid-premium">
-                                    <!-- Card 1: Assunto -->
+                                    <!-- Card 1: Número do Processo -->
+                                    <div class="detail-card-item card-indigo">
+                                        <div class="detail-card-icon">
+                                            <i class="fa-solid fa-folder-open"></i>
+                                        </div>
+                                        <div class="detail-card-content">
+                                            <span class="detail-card-label">Número do Processo</span>
+                                            <span class="detail-card-value" id="res-process-number">-</span>
+                                        </div>
+                                    </div>
+                                    <!-- Card 2: Assunto -->
                                     <div class="detail-card-item card-blue">
                                         <div class="detail-card-icon">
                                             <i class="fa-solid fa-file-lines"></i>
@@ -188,7 +208,7 @@ const searchView = {
                                             <span class="detail-card-value" id="res-assunto">-</span>
                                         </div>
                                     </div>
-                                    <!-- Card 2: Requerente -->
+                                    <!-- Card 3: Requerente -->
                                     <div class="detail-card-item card-purple">
                                         <div class="detail-card-icon">
                                             <i class="fa-solid fa-user-tie"></i>
@@ -198,7 +218,7 @@ const searchView = {
                                             <span class="detail-card-value" id="res-requerente">-</span>
                                         </div>
                                     </div>
-                                    <!-- Card 3: Documento / CPF CNPJ -->
+                                    <!-- Card 4: Documento / CPF CNPJ -->
                                     <div class="detail-card-item card-amber">
                                         <div class="detail-card-icon">
                                             <i class="fa-solid fa-id-card"></i>
@@ -208,14 +228,44 @@ const searchView = {
                                             <span class="detail-card-value" id="res-doc">-</span>
                                         </div>
                                     </div>
-                                    <!-- Card 4: Localização Atual / Status -->
+                                    <!-- Card 5: Setor de Custódia / Posse -->
                                     <div class="detail-card-item card-emerald">
                                         <div class="detail-card-icon">
-                                            <i class="fa-solid fa-map-location-dot"></i>
+                                            <i class="fa-solid fa-building"></i>
                                         </div>
                                         <div class="detail-card-content">
-                                            <span class="detail-card-label">Posse Atual (Status)</span>
-                                            <span class="detail-card-value" id="res-status">-</span>
+                                            <span class="detail-card-label">Setor de Custódia</span>
+                                            <span class="detail-card-value" id="res-sector">-</span>
+                                        </div>
+                                    </div>
+                                    <!-- Card 6: Auditor Responsável -->
+                                    <div class="detail-card-item card-teal">
+                                        <div class="detail-card-icon">
+                                            <i class="fa-solid fa-user-shield"></i>
+                                        </div>
+                                        <div class="detail-card-content">
+                                            <span class="detail-card-label">Auditor Responsável</span>
+                                            <span class="detail-card-value" id="res-responsible">-</span>
+                                        </div>
+                                    </div>
+                                    <!-- Card 7: Registro de Movimentação (Ação) -->
+                                    <div class="detail-card-item card-pink">
+                                        <div class="detail-card-icon">
+                                            <i class="fa-solid fa-arrows-spin"></i>
+                                        </div>
+                                        <div class="detail-card-content">
+                                            <span class="detail-card-label">Último Registro</span>
+                                            <span class="detail-card-value" id="res-movement-action">-</span>
+                                        </div>
+                                    </div>
+                                    <!-- Card 8: Data do Último Trâmite -->
+                                    <div class="detail-card-item card-blue">
+                                        <div class="detail-card-icon">
+                                            <i class="fa-solid fa-calendar-days"></i>
+                                        </div>
+                                        <div class="detail-card-content">
+                                            <span class="detail-card-label">Data do Trâmite</span>
+                                            <span class="detail-card-value" id="res-movement-date">-</span>
                                         </div>
                                     </div>
                                 </div>
@@ -336,34 +386,33 @@ const searchView = {
                     margin-bottom: 1rem;
                 }
                 .badge-entrada {
-                    background: rgba(16, 185, 129, 0.1);
-                    color: #10b981;
-                    padding: 0.2rem 0.6rem;
+                    background: rgba(0, 114, 188, 0.1);
+                    color: #0072bc;
+                    padding: 0.25rem 0.65rem;
                     border-radius: 20px;
                     font-size: 0.8rem;
-                    font-weight: 600;
+                    font-weight: 700;
                 }
                 .badge-saida {
-                    background: rgba(245, 158, 11, 0.1);
-                    color: #f59e0b;
-                    padding: 0.2rem 0.6rem;
+                    background: rgba(139, 92, 246, 0.1);
+                    color: #8b5cf6;
+                    padding: 0.25rem 0.65rem;
                     border-radius: 20px;
                     font-size: 0.8rem;
-                    font-weight: 600;
+                    font-weight: 700;
                 }
             </style>
         `;
 
+        // Elementos de Controle Geral
         const btnSearch = document.getElementById('btn-search-proc');
         const btnClearFiltersTop = document.getElementById('btn-clear-filters-top');
         const inputSearch = document.getElementById('search-input');
         const filterSector = document.getElementById('filter-sector');
         const filterAuditor = document.getElementById('filter-auditor');
-        const filterMode = document.getElementById('filter-mode');
         const resultsDiv = document.getElementById('search-results');
         const emptyDiv = document.getElementById('search-empty');
-        const recentSection = document.getElementById('recent-section');
-        const recentList = document.getElementById('recent-processes-list');
+        const mainPanel = document.getElementById('main-panel');
         const searchListSection = document.getElementById('search-list-section');
         const searchList = document.getElementById('search-processes-list');
         const btnBackRecent = document.getElementById('btn-back-recent');
@@ -381,71 +430,17 @@ const searchView = {
         const editActions = document.getElementById('edit-actions');
         let isEditing = false;
         let originalData = {};
-        
         let currentProcessId = null;
 
-        // Variáveis de paginação para o setor
-        let allSectorProcesses = []; // Lista original completa do setor
-        let sectorProcesses = [];    // Lista filtrada sendo exibida
-        let pageSector = 1;
-        const pageSizeSector = 5;
+        // PAGINAÇÃO E FILTROS: ÁREA 1 (Processos em Análise)
+        let pageAnalysis = 1;
+        const limitAnalysis = 5;
+        let searchAnalysis = '';
 
-        // Referências aos inputs de filtro do setor
-        const sectorQueryInput = document.getElementById('sector-filter-query');
-        const sectorMonthSelect = document.getElementById('sector-filter-month');
-        const sectorYearSelect = document.getElementById('sector-filter-year');
-
-        // Popular select do Ano do Setor dinamicamente de forma segura
-        if (sectorYearSelect) {
-            const currentYear = new Date().getFullYear();
-            let yearsHtml = '<option value="">Filtrar Ano...</option>';
-            for (let y = currentYear + 1; y >= 2020; y--) {
-                yearsHtml += `<option value="${y}">${y}</option>`;
-            }
-            sectorYearSelect.innerHTML = yearsHtml;
-        }
-
-        const applySectorFilters = () => {
-            const query = (sectorQueryInput ? sectorQueryInput.value : '').trim().toLowerCase();
-            const month = sectorMonthSelect ? sectorMonthSelect.value : '';
-            const year = sectorYearSelect ? sectorYearSelect.value : '';
-
-            sectorProcesses = allSectorProcesses.filter(m => {
-                // Filtro por número sensitivo (ignora barras e hífens se o usuário buscar contínuo)
-                if (query) {
-                    const cleanNum = m.process_number.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    const cleanQuery = query.replace(/[^a-z0-9]/g, '');
-                    if (!cleanNum.includes(cleanQuery) && !m.process_number.toLowerCase().includes(query)) {
-                        return false;
-                    }
-                }
-                // Filtro por data (Mês / Ano do trâmite)
-                if (month || year) {
-                    if (!m.movement_date) return false;
-                    const dateParts = m.movement_date.split(' ')[0].split('-'); // [YYYY, MM, DD]
-                    if (dateParts.length >= 2) {
-                        const mYear = dateParts[0]; // YYYY
-                        const mMonth = dateParts[1]; // MM
-                        if (month && mMonth !== month) {
-                            return false;
-                        }
-                        if (year && mYear !== year) {
-                            return false;
-                        }
-                    } else {
-                        return false;
-                    }
-                }
-                return true;
-            });
-
-            pageSector = 1;
-            renderSectorPage();
-        };
-
-        if (sectorQueryInput) sectorQueryInput.addEventListener('input', applySectorFilters);
-        if (sectorMonthSelect) sectorMonthSelect.addEventListener('change', applySectorFilters);
-        if (sectorYearSelect) sectorYearSelect.addEventListener('change', applySectorFilters);
+        // PAGINAÇÃO E FILTROS: ÁREA 2 (Processos já Tramitados)
+        let pageTramitados = 1;
+        const limitTramitados = 5;
+        let searchTramitados = '';
 
         // Load Sectors for filter
         try {
@@ -465,148 +460,204 @@ const searchView = {
             console.error('Erro ao carregar auditores para filtro:', e);
         }
 
-        const loadSectorProcesses = async () => {
+        // CARREGAR ÁREA 1: PROCESSOS EM ANÁLISE
+        const loadAnalysisProcesses = async () => {
             try {
-                const sectorId = user.sector_id;
-                const isAdmin = user.role === 'Admin';
-                if (!sectorId && !isAdmin) {
-                    recentList.innerHTML = '<div class="p-4 text-center text-secondary">Usuário não possui setor associado.</div>';
+                const listContainer = document.getElementById('analysis-processes-list');
+                const pageInfo = document.getElementById('analysis-page-info');
+                const btnPrev = document.getElementById('btn-analysis-prev');
+                const btnNext = document.getElementById('btn-analysis-next');
+                
+                listContainer.innerHTML = '<div class="p-3 text-center text-secondary"><i class="fa-solid fa-spinner fa-spin"></i> Carregando processos em análise...</div>';
+                
+                const data = await Api.movements.search(searchAnalysis, '', false, '', pageAnalysis, limitAnalysis, 'analysis');
+                const processes = data.processes || [];
+                const pagination = data.pagination || { total: 0, pages: 1 };
+                
+                if (pageInfo) pageInfo.textContent = `Página ${pagination.page} de ${pagination.pages || 1}`;
+                if (btnPrev) {
+                    btnPrev.disabled = pagination.page === 1;
+                    btnPrev.style.opacity = pagination.page === 1 ? '0.4' : '1';
+                }
+                if (btnNext) {
+                    btnNext.disabled = pagination.page >= pagination.pages;
+                    btnNext.style.opacity = pagination.page >= pagination.pages ? '0.4' : '1';
+                }
+                
+                if (processes.length === 0) {
+                    listContainer.innerHTML = '<div class="p-4 text-center text-secondary">Nenhum processo em análise no seu setor atualmente.</div>';
                     return;
                 }
-
-                const titleEl = document.getElementById('recent-section-title');
-                if (titleEl) {
-                    if (isAdmin && !sectorId) {
-                        titleEl.innerHTML = `<i class="fa-solid fa-globe" style="color:var(--primary-color); margin-right: 0.35rem;"></i> Todos os Processos Ativos (Superadmin)`;
-                    } else {
-                        titleEl.innerHTML = `<i class="fa-solid fa-building" style="color:var(--primary-color); margin-right: 0.35rem;"></i> Processos Atualmente no Seu Setor (${user.sector_name || 'Setor Atual'})`;
-                    }
-                }
-
-                recentList.innerHTML = '<div class="p-3 text-center text-secondary"><i class="fa-solid fa-spinner fa-spin"></i> Carregando processos...</div>';
-
-                // Traz todos os processos no setor atual para podermos paginar client-side (ou todos se for admin sem setor)
-                const list = await Api.movements.search('', sectorId || '', true, '', 1, 1000);
                 
-                // Garantir ordenação do trâmite mais recente para o mais antigo
-                list.sort((a, b) => {
-                    const dateA = new Date(a.movement_date || 0);
-                    const dateB = new Date(b.movement_date || 0);
-                    return dateB - dateA;
+                listContainer.innerHTML = processes.map(m => `
+                    <div class="recent-item" data-number="${m.process_number}" style="border-left: 4px solid #0072bc; background: rgba(0, 114, 188, 0.015); display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                        <div class="recent-info" style="flex: 1; padding-right: 15px;">
+                            <h5 style="color: #0072bc; font-weight: 750; font-family: 'Outfit', sans-serif; margin: 0 0 4px 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                                ${m.process_number} 
+                                ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="font-size:0.8rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="font-size:0.8rem; color:var(--primary-color);"></i>' : '')}
+                            </h5>
+                            <p style="font-weight: 500; font-size: 0.88rem; margin: 0 0 6px 0; color: var(--text-primary);">${m.subject || 'Sem assunto'}</p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.76rem; color: var(--text-secondary);">
+                                <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-user-tie" style="color: #0072bc;"></i> Auditor: <strong style="color: var(--text-primary); font-weight: 600;">${m.responsible_name || 'Não atribuído'}</strong></span>
+                                <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-building" style="color: #0072bc;"></i> Setor: <strong style="color: var(--text-primary); font-weight: 600;">${m.last_sector_name || '-'}</strong></span>
+                            </div>
+                        </div>
+                        <div class="recent-status" style="text-align: right; min-width: 140px; display: flex; flex-direction: column; align-items: flex-end;">
+                            <span class="badge-entrada" style="letter-spacing: 0.02em; font-size: 0.72rem; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: rgba(0, 114, 188, 0.1); color: #0072bc; border: 1px solid rgba(0, 114, 188, 0.2);">EM CUSTÓDIA</span>
+                            <p style="font-size: 0.72rem; margin: 6px 0 0 0; font-weight: 500; color: var(--text-secondary);"><i class="fa-solid fa-calendar-days" style="font-size: 0.7rem;"></i> ${m.movement_date ? window.app.formatDate(m.movement_date) : 'Sem data'}</p>
+                        </div>
+                    </div>
+                `).join('');
+                
+                listContainer.querySelectorAll('.recent-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        inputSearch.value = item.dataset.number;
+                        loadProcessDetails(item.dataset.number);
+                    });
                 });
-
-                // Resetar inputs dos filtros sensitivos
-                if (sectorQueryInput) sectorQueryInput.value = '';
-                if (sectorMonthSelect) sectorMonthSelect.value = '';
-                if (sectorYearSelect) sectorYearSelect.value = '';
-
-                allSectorProcesses = list;
-                sectorProcesses = list;
-                pageSector = 1;
-                renderSectorPage();
             } catch (err) {
                 console.error(err);
-                recentList.innerHTML = '<div class="p-4 text-center text-danger">Erro ao carregar processos do seu setor.</div>';
+                document.getElementById('analysis-processes-list').innerHTML = '<div class="p-4 text-center text-danger">Erro ao carregar processos em análise.</div>';
             }
         };
 
-        const renderSectorPage = () => {
-            const totalPages = Math.ceil(sectorProcesses.length / pageSizeSector) || 1;
-            if (pageSector > totalPages) pageSector = totalPages;
-            if (pageSector < 1) pageSector = 1;
-
-            const btnPrev = document.getElementById('btn-sector-prev');
-            const btnNext = document.getElementById('btn-sector-next');
-            const pageInfo = document.getElementById('sector-page-info');
-
-            if (pageInfo) {
-                pageInfo.textContent = `Página ${pageSector} de ${totalPages}`;
-            }
-            if (btnPrev) {
-                btnPrev.disabled = pageSector === 1;
-                btnPrev.style.opacity = pageSector === 1 ? '0.4' : '1';
-                btnPrev.style.cursor = pageSector === 1 ? 'not-allowed' : 'pointer';
-            }
-            if (btnNext) {
-                btnNext.disabled = pageSector === totalPages;
-                btnNext.style.opacity = pageSector === totalPages ? '0.4' : '1';
-                btnNext.style.cursor = pageSector === totalPages ? 'not-allowed' : 'pointer';
-            }
-
-            if (sectorProcesses.length === 0) {
-                recentList.innerHTML = '<div class="p-4 text-center text-secondary">Nenhum processo no seu setor atualmente.</div>';
-                return;
-            }
-
-            const start = (pageSector - 1) * pageSizeSector;
-            const end = start + pageSizeSector;
-            const pageItems = sectorProcesses.slice(start, end);
-
-            recentList.innerHTML = pageItems.map(m => `
-                <div class="recent-item" data-number="${m.process_number}">
-                    <div class="recent-info">
-                        <h5>${m.process_number} ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="font-size:0.8rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="font-size:0.8rem; color:var(--primary-color);"></i>' : '')}</h5>
-                        <p>${m.subject || 'Sem assunto'}</p>
-                        ${m.parent_id ? `<small style="color:var(--text-secondary); font-size:0.7rem;">Apenso ao ${m.parent_process_number}</small>` : (m.attachments_count > 0 ? `<small style="color:var(--primary-color); font-size:0.7rem;">Possui ${m.attachments_count} apenso(s)</small>` : '')}
+        // CARREGAR ÁREA 2: PROCESSOS JÁ TRAMITADOS
+        const loadTramitadosProcesses = async () => {
+            try {
+                const listContainer = document.getElementById('tramitados-processes-list');
+                const pageInfo = document.getElementById('tramitados-page-info');
+                const btnPrev = document.getElementById('btn-tramitados-prev');
+                const btnNext = document.getElementById('btn-tramitados-next');
+                
+                listContainer.innerHTML = '<div class="p-3 text-center text-secondary"><i class="fa-solid fa-spinner fa-spin"></i> Carregando processos tramitados...</div>';
+                
+                const data = await Api.movements.search(searchTramitados, '', false, '', pageTramitados, limitTramitados, 'tramitados');
+                const processes = data.processes || [];
+                const pagination = data.pagination || { total: 0, pages: 1 };
+                
+                if (pageInfo) pageInfo.textContent = `Página ${pagination.page} de ${pagination.pages || 1}`;
+                if (btnPrev) {
+                    btnPrev.disabled = pagination.page === 1;
+                    btnPrev.style.opacity = pagination.page === 1 ? '0.4' : '1';
+                }
+                if (btnNext) {
+                    btnNext.disabled = pagination.page >= pagination.pages;
+                    btnNext.style.opacity = pagination.page >= pagination.pages ? '0.4' : '1';
+                }
+                
+                if (processes.length === 0) {
+                    listContainer.innerHTML = '<div class="p-4 text-center text-secondary">Nenhum processo tramitado anteriormente por este setor.</div>';
+                    return;
+                }
+                
+                listContainer.innerHTML = processes.map(m => `
+                    <div class="recent-item" data-number="${m.process_number}" style="border-left: 4px solid #8b5cf6; background: rgba(139, 92, 246, 0.015); display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                        <div class="recent-info" style="flex: 1; padding-right: 15px;">
+                            <h5 style="color: #8b5cf6; font-weight: 750; font-family: 'Outfit', sans-serif; margin: 0 0 4px 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                                ${m.process_number} 
+                                ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="font-size:0.8rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="font-size:0.8rem; color:var(--primary-color);"></i>' : '')}
+                            </h5>
+                            <p style="font-weight: 500; font-size: 0.88rem; margin: 0 0 6px 0; color: var(--text-primary);">${m.subject || 'Sem assunto'}</p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.76rem; color: var(--text-secondary);">
+                                <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-user-tie" style="color: #8b5cf6;"></i> Auditor: <strong style="color: var(--text-primary); font-weight: 600;">${m.responsible_name || 'Não atribuído'}</strong></span>
+                                <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-building" style="color: #8b5cf6;"></i> Destino: <strong style="color: var(--text-primary); font-weight: 600;">${m.last_sector_name || '-'}</strong></span>
+                            </div>
+                        </div>
+                        <div class="recent-status" style="text-align: right; min-width: 140px; display: flex; flex-direction: column; align-items: flex-end;">
+                            <span class="badge-saida" style="letter-spacing: 0.02em; font-size: 0.72rem; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.2);">HISTÓRICO</span>
+                            <p style="font-size: 0.72rem; margin: 6px 0 0 0; font-weight: 500; color: var(--text-secondary);"><i class="fa-solid fa-calendar-days" style="font-size: 0.7rem;"></i> ${m.movement_date ? window.app.formatDate(m.movement_date) : 'Sem data'}</p>
+                        </div>
                     </div>
-                    <div class="recent-status">
-                        <span class="badge-${(m.action || 'ENTRADA').toLowerCase()}">${window.app.formatAction(m.action, m.destination_sector)}</span>
-                        <p style="font-size: 0.7rem; margin-top: 4px;">${m.movement_date ? window.app.formatDate(m.movement_date) : 'Sem data'}</p>
-                    </div>
-                </div>
-            `).join('');
-
-            document.querySelectorAll('#recent-processes-list .recent-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    inputSearch.value = item.dataset.number;
-                    loadProcessDetails(item.dataset.number);
+                `).join('');
+                
+                listContainer.querySelectorAll('.recent-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        inputSearch.value = item.dataset.number;
+                        loadProcessDetails(item.dataset.number);
+                    });
                 });
-            });
+            } catch (err) {
+                console.error(err);
+                document.getElementById('tramitados-processes-list').innerHTML = '<div class="p-4 text-center text-danger">Erro ao carregar processos já tramitados.</div>';
+            }
         };
 
-        // Vincular paginação do setor
-        const btnPrevSector = document.getElementById('btn-sector-prev');
-        const btnNextSector = document.getElementById('btn-sector-next');
-        if (btnPrevSector) {
-            btnPrevSector.addEventListener('click', () => {
-                if (pageSector > 1) {
-                    pageSector--;
-                    renderSectorPage();
-                }
-            });
-        }
-        if (btnNextSector) {
-            btnNextSector.addEventListener('click', () => {
-                const totalPages = Math.ceil(sectorProcesses.length / pageSizeSector) || 1;
-                if (pageSector < totalPages) {
-                    pageSector++;
-                    renderSectorPage();
-                }
-            });
-        }
+        // Paginação Área 1
+        document.getElementById('btn-analysis-prev').addEventListener('click', () => {
+            if (pageAnalysis > 1) {
+                pageAnalysis--;
+                loadAnalysisProcesses();
+            }
+        });
+        document.getElementById('btn-analysis-next').addEventListener('click', () => {
+            pageAnalysis++;
+            loadAnalysisProcesses();
+        });
 
+        // Paginação Área 2
+        document.getElementById('btn-tramitados-prev').addEventListener('click', () => {
+            if (pageTramitados > 1) {
+                pageTramitados--;
+                loadTramitadosProcesses();
+            }
+        });
+        document.getElementById('btn-tramitados-next').addEventListener('click', () => {
+            pageTramitados++;
+            loadTramitadosProcesses();
+        });
+
+        // Debounce para filtros sensitivos rápidos
+        let analysisTimeout = null;
+        document.getElementById('analysis-filter-query').addEventListener('input', (e) => {
+            clearTimeout(analysisTimeout);
+            analysisTimeout = setTimeout(() => {
+                searchAnalysis = e.target.value.trim();
+                pageAnalysis = 1;
+                loadAnalysisProcesses();
+            }, 300);
+        });
+
+        let tramitadosTimeout = null;
+        document.getElementById('tramitados-filter-query').addEventListener('input', (e) => {
+            clearTimeout(tramitadosTimeout);
+            tramitadosTimeout = setTimeout(() => {
+                searchTramitados = e.target.value.trim();
+                pageTramitados = 1;
+                loadTramitadosProcesses();
+            }, 300);
+        });
+
+        // Item de Renderização da Busca Fora do Setor
         const renderProcessItem = (m) => `
-            <div class="recent-item search-result-item" data-number="${m.process_number}">
-                <div class="recent-info">
-                    <h5>${m.process_number} ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="font-size:0.8rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="font-size:0.8rem; color:var(--primary-color);"></i>' : '')}</h5>
-                    <p>${m.subject || 'Sem assunto'}</p>
-                    <div style="display:flex; gap:0.5rem; margin-top:0.3rem;">
-                        <span class="badge-action btn-detail" data-number="${m.process_number}"><i class="fa-solid fa-eye"></i> Detalhar</span>
-                        <span class="badge-action btn-move-fast" data-number="${m.process_number}"><i class="fa-solid fa-share-from-square"></i> Tramitar</span>
+            <div class="recent-item search-result-item" data-number="${m.process_number}" style="border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, 0.015); display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                <div class="recent-info" style="flex: 1; padding-right: 15px;">
+                    <h5 style="color: #f59e0b; font-weight: 750; font-family: 'Outfit', sans-serif; margin: 0 0 4px 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                        ${m.process_number} 
+                        ${m.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="font-size:0.8rem; color:var(--text-secondary);"></i>' : (m.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="font-size:0.8rem; color:var(--primary-color);"></i>' : '')}
+                    </h5>
+                    <p style="font-weight: 500; font-size: 0.88rem; margin: 0 0 6px 0; color: var(--text-primary);">${m.subject || 'Sem assunto'}</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 8px;">
+                        <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-user-tie" style="color: #f59e0b;"></i> Auditor: <strong style="color: var(--text-primary); font-weight: 600;">${m.responsible_name || 'Não atribuído'}</strong></span>
+                        <span style="display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-building" style="color: #f59e0b;"></i> Local: <strong style="color: var(--text-primary); font-weight: 600;">${m.last_sector_name || '-'}</strong></span>
+                    </div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <span class="badge-action btn-detail" data-number="${m.process_number}" style="background:#0072bc; color:white; border-radius:4px; padding:3px 10px; font-size:0.75rem; font-weight:600; cursor:pointer; display: inline-flex; align-items: center; gap: 4px; transition: opacity 0.15s;"><i class="fa-solid fa-eye"></i> Detalhar</span>
+                        <span class="badge-action btn-move-fast" data-number="${m.process_number}" style="background:#79b947; color:white; border-radius:4px; padding:3px 10px; font-size:0.75rem; font-weight:600; cursor:pointer; display: inline-flex; align-items: center; gap: 4px; transition: opacity 0.15s;"><i class="fa-solid fa-share"></i> Tramitar</span>
                     </div>
                 </div>
-                <div class="recent-status" style="min-width: 180px;">
-                    <span class="badge-${(m.action || 'NOVO').toLowerCase()}">${m.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : (m.action || 'NOVO')}</span>
-                    <p style="font-size: 0.75rem; margin-top: 6px; font-weight: 500; color: var(--text-primary);">${window.app.formatDate(m.movement_date)}</p>
+                <div class="recent-status" style="text-align: right; min-width: 140px; display: flex; flex-direction: column; align-items: flex-end;">
+                    <span class="${m.action === 'ENTRADA' ? 'badge-entrada' : 'badge-saida'}" style="letter-spacing: 0.02em; font-size: 0.72rem; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: ${m.action === 'ENTRADA' ? 'rgba(0, 114, 188, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; color: ${m.action === 'ENTRADA' ? '#0072bc' : '#ef4444'}; border: 1px solid ${m.action === 'ENTRADA' ? 'rgba(0, 114, 188, 0.2)' : 'rgba(239, 68, 68, 0.2)'};">${m.action === 'ENTRADA' ? 'CUSTÓDIA ATIVA' : 'SAÍDA / TRÂMITE'}</span>
+                    <p style="font-size: 0.72rem; margin: 6px 0 0 0; font-weight: 500; color: var(--text-secondary);"><i class="fa-solid fa-calendar-days" style="font-size: 0.7rem;"></i> ${m.movement_date ? window.app.formatDate(m.movement_date) : 'Sem data'}</p>
                 </div>
             </div>
         `;
 
+        // Executar Busca Geral (Área 3)
         const doSearch = async () => {
             const query = inputSearch.value.trim();
             const sectorId = filterSector.value;
             const auditorId = filterAuditor ? filterAuditor.value : '';
-            const onlyCurrent = filterMode.value === 'current';
+            const onlyCurrent = false; // Queremos varrer todas as ocorrências de trâmites fora do setor
             
             if (!query && !sectorId && !auditorId) {
                 window.app.toast('Digite um número ou selecione um setor/auditor para buscar', 'warning');
@@ -614,14 +665,13 @@ const searchView = {
             }
 
             btnSearch.disabled = true;
-            btnSearch.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            btnSearch.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando...';
 
             try {
-                // Realizar busca (limite de 50 registros de cada vez para busca geral)
-                const processes = await Api.movements.search(query, sectorId, onlyCurrent, auditorId, 1, 50);
+                const data = await Api.movements.search(query, sectorId, onlyCurrent, auditorId, 1, 50, 'outside');
+                const processes = data.processes || [];
                 
-                recentSection.style.display = 'none';
-                document.getElementById('search-filter-card').style.display = 'none';
+                mainPanel.style.display = 'none';
                 resultsDiv.style.display = 'none';
                 
                 if (processes && processes.length > 0) {
@@ -641,7 +691,7 @@ const searchView = {
                         });
                     });
 
-                    document.querySelectorAll('.search-result-item').forEach(item => {
+                    searchList.querySelectorAll('.search-result-item').forEach(item => {
                         item.addEventListener('click', () => {
                             inputSearch.value = item.dataset.number;
                             loadProcessDetails(item.dataset.number);
@@ -656,43 +706,59 @@ const searchView = {
                     emptyDiv.style.display = 'block';
                 }
             } catch (err) {
-                window.app.toast('Erro ao buscar processos', 'error');
+                window.app.toast(err.message || 'Erro ao buscar processos', 'error');
             } finally {
                 btnSearch.disabled = false;
-                btnSearch.innerHTML = '<i class="fa-solid fa-sliders"></i> Filtrar Processos';
+                btnSearch.innerHTML = '<i class="fa-solid fa-search"></i> Buscar Fora do Setor';
             }
         };
 
+        // CARREGAR DETALHES COMPLETOS DE UM PROCESSO
         const loadProcessDetails = async (number) => {
             try {
                 const data = await Api.movements.getByNumber(number);
                 if (data && data.exists) {
                     const process = data.process;
-                    // Load history
+                    // Carregar histórico completo do processo
                     const history = await Api.movements.listByProcess(process.id);
                     
-                    // Fill Details
+                    // Preencher campos informativos
+                    const badgeElem = document.getElementById('res-process-number-badge');
+                    if (badgeElem) badgeElem.textContent = process.process_number || '';
+                    
+                    const numElem = document.getElementById('res-process-number');
+                    if (numElem) numElem.textContent = process.process_number || '';
+
                     document.getElementById('res-assunto').textContent = process.subject || 'Processo Importado';
                     document.getElementById('res-requerente').textContent = process.requester || 'Importação de Dados';
                     document.getElementById('res-doc').textContent = process.document_number || 'Não informado';
                     document.getElementById('res-obs').textContent = process.observations || 'Sem observações';
                     
-                    // Current Status
+                    // Status e Posse Atual (Novos Cards)
                     const lastMov = history[0];
+                    const sectorElem = document.getElementById('res-sector');
+                    const respElem = document.getElementById('res-responsible');
+                    const actionElem = document.getElementById('res-movement-action');
+                    const dateElem = document.getElementById('res-movement-date');
+
                     if (lastMov) {
-                        const setorName = lastMov.destination_sector || 'Não informado';
-                        document.getElementById('res-status').textContent = lastMov.action === 'ENTRADA' ? 'Em posse de ' + setorName : 'Enviado para ' + setorName;
+                        if (sectorElem) sectorElem.textContent = lastMov.destination_sector || '-';
+                        if (respElem) respElem.textContent = lastMov.responsible_name || 'Não atribuído';
+                        if (actionElem) actionElem.textContent = lastMov.action === 'ENTRADA' ? 'ENTRADA (Custódia Ativa)' : 'SAÍDA / TRÂMITE';
+                        if (dateElem) dateElem.textContent = lastMov.movement_date ? window.app.formatDate(lastMov.movement_date) : 'Sem data';
                     } else {
-                        document.getElementById('res-status').textContent = 'Sem movimentação';
+                        if (sectorElem) sectorElem.textContent = '-';
+                        if (respElem) respElem.textContent = 'Não atribuído';
+                        if (actionElem) actionElem.textContent = 'NOVO';
+                        if (dateElem) dateElem.textContent = 'Sem data';
                     }
 
-                    // REGRA DE NEGÓCIO DE POSSE DE PROCESSO (BLOQUEIO DE TRAMITAÇÃO OPERACIONAL)
-                    const userSectorId = user.sector_id;
+                    // REGRA DE CUSTÓDIA / POSSE DE PROCESSO (BOTÃO TRAMITAR)
                     const lastSectorId = process.last_destination_sector_id;
                     const lastAction = process.last_action;
 
-                    // Pode movimentar se for Admin/Superadmin, ou se não tiver histórico (novo processo) OU se estiver sob custódia do seu setor e a ação for ENTRADA
-                    const canTramitar = (user.role === 'Admin' || !lastSectorId || (lastSectorId == userSectorId && lastAction === 'ENTRADA'));
+                    // O usuário pode tramitar se for Admin OU se não tiver histórico OU se estiver sob custódia de um dos seus setores autorizados (via backend)
+                    const canTramitar = (user.role === 'Admin' || !lastSectorId || process.is_authorized_custody);
                     const alertBanner = document.getElementById('posse-alert-banner');
 
                     if (!canTramitar) {
@@ -702,7 +768,7 @@ const searchView = {
                         alertBanner.innerHTML = `
                             <div class="alert alert-danger" style="display:flex; align-items:center; gap: 0.75rem; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: 1rem 1.25rem; border-radius: var(--radius-md); font-weight: 500; font-size: 0.9rem;">
                                 <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.25rem;"></i>
-                                <span>Este processo encontra-se atualmente em: <strong>${currentSectorName}</strong> (${statusDesc}). A tramitação de nova movimentação é de direito exclusivo do setor detentor da custódia do processo.</span>
+                                <span>Este processo encontra-se atualmente em: <strong>${currentSectorName}</strong> (${statusDesc}). A tramitação é de direito exclusivo dos responsáveis com posse ativa sobre a custódia do processo.</span>
                             </div>
                         `;
                         alertBanner.style.display = 'block';
@@ -711,7 +777,7 @@ const searchView = {
                         alertBanner.style.display = 'none';
                     }
 
-                    // Attachment Info in Details
+                    // Seção de apensos
                     const attachDiv = document.getElementById('res-attachment-info');
                     const attachText = document.getElementById('res-attachment-text');
                     const childrenDiv = document.getElementById('res-children-list');
@@ -722,7 +788,7 @@ const searchView = {
                         attachText.textContent = `Este processo está APENSADO ao processo ${process.parent_process_number}`;
                         btnDetachMain.style.display = 'block';
                         childrenDiv.style.display = 'none';
-                        btnAttachProc.style.display = 'none'; // Cannot attach if already a child
+                        btnAttachProc.style.display = 'none';
                     } else if (process.attachments_count > 0) {
                         attachDiv.style.display = 'none';
                         childrenDiv.style.display = 'block';
@@ -740,21 +806,20 @@ const searchView = {
                         btnAttachProc.style.display = 'block';
                     }
 
-                    // Fill History table
+                    // Histórico de movimentações na linha do tempo
                     const tbody = document.getElementById('history-body');
                     tbody.innerHTML = history.length ? history.map(h => `
                         <tr>
-                            <td>${window.app.formatDate(h.movement_date)}</td>
-                            <td><span class="badge-${h.action.toLowerCase()}">${h.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : h.action}</span></td>
-                            <td>${h.destination_sector}</td>
+                            <td><strong>${window.app.formatDate(h.movement_date)}</strong></td>
+                            <td><span class="${h.action === 'ENTRADA' ? 'badge-entrada' : 'badge-saida'}">${h.action === 'ENTRADA' ? 'ENTRADA (Tramitação)' : 'SAÍDA'}</span></td>
+                            <td><strong>${h.destination_sector}</strong></td>
                             <td>${h.responsible_name || '-'}</td>
                             <td>${h.user_name || '-'}</td>
                         </tr>
                     `).join('') : '<tr><td colspan="5" class="text-center">Nenhuma movimentação encontrada</td></tr>';
 
                     resultsDiv.style.display = 'block';
-                    recentSection.style.display = 'none';
-                    document.getElementById('search-filter-card').style.display = 'none';
+                    mainPanel.style.display = 'none';
                     searchListSection.style.display = 'none';
                     emptyDiv.style.display = 'none';
 
@@ -776,12 +841,19 @@ const searchView = {
                     } else {
                         btnDeleteProc.style.display = 'none';
                     }
+                } else {
+                    currentProcessId = null;
+                    mainPanel.style.display = 'none';
+                    resultsDiv.style.display = 'none';
+                    searchListSection.style.display = 'none';
+                    emptyDiv.style.display = 'block';
                 }
             } catch(e) {
-                window.app.toast('Erro ao carregar detalhes', 'error');
+                window.app.toast(e.message || 'Erro ao carregar detalhes do processo', 'error');
             }
         };
 
+        // RESETAR TELA PARA PAINEL PRINCIPAL COM TODAS AS ÁREAS
         const resetView = () => {
             inputSearch.value = '';
             if (filterSector) filterSector.value = '';
@@ -789,9 +861,18 @@ const searchView = {
             resultsDiv.style.display = 'none';
             emptyDiv.style.display = 'none';
             searchListSection.style.display = 'none';
-            recentSection.style.display = 'block';
-            document.getElementById('search-filter-card').style.display = 'block';
-            loadSectorProcesses();
+            mainPanel.style.display = 'block';
+            
+            // Recarrega as duas áreas principais com as buscas limpas
+            searchAnalysis = '';
+            pageAnalysis = 1;
+            document.getElementById('analysis-filter-query').value = '';
+            loadAnalysisProcesses();
+
+            searchTramitados = '';
+            pageTramitados = 1;
+            document.getElementById('tramitados-filter-query').value = '';
+            loadTramitadosProcesses();
         };
 
         btnSearch.addEventListener('click', doSearch);
@@ -800,18 +881,7 @@ const searchView = {
         });
         
         if (btnClearFiltersTop) {
-            btnClearFiltersTop.addEventListener('click', () => {
-                inputSearch.value = '';
-                if (filterSector) filterSector.value = '';
-                if (filterAuditor) filterAuditor.value = '';
-                filterMode.value = 'current';
-                resultsDiv.style.display = 'none';
-                searchListSection.style.display = 'none';
-                emptyDiv.style.display = 'none';
-                recentSection.style.display = 'block';
-                document.getElementById('search-filter-card').style.display = 'block';
-                loadSectorProcesses();
-            });
+            btnClearFiltersTop.addEventListener('click', resetView);
         }
         
         btnDeleteProc.addEventListener('click', async () => {
@@ -886,7 +956,6 @@ const searchView = {
                     await Api.processes.update(updatedData);
                     window.app.toast('Informações atualizadas com sucesso!');
                     
-                    // Update original data and exit edit mode
                     originalData = { ...updatedData };
                     toggleEditMode(false);
                 } catch (err) {
@@ -904,8 +973,6 @@ const searchView = {
 
             try {
                 btnAttachProc.disabled = true;
-                
-                // Validação: O processo filho deve existir
                 const check = await Api.movements.getByNumber(childNumber);
                 if (!check || !check.exists) {
                     throw new Error('O processo informado não foi encontrado no sistema. Por favor, cadastre-o primeiro.');
@@ -940,10 +1007,9 @@ const searchView = {
         btnClearEmpty.addEventListener('click', resetView);
         if(btnBackRecent) btnBackRecent.addEventListener('click', resetView);
 
-        // Styling for pills
+        // Adição de estilos adicionais premium
         const style = document.createElement('style');
         style.textContent = `
-             /* Wrappers de Ícones de Inputs Premium na Busca */
             .mov-input-icon-wrapper {
                 position: relative;
                 display: flex;
@@ -968,7 +1034,6 @@ const searchView = {
                 color: var(--primary-color);
             }
 
-            /* Grid Premium de Detalhes do Processo (Cards Glassmorphic) */
             .details-grid-premium {
                 display: grid;
                 grid-template-columns: repeat(4, 1fr);
@@ -1003,7 +1068,6 @@ const searchView = {
                 box-shadow: 0 4px 12px rgba(0,0,0,0.04);
             }
 
-            /* Variantes de cores para os cards de detalhes */
             .detail-card-item.card-blue {
                 background: rgba(59, 130, 246, 0.02);
                 border-color: rgba(59, 130, 246, 0.12);
@@ -1056,6 +1120,45 @@ const searchView = {
                 background: rgba(16, 185, 129, 0.04);
             }
 
+            .detail-card-item.card-pink {
+                background: rgba(239, 68, 68, 0.02);
+                border-color: rgba(239, 68, 68, 0.12);
+            }
+            .detail-card-item.card-pink .detail-card-icon {
+                background: rgba(239, 68, 68, 0.08);
+                color: #ef4444;
+            }
+            .detail-card-item.card-pink:hover {
+                border-color: rgba(239, 68, 68, 0.25);
+                background: rgba(239, 68, 68, 0.04);
+            }
+
+            .detail-card-item.card-teal {
+                background: rgba(20, 184, 166, 0.02);
+                border-color: rgba(20, 184, 166, 0.12);
+            }
+            .detail-card-item.card-teal .detail-card-icon {
+                background: rgba(20, 184, 166, 0.08);
+                color: #14b8a6;
+            }
+            .detail-card-item.card-teal:hover {
+                border-color: rgba(20, 184, 166, 0.25);
+                background: rgba(20, 184, 166, 0.04);
+            }
+
+            .detail-card-item.card-indigo {
+                background: rgba(99, 102, 241, 0.02);
+                border-color: rgba(99, 102, 241, 0.12);
+            }
+            .detail-card-item.card-indigo .detail-card-icon {
+                background: rgba(99, 102, 241, 0.08);
+                color: #6366f1;
+            }
+            .detail-card-item.card-indigo:hover {
+                border-color: rgba(99, 102, 241, 0.25);
+                background: rgba(99, 102, 241, 0.04);
+            }
+
             .detail-card-icon {
                 display: flex;
                 align-items: center;
@@ -1089,7 +1192,6 @@ const searchView = {
                 text-overflow: ellipsis;
             }
 
-            /* Ações de Topo com Efeito */
             .search-action-bar button {
                 transition: all 0.25s ease;
             }
@@ -1098,9 +1200,6 @@ const searchView = {
             }
             #btn-tramitar-proc:hover {
                 box-shadow: 0 6px 15px rgba(121, 185, 71, 0.35);
-            }
-            #btn-clear-filters-top:hover {
-                background: var(--border-color);
             }
 
             .attachment-pill {
@@ -1114,17 +1213,6 @@ const searchView = {
                 font-size: 0.85rem;
                 color: #1e40af;
                 font-weight: 500;
-            }
-            .btn-detach-child {
-                border: none;
-                background: none;
-                color: #ef4444;
-                cursor: pointer;
-                padding: 0;
-                display: flex;
-                align-items: center;
-                font-size: 1rem;
-                margin-left: 0.3rem;
             }
             .attachment-pill:hover { background: #dbeafe; }
             
@@ -1141,8 +1229,9 @@ const searchView = {
         `;
         document.head.appendChild(style);
 
-        // Initial load
-        loadSectorProcesses();
+        // Inicializar o carregamento das listas
+        loadAnalysisProcesses();
+        loadTramitadosProcesses();
 
         btnTramitar.addEventListener('click', () => {
             const num = inputSearch.value.trim();
@@ -1160,19 +1249,16 @@ const searchView = {
             }
         });
 
-        // Expor funções utilitárias e instâncias no objeto searchView
         this.loadProcessDetails = loadProcessDetails;
-        this.loadSectorProcesses = loadSectorProcesses;
+        this.resetView = resetView;
 
-        // Expose for external calls (e.g., from auditor drawer)
+        // Suporte para busca automatizada via drawer de auditores ou hash de rota
         this._autoSearch = (processNumber) => {
             inputSearch.value = processNumber;
             filterSector.value = '';
-            // Single process lookup goes directly to detail view
             loadProcessDetails(processNumber);
         };
 
-        // If navigated with a process number in hash (e.g. #search/009/001/2023)
         const preload = viewParts.slice(1).join('/');
         if (preload) {
             setTimeout(() => this._autoSearch(preload), 100);

@@ -126,13 +126,14 @@ const Api = {
         listLatest: () => Api.request('movements.php?latest=1', 'GET'),
         listByProcess: (procId) => Api.request(`movements.php?process_id=${procId}`, 'GET'),
         getByNumber: (number) => Api.request(`movements.php?process_number=${encodeURIComponent(number)}`, 'GET'),
-        search: (query, sector_id = '', only_current = false, responsible_id = '', page = 1, limit = 50) => {
+        search: (query, sector_id = '', only_current = false, responsible_id = '', page = 1, limit = 50, scope = '') => {
             let url = `movements.php?search=${encodeURIComponent(query)}`;
             if (sector_id) url += `&sector_id=${sector_id}`;
             if (only_current) url += `&only_current=1`;
             if (responsible_id) url += `&responsible_id=${responsible_id}`;
             if (page) url += `&page=${page}`;
             if (limit) url += `&limit=${limit}`;
+            if (scope) url += `&scope=${scope}`;
             return Api.request(url, 'GET');
         },
         register: (data) => Api.request('movements.php', 'POST', data)
@@ -143,7 +144,8 @@ const Api = {
             const params = [];
             if (start) params.push(`start=${start}`);
             if (end) params.push(`end=${end}`);
-            if (params.length > 0) url += `?${params.join('&')}`;
+            params.push(`_t=${Date.now()}`); // Cache-buster
+            url += `?${params.join('&')}`;
             return Api.request(url, 'GET');
         }
     },
