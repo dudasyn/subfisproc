@@ -75,6 +75,7 @@ if ($method === 'DELETE') {
         jsonResponse(['success' => true]);
     } elseif ($action === 'update') {
         $id = $data['id'] ?? null;
+        $process_number = trim($data['process_number'] ?? '');
         $subject = trim($data['subject'] ?? '');
         $requester = trim($data['requester'] ?? '');
         $document_number = trim($data['document_number'] ?? '');
@@ -85,8 +86,8 @@ if ($method === 'DELETE') {
         }
 
         try {
-            $stmt = $pdo->prepare('UPDATE processes SET subject = ?, requester = ?, document_number = ?, observations = ? WHERE id = ?');
-            $stmt->execute([$subject, $requester, $document_number, $observations, $id]);
+            $stmt = $pdo->prepare('UPDATE processes SET process_number = ?, subject = ?, requester = ?, document_number = ?, observations = ? WHERE id = ?');
+            $stmt->execute([$process_number, $subject, $requester, $document_number, $observations, $id]);
             
             jsonResponse(['success' => true]);
         } catch (PDOException $e) {

@@ -50,7 +50,7 @@ if ($method === 'GET') {
     } elseif ($process_number) {
         // Fetch process details and last movement
         $stmt = $pdo->prepare('
-            SELECT p_main.id, p_main.subject, p_main.requester, p_main.document_number, p_main.observations, p_main.parent_id,
+            SELECT p_main.id, p_main.process_number, p_main.subject, p_main.requester, p_main.document_number, p_main.observations, p_main.parent_id,
                    (SELECT COUNT(*) FROM processes p_sub WHERE p_sub.parent_id = p_main.id) as attachments_count,
                    (SELECT p_parent.process_number FROM processes p_parent WHERE p_parent.id = p_main.parent_id) as parent_process_number
             FROM processes p_main
@@ -88,9 +88,10 @@ if ($method === 'GET') {
         } else {
             jsonResponse(['exists' => false]);
         }
-    } elseif (isset($_GET['search']) || isset($_GET['sector_id'])) {
+    } elseif (isset($_GET['search']) || isset($_GET['sector_id']) || isset($_GET['user_id'])) {
         $search = $_GET['search'] ?? '';
         $sector_id = $_GET['sector_id'] ?? null;
+        $user_id = $_GET['user_id'] ?? null;
         $only_current = isset($_GET['only_current']) && $_GET['only_current'] === '1';
         
         $params = [];
@@ -99,30 +100,33 @@ if ($method === 'GET') {
                 (SELECT p_p.process_number FROM processes p_p WHERE p_p.id = p.parent_id) as parent_process_number 
                 FROM processes p ";
         
-        if ($only_current && $sector_id) {
-            $sql .= "
-                JOIN movements m ON p.id = m.process_id 
-                WHERE m.id IN (SELECT MAX(id) FROM movements GROUP BY process_id)
-                AND m.destination_sector_id = ?
-            ";
+        if ($sector_id || $user_id || $only_current) {
+            $sql .= " JOIN movements m ON p.id = m.process_id ";
+        }
+        
+        $where = [];
+        
+        if ($only_current) {
+            $where[] = "m.id IN (SELECT MAX(id) FROM movements GROUP BY process_id)";
+        }
+        
+        if ($sector_id) {
+            $where[] = "m.destination_sector_id = ?";
             $params[] = $sector_id;
-            if ($search) {
-                $sql .= " AND p.process_number LIKE ?";
-                $params[] = '%'.$search.'%';
-            }
-        } elseif ($sector_id) {
-            $sql .= "
-                JOIN movements m ON p.id = m.process_id 
-                WHERE m.destination_sector_id = ?
-            ";
-            $params[] = $sector_id;
-            if ($search) {
-                $sql .= " AND p.process_number LIKE ?";
-                $params[] = '%'.$search.'%';
-            }
-        } else {
-            $sql .= " WHERE p.process_number LIKE ?";
+        }
+        
+        if ($user_id) {
+            $where[] = "m.user_id = ?";
+            $params[] = $user_id;
+        }
+        
+        if ($search) {
+            $where[] = "p.process_number LIKE ?";
             $params[] = '%'.$search.'%';
+        }
+        
+        if (count($where) > 0) {
+            $sql .= " WHERE " . implode(" AND ", $where);
         }
         
         $sql .= " ORDER BY p.id DESC LIMIT 50";
