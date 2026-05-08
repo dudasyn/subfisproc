@@ -581,12 +581,19 @@ const searchView = {
                 btnSaveProc.disabled = true;
                 btnSaveProc.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                 
-                await Api.processes.update(updatedData);
-                window.app.toast('Informações atualizadas com sucesso!');
+                const response = await Api.processes.update(updatedData);
                 
-                // Update original data and exit edit mode
-                originalData = { ...updatedData };
-                toggleEditMode(false);
+                if (response && response.merged) {
+                    window.app.toast('Processo mesclado com sucesso!');
+                    inputSearch.value = updatedData.process_number;
+                    loadProcessDetails(updatedData.process_number);
+                } else {
+                    window.app.toast('Informações atualizadas com sucesso!');
+                    
+                    // Update original data and exit edit mode
+                    originalData = { ...updatedData };
+                    toggleEditMode(false);
+                }
             } catch (err) {
                 window.app.toast(err.message, 'error');
             } finally {
