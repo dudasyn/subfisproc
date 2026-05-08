@@ -29,6 +29,12 @@ const searchView = {
                                     <option value="history">Já passou por lá (Histórico)</option>
                                 </select>
                             </div>
+                            <div class="form-group col-span-1">
+                                <label>Colaborador</label>
+                                <select id="filter-user">
+                                    <option value="">Todos...</option>
+                                </select>
+                            </div>
                             <div class="form-group">
                                 <button id="btn-search-proc" class="btn-primary" style="height: 48px; width: 100%;">
                                     <span>Filtrar</span>
@@ -98,6 +104,10 @@ const searchView = {
                             </div>
                             <div class="card-body">
                                 <div class="details-grid">
+                                    <div class="detail-item" style="grid-column: 1 / -1;">
+                                        <span class="label">Número do Processo:</span>
+                                        <span class="value" id="res-numero" style="font-size: 1.1rem; font-weight: 700; color: var(--primary-color);">-</span>
+                                    </div>
                                     <div class="detail-item">
                                         <span class="label">Assunto:</span>
                                         <span class="value" id="res-assunto">-</span>
@@ -266,6 +276,7 @@ const searchView = {
         const inputSearch = document.getElementById('search-input');
         const filterSector = document.getElementById('filter-sector');
         const filterMode = document.getElementById('filter-mode');
+        const filterUser = document.getElementById('filter-user');
         const resultsDiv = document.getElementById('search-results');
         const emptyDiv = document.getElementById('search-empty');
         const recentSection = document.getElementById('recent-section');
@@ -291,6 +302,10 @@ const searchView = {
         // Load Sectors for filter
         const sectors = await Api.sectors.list();
         filterSector.innerHTML += sectors.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('');
+
+        // Load Users for filter
+        const usersList = await Api.users.list();
+        filterUser.innerHTML += usersList.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
 
         const loadRecent = async () => {
             try {
@@ -366,9 +381,10 @@ const searchView = {
             const query = inputSearch.value.trim();
             const sectorId = filterSector.value;
             const onlyCurrent = filterMode.value === 'current';
+            const userId = filterUser.value;
             
-            if (!query && !sectorId) {
-                window.app.toast('Digite um número ou selecione um setor', 'warning');
+            if (!query && !sectorId && !userId) {
+                window.app.toast('Digite um número, selecione um setor ou colaborador', 'warning');
                 return;
             }
 
@@ -376,7 +392,7 @@ const searchView = {
             btnSearch.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
             try {
-                const processes = await Api.movements.search(query, sectorId, onlyCurrent);
+                const processes = await Api.movements.search(query, sectorId, onlyCurrent, userId);
                 
                 recentSection.style.display = 'none';
                 resultsDiv.style.display = 'none';
@@ -429,6 +445,7 @@ const searchView = {
                     const history = await Api.movements.listByProcess(process.id);
                     
                     // Fill Details
+                    document.getElementById('res-numero').textContent = process.process_number || '-';
                     document.getElementById('res-assunto').textContent = process.subject || 'Processo Importado';
                     document.getElementById('res-requerente').textContent = process.requester || 'Importação de Dados';
                     document.getElementById('res-doc').textContent = process.document_number || 'Não informado';
@@ -491,6 +508,7 @@ const searchView = {
 
                     currentProcessId = process.id;
                     originalData = {
+                        process_number: process.process_number || '',
                         subject: process.subject || '',
                         requester: process.requester || '',
                         document_number: process.document_number || '',
@@ -512,6 +530,7 @@ const searchView = {
         const toggleEditMode = (editing) => {
             isEditing = editing;
             const elements = {
+                numero: document.getElementById('res-numero'),
                 assunto: document.getElementById('res-assunto'),
                 requerente: document.getElementById('res-requerente'),
                 doc: document.getElementById('res-doc'),
@@ -519,6 +538,7 @@ const searchView = {
             };
 
             if (editing) {
+                elements.numero.innerHTML = `<input type="text" id="edit-numero" class="form-control-sm" style="width:100%; font-size: 1.1rem; font-weight: 700; color: var(--primary-color);" value="${originalData.process_number}">`;
                 elements.assunto.innerHTML = `<input type="text" id="edit-assunto" class="form-control-sm" style="width:100%" value="${originalData.subject}">`;
                 elements.requerente.innerHTML = `<input type="text" id="edit-requerente" class="form-control-sm" style="width:100%" value="${originalData.requester}">`;
                 elements.doc.innerHTML = `<input type="text" id="edit-doc" class="form-control-sm" style="width:100%" value="${originalData.document_number}">`;
@@ -529,6 +549,7 @@ const searchView = {
                 btnDeleteProc.style.display = 'none';
                 btnAttachProc.style.display = 'none';
             } else {
+                elements.numero.textContent = originalData.process_number || '-';
                 elements.assunto.textContent = originalData.subject || 'Processo Importado';
                 elements.requerente.textContent = originalData.requester || 'Importação de Dados';
                 elements.doc.textContent = originalData.document_number || 'Não informado';
@@ -549,6 +570,7 @@ const searchView = {
         btnSaveProc.addEventListener('click', async () => {
             const updatedData = {
                 id: currentProcessId,
+                process_number: document.getElementById('edit-numero').value.trim(),
                 subject: document.getElementById('edit-assunto').value.trim(),
                 requester: document.getElementById('edit-requerente').value.trim(),
                 document_number: document.getElementById('edit-doc').value.trim(),

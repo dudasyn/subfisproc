@@ -101,9 +101,14 @@ const reportsView = {
                     </div>
 
                     <div id="stagnant-results" style="display:none;">
-                        <div class="flex-end mb-1" style="gap:10px;">
-                            <button class="btn-secondary" id="btn-stag-xlsx" style="width:auto;"><i class="fa-solid fa-file-excel"></i> Exportar XLSX</button>
-                            <button class="btn-secondary" id="btn-stag-pdf" style="width:auto;"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button>
+                        <div class="flex-between mb-1" style="align-items: center;">
+                            <div>
+                                <h4 id="stagnant-summary-text" style="margin: 0; color: var(--primary-color);"></h4>
+                            </div>
+                            <div style="display: flex; gap:10px;">
+                                <button class="btn-secondary" id="btn-stag-xlsx" style="width:auto;"><i class="fa-solid fa-file-excel"></i> Exportar XLSX</button>
+                                <button class="btn-secondary" id="btn-stag-pdf" style="width:auto;"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button>
+                            </div>
                         </div>
                         <div class="card">
                             <div class="table-responsive">
@@ -355,10 +360,14 @@ const reportsView = {
 
             try {
                 const data = await Api.reports.stagnant(days, sectorId);
+                
+                const summaryText = document.getElementById('stagnant-summary-text');
+                summaryText.innerHTML = `<i class="fa-solid fa-list-check"></i> ${data.length} processo(s) parados encontrados`;
+
                 tbody.innerHTML = data.map(p => `
-                    <tr>
+                    <tr onclick="reportsView.showProcessModal('${p.process_number}')" style="cursor:pointer;" title="Clique para ver detalhes do processo">
                         <td>
-                            <strong>${p.process_number}</strong>
+                            <strong style="color:var(--primary-color);">${p.process_number}</strong>
                             ${p.parent_id ? '<i class="fa-solid fa-paperclip" title="Apenso" style="margin-left:5px; font-size:0.7rem; color:var(--text-secondary);"></i>' : (p.attachments_count > 0 ? '<i class="fa-solid fa-link" title="Possui apensos" style="margin-left:5px; font-size:0.7rem; color:var(--primary-color);"></i>' : '')}
                         </td>
                         <td>${p.subject}</td>
@@ -369,7 +378,10 @@ const reportsView = {
                     </tr>
                 `).join('');
 
-                if (data.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum processo parado</td></tr>';
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum processo parado</td></tr>';
+                    summaryText.innerHTML = '';
+                }
                 results.style.display = 'block';
             } catch (e) {
                 window.app.toast(e.message, 'error');
@@ -379,8 +391,14 @@ const reportsView = {
             }
         };
 
-        document.getElementById('btn-stag-xlsx').onclick = () => this.exportXLSX('table-stag', 'Relatorio_Stagnados');
-        document.getElementById('btn-stag-pdf').onclick = () => this.exportPDF('table-stag', 'Processos Stagnados');
+        document.getElementById('btn-stag-xlsx').onclick = () => {
+            const sumText = document.getElementById('stagnant-summary-text').innerText;
+            this.exportXLSX('table-stag', 'Relatorio_Stagnados', sumText);
+        };
+        document.getElementById('btn-stag-pdf').onclick = () => {
+            const sumText = document.getElementById('stagnant-summary-text').innerText;
+            this.exportPDF('table-stag', 'Processos Parados por Setor', sumText);
+        };
     },
 
     initAuditors() {
