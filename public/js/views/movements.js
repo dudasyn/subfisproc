@@ -346,18 +346,62 @@ const movementsView = {
                     assuntoInput.disabled = false;
                     docInput.disabled = false;
                     
-                    // Assunto: preferência para complemento_assunto (scraped.assunto), fallback para assunto_original
+                    // Captura os valores atualmente preenchidos nos campos locais
+                    const originalSubjectValue = assuntoInput.value.trim();
+                    const originalRequesterValue = requerenteInput.value.trim();
+                    const originalDocValue = docInput.value.trim();
+
+                    // Valores extraídos do STPD
                     const finalSubject = scraped.assunto || scraped.assunto_original || '';
-                    assuntoInput.value = finalSubject;
+                    const finalRequester = scraped.requerente || scraped.interessado || '';
+                    const finalDoc = extractDocument(scraped) || '';
+
+                    // Array para armazenar informações desviadas do STPD para as Observações
+                    const stpdDivertedInfo = [];
+
+                    // Assunto: se já estiver preenchido localmente, preserva e desvia o do STPD
+                    if (originalSubjectValue !== '') {
+                        if (finalSubject && finalSubject !== originalSubjectValue) {
+                            stpdDivertedInfo.push(`• Assunto retornado do STPD: ${finalSubject}`);
+                        }
+                    } else {
+                        assuntoInput.value = finalSubject;
+                    }
                     
-                    // Requerente
-                    requerenteInput.value = scraped.requerente || scraped.interessado || '';
+                    // Requerente: se já estiver preenchido localmente, preserva e desvia o do STPD
+                    if (originalRequesterValue !== '') {
+                        if (finalRequester && finalRequester !== originalRequesterValue) {
+                            stpdDivertedInfo.push(`• Requerente retornado do STPD: ${finalRequester}`);
+                        }
+                    } else {
+                        requerenteInput.value = finalRequester;
+                    }
                     
-                    // CPF/CNPJ: usa regex inteligente para extração
-                    docInput.value = extractDocument(scraped) || '';
+                    // CPF/CNPJ: se já estiver preenchido localmente, preserva e desvia o do STPD
+                    if (originalDocValue !== '') {
+                        if (finalDoc && finalDoc !== originalDocValue) {
+                            stpdDivertedInfo.push(`• CPF/CNPJ retornado do STPD: ${finalDoc}`);
+                        }
+                    } else {
+                        docInput.value = finalDoc;
+                    }
                     
-                    // Observações formatadas e concatenadas
-                    obsInput.value = formatObservations(scraped);
+                    // Formata a observação vinda do STPD
+                    let baseObs = formatObservations(scraped);
+                    if (stpdDivertedInfo.length > 0) {
+                        baseObs = `[DADOS DO STPD PRESERVADOS (CAMPOS LOCAIS JÁ PREENCHIDOS)]\n` + 
+                                  stpdDivertedInfo.join('\n') + 
+                                  `\n\n` + 
+                                  baseObs;
+                    }
+
+                    // Preserva qualquer observação que o usuário já tenha digitado localmente no formulário
+                    const originalObs = obsInput.value.trim();
+                    if (originalObs !== '') {
+                        obsInput.value = originalObs + `\n\n` + baseObs;
+                    } else {
+                        obsInput.value = baseObs;
+                    }
                     
                     // Exibe a Última Tramitação de forma premium
                     if (scraped.ultima_tramitacao) {

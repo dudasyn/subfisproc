@@ -95,7 +95,7 @@ if ($method === 'GET') {
     } elseif ($process_number) {
         // Fetch process details and last movement
         $stmt = $pdo->prepare('
-            SELECT p_main.id, p_main.subject, p_main.requester, p_main.document_number, p_main.observations, p_main.parent_id,
+            SELECT p_main.id, p_main.process_number, p_main.subject, p_main.requester, p_main.document_number, p_main.observations, p_main.parent_id,
                    (SELECT COUNT(*) FROM processes p_sub WHERE p_sub.parent_id = p_main.id) as attachments_count,
                    (SELECT p_parent.process_number FROM processes p_parent WHERE p_parent.id = p_main.parent_id) as parent_process_number
             FROM processes p_main

@@ -248,26 +248,6 @@ const searchView = {
                                             <span class="detail-card-value" id="res-responsible">-</span>
                                         </div>
                                     </div>
-                                    <!-- Card 7: Registro de Movimentação (Ação) -->
-                                    <div class="detail-card-item card-pink">
-                                        <div class="detail-card-icon">
-                                            <i class="fa-solid fa-arrows-spin"></i>
-                                        </div>
-                                        <div class="detail-card-content">
-                                            <span class="detail-card-label">Último Registro</span>
-                                            <span class="detail-card-value" id="res-movement-action">-</span>
-                                        </div>
-                                    </div>
-                                    <!-- Card 8: Data do Último Trâmite -->
-                                    <div class="detail-card-item card-blue">
-                                        <div class="detail-card-icon">
-                                            <i class="fa-solid fa-calendar-days"></i>
-                                        </div>
-                                        <div class="detail-card-content">
-                                            <span class="detail-card-label">Data do Trâmite</span>
-                                            <span class="detail-card-value" id="res-movement-date">-</span>
-                                        </div>
-                                    </div>
                                 </div>
                                 
                                 <!-- Seção de Apensos / Apensados -->
@@ -738,19 +718,13 @@ const searchView = {
                     const lastMov = history[0];
                     const sectorElem = document.getElementById('res-sector');
                     const respElem = document.getElementById('res-responsible');
-                    const actionElem = document.getElementById('res-movement-action');
-                    const dateElem = document.getElementById('res-movement-date');
 
                     if (lastMov) {
                         if (sectorElem) sectorElem.textContent = lastMov.destination_sector || '-';
                         if (respElem) respElem.textContent = lastMov.responsible_name || 'Não atribuído';
-                        if (actionElem) actionElem.textContent = lastMov.action === 'ENTRADA' ? 'ENTRADA (Custódia Ativa)' : 'SAÍDA / TRÂMITE';
-                        if (dateElem) dateElem.textContent = lastMov.movement_date ? window.app.formatDate(lastMov.movement_date) : 'Sem data';
                     } else {
                         if (sectorElem) sectorElem.textContent = '-';
                         if (respElem) respElem.textContent = 'Não atribuído';
-                        if (actionElem) actionElem.textContent = 'NOVO';
-                        if (dateElem) dateElem.textContent = 'Sem data';
                     }
 
                     // REGRA DE CUSTÓDIA / POSSE DE PROCESSO (BOTÃO TRAMITAR)
@@ -1036,7 +1010,7 @@ const searchView = {
 
             .details-grid-premium {
                 display: grid;
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(3, 1fr);
                 gap: 1.25rem;
                 margin-bottom: 1.5rem;
                 width: 100%;
