@@ -493,6 +493,28 @@ const movementsView = {
 
         destinoSelect.addEventListener('change', updateActionAutomatically);
 
+        const handleResponsibleChange = () => {
+            const respId = responsavelSelect.value;
+            if (respId) {
+                const resp = this.responsibles.find(r => String(r.id) === String(respId));
+                if (resp && resp.sector_ids) {
+                    const sectorIds = resp.sector_ids.split(',').map(id => id.trim()).filter(id => id !== '');
+                    if (sectorIds.length > 0) {
+                        const targetSectorId = sectorIds[0];
+                        destinoSelect.value = targetSectorId;
+                        destinoSelect.disabled = true; // Trava o setor de destino de forma compulsória
+                        
+                        window.app.toast(`Setor de destino alterado e travado para o setor do Auditor: ${resp.sector_name || 'Setor do Auditor'}`, 'info');
+                        updateActionAutomatically();
+                        return;
+                    }
+                }
+            }
+            destinoSelect.disabled = false; // Destrava se nenhum auditor estiver selecionado
+        };
+
+        responsavelSelect.addEventListener('change', handleResponsibleChange);
+
         // Format verification warning (non-blocking)
         processInput.addEventListener('input', () => {
             const processNumber = processInput.value.trim();
@@ -526,6 +548,7 @@ const movementsView = {
             docInput.value = '';
             obsInput.value = '';
             responsavelSelect.value = '';
+            handleResponsibleChange();
             if (btnSave) btnSave.disabled = false;
             
             const utContainer = document.getElementById('mov-ultima-tramitacao-container');
@@ -564,6 +587,7 @@ const movementsView = {
                     if (process.last_responsible_id) {
                         responsavelSelect.value = process.last_responsible_id;
                     }
+                    handleResponsibleChange();
 
                     // WARNING: Process has attachments
                     if (process.attachments_count > 0) {
@@ -618,6 +642,23 @@ const movementsView = {
             if (actionValue === 'SAIDA_EXTERNO') {
                 actionValue = 'SAIDA';
             }
+
+            // Validação de segurança: se houver auditor, o setor de destino deve pertencer a ele
+            const respId = responsavelSelect.value;
+            if (respId) {
+                const resp = this.responsibles.find(r => String(r.id) === String(respId));
+                if (resp && resp.sector_ids) {
+                    const sectorIds = resp.sector_ids.split(',').map(id => id.trim()).filter(id => id !== '');
+                    const destSectorId = String(destinoSelect.value);
+                    if (!sectorIds.includes(destSectorId)) {
+                        window.app.toast('Erro: O setor de destino deve corresponder ao setor do Auditor!', 'error');
+                        btn.innerHTML = '<i class="fa-solid fa-save"></i> Gravar Movimentação';
+                        btn.disabled = false;
+                        return;
+                    }
+                }
+            }
+
             const data = {
                 process_number: document.getElementById('mov-processo').value,
                 movement_date: document.getElementById('mov-data').value,
@@ -645,6 +686,7 @@ const movementsView = {
                 destinoSelect.value = user && user.sector_id ? user.sector_id : '';
                 document.getElementById('mov-attachments-alert').style.display = 'none';
                 responsavelSelect.value = '';
+                handleResponsibleChange();
                 const utContainer = document.getElementById('mov-ultima-tramitacao-container');
                 if (utContainer) {
                     utContainer.style.display = 'none';
