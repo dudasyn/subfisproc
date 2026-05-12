@@ -217,6 +217,7 @@ const movementsView = {
 
         const form = document.getElementById('movement-form');
         const processInput = document.getElementById('mov-processo');
+        let lastCheckedNumber = '';
         const acaoSelect = document.getElementById('mov-acao');
         const destinoDiv = document.getElementById('div-destino');
         const destinoSelect = document.getElementById('mov-destino');
@@ -495,43 +496,72 @@ const movementsView = {
 
         const handleResponsibleChange = () => {
             const respId = responsavelSelect.value;
-            if (respId) {
-                const resp = this.responsibles.find(r => String(r.id) === String(respId));
-                if (resp && resp.sector_ids) {
-                    const sectorIds = resp.sector_ids.split(',').map(id => id.trim()).filter(id => id !== '');
-                    if (sectorIds.length > 0) {
-                        const targetSectorId = sectorIds[0];
-                        destinoSelect.value = targetSectorId;
-                        destinoSelect.disabled = true; // Trava o setor de destino de forma compulsória
-                        
-                        window.app.toast(`Setor de destino alterado e travado para o setor do Auditor: ${resp.sector_name || 'Setor do Auditor'}`, 'info');
-                        updateActionAutomatically();
-                        return;
-                    }
+            if (!respId) {
+                // Sem auditor selecionado: restaura todas as opções e destrava
+                destinoSelect.disabled = false;
+                // Restaura todas as opções do select se foram filtradas
+                if (destinoSelect.dataset.filtered === 'true') {
+                    const allSectors = this.sectors_data || [];
+                    const currentValue = destinoSelect.value;
+                    destinoSelect.innerHTML = '<option value="">Selecione o setor de destino...</option>' +
+                        allSectors.map(s => `<option value="${s.id}" ${String(s.id) === String(currentValue) ? 'selected' : ''}>${s.alias || s.name}</option>`).join('');
+                    destinoSelect.dataset.filtered = 'false';
                 }
+                return;
             }
-            destinoSelect.disabled = false; // Destrava se nenhum auditor estiver selecionado
+
+            const resp = this.responsibles ? this.responsibles.find(r => String(r.id) === String(respId)) : null;
+            if (!resp) {
+                destinoSelect.disabled = false;
+                return;
+            }
+
+            const sectorIds = resp.sector_ids
+                ? resp.sector_ids.split(',').map(id => id.trim()).filter(id => id !== '')
+                : [];
+
+            if (sectorIds.length === 0) {
+                // Auditor sem setor vinculado: campo livre, sem restrição
+                destinoSelect.disabled = false;
+                if (destinoSelect.dataset.filtered === 'true') {
+                    const allSectors = this.sectors_data || [];
+                    const currentValue = destinoSelect.value;
+                    destinoSelect.innerHTML = '<option value="">Selecione o setor de destino...</option>' +
+                        allSectors.map(s => `<option value="${s.id}" ${String(s.id) === String(currentValue) ? 'selected' : ''}>${s.alias || s.name}</option>`).join('');
+                    destinoSelect.dataset.filtered = 'false';
+                }
+                window.app.toast(`Auditor "${resp.name}" não possui setor vinculado. Selecione o destino manualmente.`, 'info');
+
+            } else if (sectorIds.length === 1) {
+                // Auditor com exatamente 1 setor: trava compulsório
+                destinoSelect.value = sectorIds[0];
+                destinoSelect.disabled = true;
+                destinoSelect.dataset.filtered = 'false';
+                const sectorName = resp.sector_name ? resp.sector_name.split(', ')[0] : 'Setor do Auditor';
+                window.app.toast(`Setor de destino travado para: ${sectorName}`, 'info');
+                updateActionAutomatically();
+
+            } else {
+                // Auditor com múltiplos setores: filtra as opções para os setores do auditor
+                // O usuário deve escolher entre os setores deste auditor
+                const allSectors = this.sectors_data || [];
+                const allowedSectors = allSectors.filter(s => sectorIds.includes(String(s.id)));
+
+                destinoSelect.innerHTML = '<option value="">Selecione entre os setores do Auditor...</option>' +
+                    allowedSectors.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('');
+                destinoSelect.disabled = false;
+                destinoSelect.dataset.filtered = 'true';
+                window.app.toast(`Auditor em ${sectorIds.length} setores. Selecione o setor de destino.`, 'info');
+                updateActionAutomatically();
+            }
         };
 
         responsavelSelect.addEventListener('change', handleResponsibleChange);
 
-        // Format verification warning (non-blocking)
-        processInput.addEventListener('input', () => {
-            const processNumber = processInput.value.trim();
-            const warningEl = document.getElementById('mov-processo-warning');
-            
-            // Regex to match XXX/XXXX.../XXXX (Letters or digits)
-            if (processNumber && !/^[A-Z0-9]{1,10}\/[A-Z0-9]{1,10}\/[A-Z0-9]{1,10}$/i.test(processNumber)) {
-                warningEl.style.display = 'block';
-            } else {
-                warningEl.style.display = 'none';
-            }
-        });
-
-        // Search process and auto-fill
-        processInput.addEventListener('blur', async () => {
-            const processNumber = processInput.value.trim();
-            if (!processNumber) return;
+        // Função unificada para verificar existência do processo e preencher os campos
+        const checkProcessExistence = async (processNumber) => {
+            if (!processNumber || processNumber === lastCheckedNumber) return;
+            lastCheckedNumber = processNumber;
 
             const attachmentsAlert = document.getElementById('mov-attachments-alert');
             const btnSave = document.getElementById('btn-save-mov');
@@ -605,12 +635,11 @@ const movementsView = {
                     requerenteInput.disabled = true;
                     docInput.disabled = true;
 
-                    // Lógica especial de ENRIQUECIMENTO:
-                    // Se o processo veio de importação (nome genérico), mostra aviso mas NÃO puxa automático agora
+                    // Lógica especial de ENRIQUECIMENTO / AVISO:
                     if (process.requester === 'Importação de Dados' || process.requester === 'Processo Importado') {
-                        window.app.toast('Processo com dados genéricos. Use "Puxar do Portal" se necessário.', 'info');
+                        window.app.toast('Atenção: Processo já cadastrado no sistema (importação genética)!', 'warning');
                     } else {
-                        window.app.toast('Dados do processo carregados!', 'success');
+                        window.app.toast('Atenção: Este processo já existe no banco de dados local!', 'warning');
                     }
                     
                     currentProcessState = {
@@ -625,10 +654,52 @@ const movementsView = {
                     requerenteInput.disabled = false;
                     docInput.disabled = false;
                     updateActionAutomatically();
-                    window.app.toast('Novo processo identificado.', 'info');
+                    window.app.toast('Processo inédito. Pronto para cadastro inicial!', 'info');
                 }
             } catch (err) {
                 console.error(err);
+            }
+        };
+
+        // Máscara inteligente e dinâmica de digitação (XXX/XXXXXX/YYYY)
+        processInput.addEventListener('input', (e) => {
+            // Remove tudo exceto letras e números
+            let rawValue = e.target.value.replace(/[^A-Za-z0-9]/g, '');
+            
+            let formatted = '';
+            if (rawValue.length > 0) {
+                formatted += rawValue.substring(0, 3);
+            }
+            if (rawValue.length > 3) {
+                formatted += '/' + rawValue.substring(3, 9);
+            }
+            if (rawValue.length > 9) {
+                formatted += '/' + rawValue.substring(9, 13);
+            }
+            
+            // Atribui o valor formatado de volta ao campo em caixa alta
+            e.target.value = formatted.toUpperCase();
+
+            const processNumber = e.target.value.trim();
+            const warningEl = document.getElementById('mov-processo-warning');
+            
+            if (processNumber && !/^[A-Z0-9]{3}\/[A-Z0-9]{6}\/[A-Z0-9]{4}$/i.test(processNumber)) {
+                warningEl.style.display = 'block';
+                warningEl.innerHTML = '<i class="fa-solid fa-circle-info"></i> Formato esperado: 3 dígitos / 6 dígitos / 4 dígitos (Ex: 009/007852/2024)';
+            } else {
+                warningEl.style.display = 'none';
+                // Dispara a busca imediata ao completar o padrão de 15 caracteres
+                if (processNumber.length === 15) {
+                    checkProcessExistence(processNumber);
+                }
+            }
+        });
+
+        // Search process and auto-fill on blur as a fallback
+        processInput.addEventListener('blur', () => {
+            const processNumber = processInput.value.trim();
+            if (processNumber && processNumber.length === 15) {
+                checkProcessExistence(processNumber);
             }
         });
 
@@ -675,6 +746,7 @@ const movementsView = {
                 await Api.movements.register(data);
                 window.app.toast('Movimentação registrada com sucesso!');
                 form.reset();
+                lastCheckedNumber = '';
                 // Reset state
                 currentProcessState = { isNew: true, lastAction: null };
                 assuntoInput.disabled = false;

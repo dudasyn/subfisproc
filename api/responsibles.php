@@ -101,39 +101,18 @@ if ($method === 'GET') {
 
     if (!$id || empty($name)) jsonResponse(['error' => 'ID e Nome são obrigatórios'], 400);
 
-    // Check stationed processes
-    $stmtCount = $pdo->prepare('
-        SELECT COUNT(*) 
-        FROM movements m2 
-        INNER JOIN (
-            SELECT process_id, MAX(id) as max_id 
-            FROM movements 
-            GROUP BY process_id
-        ) latest ON m2.id = latest.max_id 
-        WHERE m2.responsible_id = ?
-    ');
-    $stmtCount->execute([$id]);
-    $stationed_count = (int)$stmtCount->fetchColumn();
-
-    if ($stationed_count > 0) {
-        $stmtOldSectors = $pdo->prepare('SELECT sector_id FROM responsible_sectors WHERE responsible_id = ?');
-        $stmtOldSectors->execute([$id]);
-        $old_sectors = $stmtOldSectors->fetchAll(PDO::FETCH_COLUMN);
-        
-        $old_sorted = array_map('intval', $old_sectors); sort($old_sorted);
-        $new_sorted = array_map('intval', $sector_ids); sort($new_sorted);
-        
-        if (implode(',', $old_sorted) !== implode(',', $new_sorted)) {
-            jsonResponse(['error' => "Não é possível alterar os setores deste auditor pois ele possui $stationed_count processo(s) parado(s) sob sua responsabilidade. Zere a carga antes de remanejá-lo."], 400);
-        }
-    }
+    // REGRA DE NEGÓCIO: A custódia de um processo é sempre do SETOR.
+    // Um auditor pode mudar de setor livremente a qualquer momento.
+    // Os processos continuam no setor onde estavam (destination_sector_id da última movimentação).
+    // A referência do auditor (responsible_id) nos movimentos históricos é imutável — fica no histórico.
+    // Portanto: NÃO há bloqueio de mudança de setor mesmo com processos em análise.
 
     $pdo->beginTransaction();
     try {
         $stmt = $pdo->prepare('UPDATE responsibles SET name = ? WHERE id = ?');
         $stmt->execute([$name, $id]);
 
-        // Replace all sector associations
+        // Substitui todos os vínculos de setor do auditor
         $pdo->prepare('DELETE FROM responsible_sectors WHERE responsible_id = ?')->execute([$id]);
         if (!empty($sector_ids)) {
             $stmt2 = $pdo->prepare('INSERT IGNORE INTO responsible_sectors (responsible_id, sector_id) VALUES (?, ?)');

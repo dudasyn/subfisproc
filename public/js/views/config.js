@@ -1163,7 +1163,7 @@ const configView = {
                         <td class="text-center" style="vertical-align: middle;">${stationedBadgeHtml}</td>
                         <td class="text-center" style="white-space: nowrap;">
                             <div style="display: flex; justify-content: center; gap: 5px;">
-                                <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showResponsibleModal(${r.id}, '${r.name.replace(/'/g, "\\'")}', '${r.sector_ids || ''}', ${count})"><i class="fa-solid fa-pen"></i> Editar</button>
+                                <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem;" onclick="configView.showResponsibleModal(${r.id}, '${r.name.replace(/'/g, "\\'")}', '${r.sector_ids || ''}')"><i class="fa-solid fa-pen"></i> Editar</button>
                                 <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:var(--bg-secondary); color:var(--primary);" onclick="configView.showMergeResponsibleModal(${r.id}, '${r.name.replace(/'/g, "\\'")}')" title="Mesclar auditor duplicado"><i class="fa-solid fa-code-merge"></i> Mesclar</button>
                                 <button class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size:0.8rem; background:#fee2e2; color:#b91c1c;" onclick="configView.deleteResponsible(${r.id})"><i class="fa-solid fa-trash"></i></button>
                             </div>
@@ -1303,25 +1303,35 @@ const configView = {
         };
     },
 
-    showResponsibleModal(id = null, currentName = '', currentSectorIds = '', stationedCount = 0) {
+    showResponsibleModal(id = null, currentName = '', currentSectorIds = '') {
         let selectedSectors = [];
         if (currentSectorIds) {
             const ids = currentSectorIds.split(',').map(s => s.trim());
             selectedSectors = this.sectors.filter(s => ids.includes(String(s.id)));
         }
 
+        // Processos em análise — apenas informativo, sem bloquear edição
+        const resp = id && this.responsibles_list ? this.responsibles_list.find(r => parseInt(r.id, 10) === parseInt(id, 10)) : null;
+        const stationedCount = resp ? parseInt(resp.stationed_processes_count || 0, 10) : 0;
+        const infoHtml = stationedCount > 0
+            ? `<div class="alert" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #92400e;">
+                <i class="fa-solid fa-circle-info" style="color: #f59e0b;"></i>
+                <span>Este auditor possui <strong>${stationedCount} processo(s) em análise</strong>. A mudança de setor é <strong>permitida</strong> — os processos permanecem no setor de custódia original, mas a referência ao auditor é mantida no histórico.</span>
+               </div>`
+            : '';
+
         const html = `
+            ${infoHtml}
             <div class="form-group mb-1">
                 <label>Nome do Responsável</label>
                 <input type="text" id="resp-name" required value="${currentName.replace(/"/g, '&quot;')}" placeholder="Ex: João da Silva">
             </div>
             <div class="form-group mb-1">
                 <label>Adicionar Setor de Atuação</label>
-                <select id="resp-add-sector" ${stationedCount > 0 ? 'disabled' : ''}>
-                    <option value="">${stationedCount > 0 ? 'Setores bloqueados para alteração' : 'Selecione um setor para adicionar...'}</option>
+                <select id="resp-add-sector">
+                    <option value="">Selecione um setor para adicionar...</option>
                     ${this.sectors.map(s => `<option value="${s.id}">${s.alias || s.name}</option>`).join('')}
                 </select>
-                ${stationedCount > 0 ? `<small style="color:#b91c1c; display:block; margin-top:0.3rem;"><i class="fa-solid fa-lock"></i> Auditor possui ${stationedCount} processo(s) em análise. Zere a carga antes de alterar os setores.</small>` : ''}
             </div>
             <div class="form-group">
                 <label>Setores Selecionados</label>
@@ -1354,22 +1364,20 @@ const configView = {
             }
 
             container.innerHTML = selectedSectors.map(s => `
-                <span class="badge badge-neutral ${stationedCount === 0 ? 'badge-removable' : ''}" data-id="${s.id}" style="${stationedCount === 0 ? 'cursor: pointer;' : ''}">
+                <span class="badge badge-neutral badge-removable" data-id="${s.id}" style="cursor: pointer;">
                     ${s.alias || s.name}
-                    ${stationedCount === 0 ? '<i class="fa-solid fa-xmark badge-remove-btn"></i>' : ''}
+                    <i class="fa-solid fa-xmark badge-remove-btn"></i>
                 </span>
             `).join('');
 
-            // Attach individual remove events only if not blocked
-            if (stationedCount === 0) {
-                container.querySelectorAll('.badge-removable').forEach(badge => {
-                    badge.onclick = () => {
-                        const sid = badge.dataset.id;
-                        selectedSectors = selectedSectors.filter(s => String(s.id) !== String(sid));
-                        renderBadges();
-                    };
-                });
-            }
+            // Attach individual remove events
+            container.querySelectorAll('.badge-removable').forEach(badge => {
+                badge.onclick = () => {
+                    const sid = badge.dataset.id;
+                    selectedSectors = selectedSectors.filter(s => String(s.id) !== String(sid));
+                    renderBadges();
+                };
+            });
         };
 
         select.onchange = () => {

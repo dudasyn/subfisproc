@@ -131,17 +131,21 @@ class Movement {
         $stats['aft_tramitacoes'] = (int)($flow['aft_tramitacoes'] ?? 0);
 
         // 4. Auditores Responsáveis Ativos no Grupo SUBFIS
+        // Usa a tabela pivot responsible_sectors (um auditor pode estar em 0 ou N setores).
         $subfisAuditorsSql = "
-            SELECT COUNT(*) 
+            SELECT COUNT(DISTINCT r.id) 
             FROM responsibles r 
-            WHERE r.active = 1 AND r.sector_id IN ($subfisIdsStr)";
+            INNER JOIN responsible_sectors rs ON rs.responsible_id = r.id
+            WHERE r.active = 1 AND rs.sector_id IN ($subfisIdsStr)";
         $stats['subfis_auditores'] = (int)$this->db->query($subfisAuditorsSql)->fetchColumn();
 
         // 5. Auditores Responsáveis Ativos no Grupo AFT
+        // Usa a tabela pivot responsible_sectors (um auditor pode estar em 0 ou N setores).
         $aftAuditorsSql = "
-            SELECT COUNT(*) 
+            SELECT COUNT(DISTINCT r.id) 
             FROM responsibles r 
-            WHERE r.active = 1 AND r.sector_id IN ($aftIdsStr)";
+            INNER JOIN responsible_sectors rs ON rs.responsible_id = r.id
+            WHERE r.active = 1 AND rs.sector_id IN ($aftIdsStr)";
         $stats['aft_auditores'] = (int)$this->db->query($aftAuditorsSql)->fetchColumn();
 
         // 6. Propriedades de Legado / Compatibilidade Retroativa de Visões
