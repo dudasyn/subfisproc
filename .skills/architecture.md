@@ -56,3 +56,7 @@ O projeto segue uma arquitetura Model-View-Controller rigorosa:
   - **1 setor**: O select de destino é automaticamente travado e preenchido de forma compulsória com o setor do auditor selecionado.
   - **N setores**: O select de destino é mantido editável, mas filtrado dinamicamente para exibir apenas a lista restrita de setores pertencentes àquele auditor.
 
+## 10. Gestão de Ramificações e Controle de Versionamento (Git Workflow)
+- **Branch de Desenvolvimento Obrigatória**: Toda e qualquer operação de `git pull`, `git push`, criação de commits e testes de novas lógicas de custódia e modelagem de banco de dados deve ocorrer exclusivamente na branch secundária `refactor-mvc-skills`.
+- **Isolamento de Segurança**: A ramificação `main` deve permanecer isolada de quaisquer atualizações de estrutura de banco ou código de governança até que a homologação completa na branch secundária seja homologada e aprovada.
+

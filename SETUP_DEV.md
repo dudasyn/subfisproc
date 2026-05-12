@@ -125,3 +125,12 @@ O sistema possui um painel administrativo robusto para importação de planilhas
 
 > [!WARNING]
 > Se um usuário de nível de permissão comum (como `Assistente Operacional` ou `Estagiario`) tentar executar uma das funções restritas a **Admin**, o servidor retornará um erro **`403 (Forbidden)`** com a mensagem `"Permissão insuficiente"`.
+
+---
+
+## 6. Fluxo de Git e Controle de Ramificações
+
+Para manter a integridade da produção e segurança na homologação das novas regras de governança e reestruturação de banco de dados:
+
+*   **Trilha Única de Desenvolvimento:** Todas as operações de `git pull`, `git push`, criação de commits e testes de funcionalidade devem ocorrer **exclusivamente na trilha secundária `refactor-mvc-skills`**.
+*   **Isolamento da Trilha Principal (`main`):** A branch `main` representa o estado de produção consolidado e **nunca** deve receber pulls, merges diretos ou pushes das alterações estruturais de governança de auditores sem validação e homologação completa e aprovação explícita da coordenação.
