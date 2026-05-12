@@ -80,3 +80,20 @@ Como o ambiente local do Docker está ativo e rodando perfeitamente na porta **8
     *   No backend (`api/reports.php`), injetamos um `LEFT JOIN` com uma subquery agregada de alta performance que identifica as movimentações mais recentes (`MAX(id)`) de cada processo no banco de dados e calcula instantaneamente a quantidade de processos ativamente estacionados sob a custódia física de cada setor (`action = 'ENTRADA'`).
     *   No frontend (`public/js/views/reports.js`), ajustamos o cabeçalho da tabela e a renderização das linhas para exibir essa contagem usando um badge azul (`badge-primary`) de destaque.
 
+---
+
+## 4. Herança de Custódia e Auditor em Apensamentos
+*   **Nova Regra de Negócio:** Quando um processo filho é apensado a um processo pai, ele agora **herda automaticamente** a custódia do setor e a atribuição de auditor do processo pai no ato do apensamento.
+*   **Implementação Backend (`api/processes.php`):** 
+    *   A ação `'attach'` foi ajustada para iniciar uma transação no banco.
+    *   Além de registrar o `parent_id` no processo filho, o sistema busca o trâmite/custódia mais recente do processo pai (`destination_sector_id`, `responsible_id`, `action`).
+    *   O backend insere de forma automática uma nova movimentação clonada para o processo filho, vinculando-o ao mesmo local e responsável do pai imediatamente.
+*   **Suíte de Testes Executada:** Criamos e executamos com sucesso uma suíte de testes unitários e de integração (`test_apensamento.php`) rodando no ambiente local do Docker para verificar as seguintes regras:
+    *   [✅ PASS] Criação dos processos de teste Pai e Filho.
+    *   [✅ PASS] Movimentação inicial do processo pai para um setor e auditor específicos.
+    *   [✅ PASS] Execução da rotina de apensamento.
+    *   [✅ PASS] Validação de herança de custódia (o filho recebeu o movimento de ENTRADA para o mesmo setor e auditor do pai de forma imediata).
+    *   [✅ PASS] Validação de desapensamento (o vínculo `parent_id` foi desfeito com segurança, mantendo seu histórico).
+    *   *Massa de testes limpa do banco de dados de forma automatizada ao final.*
+
+
