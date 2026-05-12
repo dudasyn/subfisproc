@@ -229,7 +229,7 @@ if ($type === 'movements') {
             GROUP BY m.destination_sector_id
         ) custody ON s.id = custody.destination_sector_id
         WHERE s.active = 1 AND s.id IN ($phs)
-        ORDER BY s.id = 1 DESC, (COALESCE(entries.total, 0) + COALESCE(exits.total, 0)) DESC, s.name ASC
+        ORDER BY s.id IN (316, 319) DESC, COALESCE(custody.total, 0) DESC, s.name ASC
     ";
     
     $stmt = $pdo->prepare($sql);
