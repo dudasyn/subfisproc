@@ -96,4 +96,29 @@ Como o ambiente local do Docker está ativo e rodando perfeitamente na porta **8
     *   [✅ PASS] Validação de desapensamento (o vínculo `parent_id` foi desfeito com segurança, mantendo seu histórico).
     *   *Massa de testes limpa do banco de dados de forma automatizada ao final.*
 
+---
+
+## 5. Cenário de Teste de Integração Real Realizado (Solicitado)
+Para assegurar a perfeição operacional do sistema, implementamos e executamos a suíte de testes de cenário real (`test_cenario_apensamento.php`) sob os parâmetros exatos requisitados pelo usuário:
+*   **Processo Filho (Anexo):** `009/002283/2026`
+*   **Processo Pai (Principal):** `009/005469/2026`
+
+### Fluxo Operacional Validado:
+1.  **Garantia de Existência:** Criação/Limpeza dos processos reais no banco de dados.
+2.  **Posição Inicial:** Movimentação do processo Pai para o setor **AFT (Setor 319)**.
+3.  **Apensamento:** Processo Filho apensado ao processo Pai.
+    *   [✅ PASS] Filho registrou `parent_id` vinculando ao Pai.
+    *   [✅ PASS] Filho herdou instantaneamente a custódia física da **AFT (319)** no exato momento do apensamento.
+4.  **Trâmite Conjunto para o IPTU:** Processo Pai tramitado para o setor **IPTU (Setor 228)**.
+    *   [✅ PASS] Pai migrou para o IPTU.
+    *   [✅ PASS] Filho acompanhou o Pai automaticamente na movimentação para o **IPTU (228)**.
+5.  **Retorno para a AFT:** Processo Pai tramitado de volta para o setor **AFT (Setor 319)**.
+    *   [✅ PASS] Pai retornou à AFT.
+    *   [✅ PASS] Filho acompanhou o Pai automaticamente no retorno para a **AFT (319)**.
+6.  **Desapensamento:** Processo Filho desapensado do Pai.
+    *   [✅ PASS] Vínculo de subordinação foi removido (`parent_id = NULL`), mantendo intactos seus históricos de trâmite individuais.
+
+A integridade estrutural e de fluxo está perfeitamente testada e homologada!
+
+
 
