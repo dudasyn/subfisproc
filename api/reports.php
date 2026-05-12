@@ -90,7 +90,7 @@ if ($type === 'movements') {
         $params[] = $sector_id;
     }
     
-    $sql .= " ORDER BY idle_days DESC";
+    $sql .= " ORDER BY s.name ASC, r.name ASC, idle_days DESC";
     
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
