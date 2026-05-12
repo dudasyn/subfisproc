@@ -57,11 +57,48 @@ if ($method === 'DELETE') {
             jsonResponse(['error' => 'Um processo não pode ser apensado a si mesmo'], 400);
         }
 
-        // Link
-        $stmt = $pdo->prepare('UPDATE processes SET parent_id = ? WHERE id = ?');
-        $stmt->execute([$parent_id, $child_id]);
-        
-        jsonResponse(['success' => true]);
+        try {
+            $pdo->beginTransaction();
+
+            // Link
+            $stmt = $pdo->prepare('UPDATE processes SET parent_id = ? WHERE id = ?');
+            $stmt->execute([$parent_id, $child_id]);
+
+            // Get parent's current custody (latest movement)
+            $stmt = $pdo->prepare('
+                SELECT destination_sector_id, responsible_id, action
+                FROM movements 
+                WHERE process_id = ? 
+                ORDER BY movement_date DESC, id DESC 
+                LIMIT 1
+            ');
+            $stmt->execute([$parent_id]);
+            $parent_mov = $stmt->fetch();
+
+            if ($parent_mov) {
+                $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 1;
+                
+                // Clone parent's location and auditor to child
+                $stmt = $pdo->prepare('
+                    INSERT INTO movements (process_id, movement_date, action, destination_sector_id, responsible_id, user_id) 
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ');
+                $stmt->execute([
+                    $child_id, 
+                    date('Y-m-d H:i:s'), 
+                    $parent_mov['action'], 
+                    $parent_mov['destination_sector_id'], 
+                    $parent_mov['responsible_id'], 
+                    $user_id
+                ]);
+            }
+
+            $pdo->commit();
+            jsonResponse(['success' => true]);
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            jsonResponse(['error' => 'Erro ao apensar processo: ' . $e->getMessage()], 500);
+        }
 
     } elseif ($action === 'detach') {
         $child_id = $data['child_id'] ?? null;
