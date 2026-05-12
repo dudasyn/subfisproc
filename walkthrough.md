@@ -120,5 +120,17 @@ Para assegurar a perfeição operacional do sistema, implementamos e executamos 
 
 A integridade estrutural e de fluxo está perfeitamente testada e homologada!
 
+---
+
+## 6. Aperfeiçoamento da Interface: Botão de Desapensamento no Painel de Detalhes
+Para atender perfeitamente à solicitação e refinar a experiência do usuário na tela de **Listar Processos**, realizamos as seguintes melhorias visuais e funcionais:
+
+*   **[NEW] Botão "Remover Apenso" na Barra Principal:** Adicionamos um botão elegante e proeminente de **Remover Apenso** (`btn-detach-proc`) diretamente no cabeçalho de ações rápidas do processo detalhado, ao lado dos botões de Tramitação, Apensar e Editar.
+*   **Controle de Visibilidade Inteligente:**
+    *   Se o processo sob visualização é um processo filho (apensado a um pai), o botão **Remover Apenso** é exibido dinamicamente em cor âmbar premium com ícone de elo quebrado (`fa-solid fa-link-slash`), enquanto o botão **Apensar Processo** é ocultado.
+    *   Se o processo é livre, o botão **Apensar Processo** é exibido normalmente e o de **Remover Apenso** é ocultado.
+*   **Correção de Conflito de Display Flex:** Identificamos que o comportamento anterior de alternância de exibição usando `.style.display = 'block'` sobrepunha e quebrava o alinhamento flexbox dos botões (`display: flex; align-items: center; gap: 0.5rem`). Corrigimos os estilos inline e as manipulações em JavaScript para usar e manter o tipo de exibição `'flex'` em todos os botões de ação (`btnAttachProc`, `btnEditProc`, `btnDeleteProc`), garantindo que os ícones e textos fiquem perfeitamente alinhados, fluidos e visualmente impecáveis.
+*   **Sincronização de Eventos:** O novo botão compartilha o mesmo fluxo transacional de desapensamento robusto do sistema, incluindo os diálogos de confirmação de segurança e atualização em tempo real dos dados do painel sem necessidade de recarregar a página.
+
 
 
