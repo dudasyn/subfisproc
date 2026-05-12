@@ -67,7 +67,16 @@ Como o ambiente local do Docker está ativo e rodando perfeitamente na porta **8
 
 1.  Acesse **http://localhost:8080** no seu navegador.
 2.  Faça login com a credencial desejada (ex: `superadmin` / `admin123@#` para testar com bypass total de segurança, ou com um usuário setorial para testar as restrições).
-3.  Abra a tela de **Listar Processos**.
-4.  Observe as 3 áreas nitidamente diferenciadas por cores e badges modernos.
-5.  Interaja com os inputs de filtro e note que a lista correspondente se atualiza de forma suave e rápida via AJAX/Backend.
-6.  Clique em um processo de sua custódia para abrir o detalhamento, visualizar a timeline, apensos e permissões de trâmite de alta qualidade.
+6.  Abra a tela de **Listar Processos**.
+7.  Observe as 3 áreas nitidamente diferenciadas por cores e badges modernos.
+8.  Interaja com os inputs de filtro e note que a lista correspondente se atualiza de forma suave e rápida via AJAX/Backend.
+9.  Clique em um processo de sua custódia para abrir o detalhamento, visualizar a timeline, apensos e permissões de trâmite de alta qualidade.
+
+---
+
+## 3. Relatórios e Estatísticas: Custódia na Data Presente
+*   **Melhoria em Totais por Setor (Entradas e Saídas):** Substituímos o cálculo textual antigo da coluna **"Saldo / Fluxo Total"** por uma métrica de negócio exata e em tempo real: **"Processos Sob Custódia (Hoje)"**.
+*   **Implementação Robusta:** 
+    *   No backend (`api/reports.php`), injetamos um `LEFT JOIN` com uma subquery agregada de alta performance que identifica as movimentações mais recentes (`MAX(id)`) de cada processo no banco de dados e calcula instantaneamente a quantidade de processos ativamente estacionados sob a custódia física de cada setor (`action = 'ENTRADA'`).
+    *   No frontend (`public/js/views/reports.js`), ajustamos o cabeçalho da tabela e a renderização das linhas para exibir essa contagem usando um badge azul (`badge-primary`) de destaque.
+
