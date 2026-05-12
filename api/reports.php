@@ -189,7 +189,8 @@ if ($type === 'movements') {
             s.name as sector_name,
             s.alias as sector_alias,
             COALESCE(entries.total, 0) as total_entries,
-            COALESCE(exits.total, 0) as total_exits
+            COALESCE(exits.total, 0) as total_exits,
+            COALESCE(custody.total, 0) as total_custody
         FROM sectors s
         LEFT JOIN (
             -- Entradas: conta apenas movimentos com action = ENTRADA para o setor
@@ -215,6 +216,18 @@ if ($type === 'movements') {
               )
             GROUP BY m_prev.destination_sector_id
         ) exits ON s.id = exits.destination_sector_id
+        LEFT JOIN (
+            -- Custódia atual: quantidade de processos sob custódia na data presente
+            SELECT m.destination_sector_id, COUNT(*) as total
+            FROM movements m
+            INNER JOIN (
+                SELECT process_id, MAX(id) as max_id
+                FROM movements
+                GROUP BY process_id
+            ) latest ON m.id = latest.max_id
+            WHERE m.action = 'ENTRADA'
+            GROUP BY m.destination_sector_id
+        ) custody ON s.id = custody.destination_sector_id
         WHERE s.active = 1 AND s.id IN ($phs)
         ORDER BY s.id = 1 DESC, (COALESCE(entries.total, 0) + COALESCE(exits.total, 0)) DESC, s.name ASC
     ";

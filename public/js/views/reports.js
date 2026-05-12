@@ -261,7 +261,7 @@ const reportsView = {
                                             <th>Setor</th>
                                             <th class="text-center">Total de Entradas</th>
                                             <th class="text-center">Total de Saídas</th>
-                                            <th class="text-center">Saldo / Fluxo Total</th>
+                                            <th class="text-center">Processos Sob Custódia (Hoje)</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbody-sec"></tbody>
@@ -536,7 +536,7 @@ const reportsView = {
                         </td>
                         <td class="text-center"><span class="badge badge-success" style="font-size:0.9rem;">${s.total_entries}</span></td>
                         <td class="text-center"><span class="badge badge-warning" style="font-size:0.9rem;">${s.total_exits}</span></td>
-                        <td class="text-center"><strong>${parseInt(s.total_entries) + parseInt(s.total_exits)}</strong></td>
+                        <td class="text-center"><span class="badge badge-primary" style="font-size:0.9rem; font-weight:700;">${s.total_custody}</span></td>
                     </tr>
                 `).join('');
 
