@@ -163,10 +163,13 @@ const searchView = {
                             <button class="btn-primary" id="btn-tramitar-proc" style="background: linear-gradient(135deg, #79b947, #5c9e2b); border: none; box-shadow: 0 4px 10px rgba(121, 185, 71, 0.2); display:flex; align-items:center; gap:0.6rem; padding: 0.6rem 1.4rem; font-weight: 700; border-radius: var(--radius-md); transition: all 0.25s ease;">
                                 <i class="fa-solid fa-route"></i> Realizar Tramitação
                             </button>
-                            <button class="btn-secondary" id="btn-attach-proc" style="display:none; padding: 0.6rem 1.2rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; border-radius: var(--radius-md);">
+                            <button class="btn-secondary" id="btn-attach-proc" style="display:none; padding: 0.6rem 1.2rem; align-items: center; gap: 0.5rem; font-weight: 600; border-radius: var(--radius-md);">
                                 <i class="fa-solid fa-link"></i> Apensar Processo
                             </button>
-                            <button class="btn-secondary" id="btn-edit-proc" style="display:none; padding: 0.6rem 1.2rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; border-radius: var(--radius-md); transition: all 0.25s ease;">
+                            <button class="btn-secondary" id="btn-detach-proc" style="display:none; padding: 0.6rem 1.2rem; align-items: center; gap: 0.5rem; font-weight: 600; border-radius: var(--radius-md); background: #fffbeb; color: #b45309; border-color: #fde68a;">
+                                <i class="fa-solid fa-link-slash"></i> Remover Apenso
+                            </button>
+                            <button class="btn-secondary" id="btn-edit-proc" style="display:none; padding: 0.6rem 1.2rem; align-items: center; gap: 0.5rem; font-weight: 600; border-radius: var(--radius-md); transition: all 0.25s ease;">
                                 <i class="fa-solid fa-pen-to-square"></i> Editar Processo
                             </button>
                             <div id="edit-actions" style="display:none; gap:0.5rem;">
@@ -177,7 +180,7 @@ const searchView = {
                                     <i class="fa-solid fa-xmark"></i> Cancelar
                                 </button>
                             </div>
-                            <button class="btn-secondary" id="btn-delete-proc" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; display:none; padding: 0.6rem 1.2rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; border-radius: var(--radius-md); transition: all 0.25s ease;">
+                            <button class="btn-secondary" id="btn-delete-proc" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; display:none; padding: 0.6rem 1.2rem; align-items: center; gap: 0.5rem; font-weight: 600; border-radius: var(--radius-md); transition: all 0.25s ease;">
                                 <i class="fa-solid fa-trash"></i> Excluir Processo
                             </button>
                         </div>
@@ -405,6 +408,7 @@ const searchView = {
         const btnClearEmpty = document.getElementById('btn-clear-empty');
         const btnDeleteProc = document.getElementById('btn-delete-proc');
         const btnAttachProc = document.getElementById('btn-attach-proc');
+        const btnDetachProc = document.getElementById('btn-detach-proc');
         const btnDetachMain = document.getElementById('btn-detach-main');
         const btnTramitar = document.getElementById('btn-tramitar-proc');
         const btnTramitarEmpty = document.getElementById('btn-tramitar-empty');
@@ -776,10 +780,12 @@ const searchView = {
                         btnDetachMain.style.display = 'block';
                         childrenDiv.style.display = 'none';
                         btnAttachProc.style.display = 'none';
+                        if (btnDetachProc) btnDetachProc.style.display = 'flex';
                     } else if (process.attachments_count > 0) {
                         attachDiv.style.display = 'none';
                         childrenDiv.style.display = 'block';
-                        btnAttachProc.style.display = 'block';
+                        btnAttachProc.style.display = 'flex';
+                        if (btnDetachProc) btnDetachProc.style.display = 'none';
                         
                         childrenContainer.innerHTML = process.attached_processes.map(childNumber => `
                             <div class="attachment-pill" style="cursor:pointer;" onclick="searchView._autoSearch('${childNumber}')">
@@ -790,7 +796,8 @@ const searchView = {
                     } else {
                         attachDiv.style.display = 'none';
                         childrenDiv.style.display = 'none';
-                        btnAttachProc.style.display = 'block';
+                        btnAttachProc.style.display = 'flex';
+                        if (btnDetachProc) btnDetachProc.style.display = 'none';
                     }
 
                     // Histórico de movimentações na linha do tempo
@@ -819,12 +826,12 @@ const searchView = {
                     };
 
                     if (user.role === 'Admin' || user.role === 'Gestor' || user.role === 'Secretaria' || user.role === 'Assistente Operacional') {
-                        btnEditProc.style.display = 'block';
+                        btnEditProc.style.display = 'flex';
                     } else {
                         btnEditProc.style.display = 'none';
                     }
                     if (user.role === 'Admin' || user.role === 'Gestor') {
-                        btnDeleteProc.style.display = 'block';
+                        btnDeleteProc.style.display = 'flex';
                     } else {
                         btnDeleteProc.style.display = 'none';
                     }
@@ -908,18 +915,26 @@ const searchView = {
                 editActions.style.display = 'flex';
                 btnDeleteProc.style.display = 'none';
                 btnAttachProc.style.display = 'none';
+                if (btnDetachProc) btnDetachProc.style.display = 'none';
             } else {
                 elements.assunto.textContent = originalData.subject || 'Processo Importado';
                 elements.requerente.textContent = originalData.requester || 'Importação de Dados';
                 elements.doc.textContent = originalData.document_number || 'Não informado';
                 elements.obs.textContent = originalData.observations || 'Sem observações';
                 
-                btnEditProc.style.display = 'block';
+                btnEditProc.style.display = 'flex';
                 editActions.style.display = 'none';
                 if (user.role === 'Admin' || user.role === 'Gestor') {
-                    btnDeleteProc.style.display = 'block';
+                    btnDeleteProc.style.display = 'flex';
                 }
-                btnAttachProc.style.display = 'block';
+                
+                if (btnDetachMain && btnDetachMain.style.display === 'block') {
+                    btnAttachProc.style.display = 'none';
+                    if (btnDetachProc) btnDetachProc.style.display = 'flex';
+                } else {
+                    btnAttachProc.style.display = 'flex';
+                    if (btnDetachProc) btnDetachProc.style.display = 'none';
+                }
             }
         };
 
@@ -979,16 +994,24 @@ const searchView = {
             }
         });
 
-        btnDetachMain.addEventListener('click', async () => {
+        const handleDetach = async () => {
             if (!confirm('Deseja desapensar este processo do seu processo pai?')) return;
             try {
+                if (btnDetachProc) btnDetachProc.disabled = true;
+                if (btnDetachMain) btnDetachMain.disabled = true;
                 await Api.processes.detach(currentProcessId);
                 window.app.toast('Processo desapensado com sucesso!');
                 loadProcessDetails(inputSearch.value);
             } catch (err) {
                 window.app.toast(err.message, 'error');
+            } finally {
+                if (btnDetachProc) btnDetachProc.disabled = false;
+                if (btnDetachMain) btnDetachMain.disabled = false;
             }
-        });
+        };
+
+        if (btnDetachMain) btnDetachMain.addEventListener('click', handleDetach);
+        if (btnDetachProc) btnDetachProc.addEventListener('click', handleDetach);
 
         btnClearSearch.addEventListener('click', resetView);
         btnClearEmpty.addEventListener('click', resetView);
