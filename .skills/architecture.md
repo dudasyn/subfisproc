@@ -48,3 +48,11 @@ O projeto segue uma arquitetura Model-View-Controller rigorosa:
   3. Execute as asserções de validação em cada caso.
   4. Garanta a execução de um `$pdo->rollBack()` para retornar o banco de dados ao estado limpo original.
 
+## 9. Governança e Mobilidade de Auditores (Regra de Negócio 0..N)
+- **Desvinculação de Custódia e Alocação**: A *custódia* de um processo pertence sempre ao **setor** (obtido pelo último trâmite `destination_sector_id`), enquanto o *auditor* é uma referência histórica.
+- **Livre Mobilidade**: Auditores podem migrar de setor ou pertencer a zero setores livremente, mesmo que possuam processos ativos sob sua responsabilidade histórica. Nenhuma validação no backend ou frontend deve impedir a alteração de lotações setoriais de auditores ativos.
+- **Trâmite Compulsório Dinâmico (Frontend)**:
+  - **0 setores**: O select de destino do trâmite é mantido destravado para escolha livre do operador.
+  - **1 setor**: O select de destino é automaticamente travado e preenchido de forma compulsória com o setor do auditor selecionado.
+  - **N setores**: O select de destino é mantido editável, mas filtrado dinamicamente para exibir apenas a lista restrita de setores pertencentes àquele auditor.
+
