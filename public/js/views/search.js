@@ -27,11 +27,16 @@ const searchView = {
                             <h4 style="display: flex; align-items: center; gap: 10px; font-weight: 750; margin: 0; color: #0072bc; font-family: 'Outfit', sans-serif;">
                                 <i class="fa-solid fa-hourglass-half"></i> ÁREA 1: Processos em Análise no Setor
                             </h4>
-                            <!-- Controles de Paginação -->
-                            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <button id="btn-analysis-prev" class="btn-secondary" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-soft); cursor: pointer;"><i class="fa-solid fa-chevron-left"></i></button>
-                                <span id="analysis-page-info" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); min-width: 90px; text-align: center;">Página 1 de 1</span>
-                                <button id="btn-analysis-next" class="btn-secondary" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-soft); cursor: pointer;"><i class="fa-solid fa-chevron-right"></i></button>
+                            <!-- Botão Registrar Entrada & Controles de Paginação -->
+                            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                                <button id="btn-registrar-entrada-area1" class="btn-primary" style="padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 700; background: linear-gradient(135deg, #0072bc, #005a96); border: none; border-radius: var(--radius-md); box-shadow: 0 4px 10px rgba(0, 114, 188, 0.15); display: flex; align-items: center; gap: 0.4rem; color: #ffffff; cursor: pointer; transition: all 0.2s ease; font-family: 'Outfit', sans-serif;">
+                                    <i class="fa-solid fa-plus-circle"></i> Registrar Entrada
+                                </button>
+                                <div style="display: flex; gap: 0.35rem; align-items: center;">
+                                    <button id="btn-analysis-prev" class="btn-secondary" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-soft); cursor: pointer;"><i class="fa-solid fa-chevron-left"></i></button>
+                                    <span id="analysis-page-info" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); min-width: 90px; text-align: center;">Página 1 de 1</span>
+                                    <button id="btn-analysis-next" class="btn-secondary" style="padding: 0.35rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-soft); cursor: pointer;"><i class="fa-solid fa-chevron-right"></i></button>
+                                </div>
                             </div>
                         </div>
                         <div class="card-body p-0">
@@ -561,6 +566,14 @@ const searchView = {
                 document.getElementById('tramitados-processes-list').innerHTML = '<div class="p-4 text-center text-danger">Erro ao carregar processos já tramitados.</div>';
             }
         };
+
+        // Botão de registrar entrada rápida na ÁREA 1
+        const btnRegistrarEntradaArea1 = document.getElementById('btn-registrar-entrada-area1');
+        if (btnRegistrarEntradaArea1) {
+            btnRegistrarEntradaArea1.addEventListener('click', () => {
+                window.location.hash = '#movements';
+            });
+        }
 
         // Paginação Área 1
         document.getElementById('btn-analysis-prev').addEventListener('click', () => {
